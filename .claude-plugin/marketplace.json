@@ -1,0 +1,14 @@
+{
+  "name": "openl-ai-plugin",
+  "owner": { "name": "OpenL Tablets" },
+  "metadata": {
+    "description": "OpenL Tablets plugins for Claude Code — work with OpenL Studio (rules, projects, tables, tests) from your AI agent."
+  },
+  "plugins": [
+    {
+      "name": "openl-ai",
+      "source": "./",
+      "description": "Work with OpenL Studio from Claude Code — manage rules, projects, tables and tests over the OpenL MCP server."
+    }
+  ]
+}
