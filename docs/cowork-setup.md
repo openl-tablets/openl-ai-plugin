@@ -123,7 +123,7 @@ If Claude lists your projects — you're done.
 | What you see | What to do |
 |---|---|
 | Claude doesn't seem to have any OpenL abilities | 1) Make sure you fully quit and restarted Claude. 2) Re-open the file from Step 2 and check the block matches the example — commas and quotes matter. 3) Check Node.js: open Terminal (macOS) or Command Prompt (Windows), run `node --version`; if it errors or shows less than `v24`, ask your administrator to install/update Node.js. |
-| "Unauthorized" or 401 errors | Your token expired or was revoked. Create a fresh one in Studio (**User → Personal Access Tokens**), put it into the file (Step 3), restart Claude. |
+| "Unauthorized" or 401 errors | First re-open the file from Step 3 and check the token line: the placeholder must be replaced with your real token (quotes kept, no spaces). If it looks right, the token expired or was revoked — create a fresh one in Studio (**User → Personal Access Tokens**), put it into the file, restart Claude. |
 | "Cannot reach OpenL Studio" / timeouts | Check you're on the office network or VPN, and that the address in the file is exactly the one that works in your browser (including `https://`). |
 | Worked in a desktop Cowork session, but not on claude.ai in the browser | Expected: this setup works only in the **desktop app**. The web version of Claude can't run it. |
 

@@ -202,8 +202,11 @@ OpenL Studio is frequently self-hosted, so private distribution matters.
 | `0.1.x` | `@1.1.0` | Personal Access Token via `userConfig`; `/openl-ai:connect` guides the user through creating and pasting it. Single-user Studio needs no token. |
 
 The PAT path works on every surface Claude Code runs on and with any Studio identity provider, so
-no browser sign-in is shipped. For Cowork / claude.ai, use the separate remote MCP connector
-(the `openl-studio-mcp` server's embedded-OAuth mode), not this plugin.
+no browser sign-in is shipped. The Claude **desktop app (Cowork)** is covered by the same PAT-backed
+`openl-mcp` server configured via `claude_desktop_config.json` — see
+[cowork-setup.md](cowork-setup.md), not this plugin's settings. Only **claude.ai (web/remote)** needs
+the separate remote MCP connector (the `openl-studio-mcp` server's embedded-OAuth mode, which
+requires an internet-reachable MCP endpoint).
 
 Each release is a normal plugin release: bump the server pin if needed, adjust the `connect` skill,
 bump `version`, tag.

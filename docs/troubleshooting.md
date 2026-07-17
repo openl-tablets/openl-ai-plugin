@@ -103,10 +103,13 @@ Include:
 - What you asked Claude to do, and the **error text** Claude showed.
 - Which setup you use: the **Claude Code plugin** or the **Claude desktop app
   (Cowork)** settings file.
-- Your **OpenL Studio address** (from `/plugin configure openl-ai@openl-ai-plugin`).
+- Your **OpenL Studio address** — Claude Code: from
+  `/plugin configure openl-ai@openl-ai-plugin`; Claude desktop app (Cowork): from the
+  `openl` entry in `claude_desktop_config.json`.
 - The output of `node --version`.
-- Whether you have added a Personal Access Token in the plugin settings, and whether
-  you can create one in Studio under **User → Personal Access Tokens**.
+- Whether you have added a Personal Access Token — Claude Code: in the plugin
+  settings; desktop app: in `claude_desktop_config.json` — and whether you can create
+  one in Studio under **User → Personal Access Tokens**.
 - Whether OpenL Studio works for you in the browser with the same account.
 
 Never include:

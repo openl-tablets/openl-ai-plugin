@@ -36,12 +36,11 @@ If the **Studio address** is not available above, recover it without bothering t
 user, in this order:
 
 1. Reuse a value already present in this conversation.
-2. Read the user-level Claude Code settings file `~/.claude/settings.json` and take
-   `pluginConfigs["openl-ai@…"].options.studio_base_url`. Read only this non-sensitive
-   option — never read or search for the token value.
-3. Only if still unknown, ask the user once: "What is your OpenL Studio address? It's
-   the web address you open in the browser to use OpenL Studio, for example
-   `https://studio.example.com`." Ask for nothing else.
+2. Otherwise ask the user once: "What is your OpenL Studio address? It's the web
+   address you open in the browser to use OpenL Studio, for example
+   `https://studio.example.com`." Ask for nothing else. Do **not** read Claude's
+   own settings/configuration files to recover it — they can contain unrelated
+   secrets and must never enter the conversation.
 
 ## Steps
 
