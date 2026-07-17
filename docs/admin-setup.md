@@ -1,22 +1,31 @@
 # Administrator Setup — `openl-ai` Claude Code Plugin
 
 This guide is for OpenL Studio administrators and IT staff who roll the plugin out to
-analysts. It covers supported versions, organization-wide installation, how sign-in
-works for each Studio deployment type, and the security model. End users only need the
-[README](../README.md); when they hit problems, point them to
+analysts. It covers supported versions, organization-wide installation, how
+authentication works for each Studio deployment type, and the security model. End
+users only need the [README](../README.md); when they hit problems, point them to
 [troubleshooting.md](troubleshooting.md).
+
+> **Scope.** This plugin is the **Claude Code** (terminal / IDE) integration. It
+> authenticates with a Personal Access Token (PAT). The Claude **desktop app**
+> (including Cowork sessions) does not support plugin settings, so the plugin cannot
+> deliver the PAT there — on that surface the OpenL server is added through the
+> desktop app's own config file instead: see [cowork-setup.md](cowork-setup.md)
+> (analyst-facing) and [Rolling out to Claude desktop / Cowork users](#rolling-out-to-claude-desktop--cowork-users)
+> below. A cloud **remote MCP connector** (the `openl-studio-mcp` server's
+> embedded-OAuth mode) exists as well, but requires an MCP endpoint reachable from
+> Anthropic's cloud — not an option for VPN-only deployments.
 
 ## Supported versions
 
 | Component | Requirement | Why |
 |---|---|---|
-| **Claude Code** | **2.1.119 or later** | The plugin's settings dialog uses `manifest.userConfig`, introduced in Claude Code 2.1.83; 2.1.119 additionally fixed plugin MCP servers failing when an optional setting referenced via `${user_config.*}` is left blank — and this plugin has three optional settings that are typically blank. (Source: the official [Claude Code changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md), entries 2.1.83 and 2.1.119; verified 2026-07-13.) |
+| **Claude Code** | **2.1.119 or later** | The plugin's settings dialog uses `manifest.userConfig`, introduced in Claude Code 2.1.83; 2.1.119 additionally fixed plugin MCP servers failing when an optional setting referenced via `${user_config.*}` is left blank — and this plugin's token setting is blank on single-user Studio and until the user adds a token. (Source: the official [Claude Code changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md), entries 2.1.83 and 2.1.119; verified 2026-07-13.) |
 | **Node.js** | **24 or later, on every user's machine** | The plugin's backend is the [`openl-mcp`](https://www.npmjs.com/package/openl-mcp) npm package (`engines: node >= 24`), launched locally via `npx` on the machine where Claude Code runs. This applies **even when the organization pre-installs the plugin** — there is no server-side variant. First launch downloads the package from the npm registry (cached afterwards). |
 | **OpenL Studio** | A deployment reachable from user machines | See [Studio address](#studio-address) below. |
 
-The plugin pins `openl-mcp@1.1.0` — the first release with browser sign-in (`login` /
-`logout`) and the first that treats a blank token setting as absent instead of sending
-an empty credential.
+The plugin pins `openl-mcp@1.1.0`, the first version that treats a blank token setting
+as absent instead of sending an empty credential.
 
 ## Installing for the organization
 
@@ -40,20 +49,22 @@ rollout you have three options:
    To lock down which marketplaces users may add, use `strictKnownMarketplaces` in
    managed settings.
 
-2. **Scripted install** — the CLI works headlessly and can pre-fill settings:
+2. **Scripted install** — the CLI works headlessly and can pre-fill the Studio address:
 
    ```bash
    claude plugin marketplace add openl-tablets/openl-ai-plugin
    claude plugin install openl-ai@openl-ai-plugin \
-     --config studio_base_url=https://studio.example.com \
-     --config oauth_issuer=https://idp.example.com/realms/openlstudio
+     --config studio_base_url=https://studio.example.com
    ```
+
+   Do not pre-fill `studio_token` this way on shared machines — it is a per-user
+   secret each analyst adds themselves.
 
 3. **Private marketplace / offline** — host a fork or a private marketplace repo
    internally; see [release.md](release.md#6-enterprise--private-distribution).
 
-Pre-filling `studio_base_url` (and `oauth_issuer`, where browser sign-in is used) is
-what makes the analyst experience truly two-step: install → `/openl-ai:connect`.
+Pre-filling `studio_base_url` is what makes the analyst experience truly two-step:
+install → `/openl-ai:connect` (which guides them through adding their token).
 
 ### Plugin settings reference
 
@@ -66,9 +77,7 @@ receives them directly.
 | Setting | Required | Injected as | Purpose |
 |---|---|---|---|
 | `studio_base_url` | yes | `OPENL_BASE_URL` | The OpenL Studio address, e.g. `https://studio.example.com`. |
-| `studio_token` | no | `OPENL_PERSONAL_ACCESS_TOKEN` | A manually issued Personal Access Token (PAT). Only needed when browser sign-in is unavailable (see below). Marked `sensitive` — masked and stored in secure storage. |
-| `oauth_issuer` | no | `OPENL_OAUTH_ISSUER` | Identity-provider issuer URL enabling browser sign-in, e.g. `https://idp.example.com/realms/openlstudio`. |
-| `oauth_client_id` | no | `OPENL_OAUTH_CLIENT_ID` | Public OAuth client id for browser sign-in. Defaults to `openl-cli`. |
+| `studio_token` | no | `OPENL_PERSONAL_ACCESS_TOKEN` | The user's Personal Access Token (PAT), created in Studio. Required for multi-user Studio; left blank for single-user Studio. Marked `sensitive` — masked and stored in secure storage. |
 
 ## Studio address
 
@@ -77,97 +86,95 @@ receives them directly.
   `<address>/rest/**`.
 - Studio must be reachable **from each user's machine** (VPN or office network if
   Studio is internal). The plugin makes direct HTTPS calls; there is no relay.
-- The cached browser sign-in is keyed by this exact address — if you later change the
-  configured address, users must run `/openl-ai:connect` once more.
 
-## How sign-in works per deployment type
+## How authentication works per deployment type
 
-The plugin authenticates to Studio with a Personal Access Token (PAT), obtained in one
-of two ways. The server picks automatically, in this order of precedence: an explicit
-`studio_token` setting → the token cached by `/openl-ai:connect` browser sign-in →
-anonymous (single-user Studio only).
+The plugin authenticates to Studio with a Personal Access Token (PAT) supplied in the
+`studio_token` setting. The server's precedence is: an explicit `studio_token` → a
+credential cached by the `openl-mcp login` CLI command, if one exists on the machine
+(the command ships in the underlying npm package; the plugin itself never runs it) →
+anonymous (single-user Studio only). There is no browser sign-in run from Claude Code.
 
 | Studio user mode | What analysts should do | Your setup work |
 |---|---|---|
 | **Single-user** (`user.mode=single`) | Nothing — no sign-in exists. `/openl-ai:connect` detects this and says so. | None. |
-| **Multi-user, internal users** (`user.mode=multi`) | Create a PAT in Studio (**User → Personal Access Tokens**) and paste it into the plugin's token setting. | Tell users where to create tokens. Browser sign-in is not possible (no OAuth identity provider). |
-| **Active Directory** | Same as multi-user: manual PAT. | Same. |
-| **OAuth2 / OIDC** | Run `/openl-ai:connect` — browser sign-in. | Configure the IdP client and distribute `oauth_issuer` (see below). Manual PAT remains a fallback. |
-| **SAML** | Manual PAT (browser sign-in requires an OIDC issuer, which SAML deployments typically don't expose). | Tell users where to create tokens. |
-| **Cowork / cloud-hosted Claude** | Manual PAT. Browser sign-in cannot work: it needs the browser and Claude Code on the same machine. | Tell users where to create tokens. |
+| **Multi-user** (`user.mode=multi`, Active Directory, OAuth2/OIDC, SAML — any IdP) | Sign in to Studio in the browser, create a PAT (**User → Personal Access Tokens**), and paste it into the plugin's token setting. | Tell users where to create tokens. No IdP changes are needed — the PAT works regardless of how Studio authenticates users. |
 
 PAT issuance requires a multi-user Studio: `GET <address>/rest/settings` (public)
 reports `supportedFeatures.personalAccessToken` and `userMode` (`null` for
 single-user). The `/openl-ai:connect` skill probes this endpoint to pick the right
-path automatically.
+guidance automatically.
 
-## Browser sign-in (OAuth2 deployments)
-
-`/openl-ai:connect` runs an OAuth 2.0 Authorization Code + PKCE flow (per RFC 8252,
-"OAuth 2.0 for Native Apps") against your IdP, then uses the resulting session to mint
-a PAT via Studio's `POST /rest/users/personal-access-tokens`. Requirements on the IdP:
-
-- A **public** client (no client secret), with **PKCE** enabled.
-- A **loopback redirect URI** `http://127.0.0.1/*` — the IP literal, **not**
-  `localhost`. Per RFC 8252 the port is ignored for loopback IP redirects, which is
-  what lets the plugin listen on an ephemeral port.
-- The client id defaults to **`openl-cli`**; if you register a different one, set the
-  plugin's `oauth_client_id`.
-- The **confidential web client Studio itself uses** to log users in will **not**
-  work: it has Studio's own redirect URI and requires a client secret, which the
-  sign-in command does not send.
-
-Then distribute two values to users (or pre-provision them, see above):
-
-- `oauth_issuer` — the IdP realm/issuer URL (must serve
-  `<issuer>/.well-known/openid-configuration`), e.g.
-  `https://idp.example.com/realms/openlstudio`.
-- `oauth_client_id` — only if it differs from `openl-cli`.
-
-Constraint: the browser and Claude Code must run on the **same machine** (the loopback
-listener is local). For cloud/remote setups, use a manual PAT.
-
-## Manual access token (PAT)
+## Access token (PAT)
 
 Works with any multi-user Studio and any identity provider, with no IdP changes:
 
-1. The user signs in to OpenL Studio in the browser.
+1. The user signs in to OpenL Studio in the browser (through whatever sign-in the
+   organization uses — the PAT step is the same afterwards).
 2. **User → Personal Access Tokens → create token** (name it e.g. "Claude Code").
 3. The user pastes the token into the plugin's **Personal Access Token** setting
    (`/plugin configure openl-ai@openl-ai-plugin`). The field is masked.
 
 PATs are user-scoped, have an expiry date, and are individually revocable in Studio —
 treat expiry/revocation as your lever for offboarding. When a PAT expires, tools start
-failing with 401; the fix is a new token (or `/openl-ai:connect` re-run on OAuth2
-deployments).
+failing with 401; the fix is a new token.
+
+## Rolling out to Claude desktop / Cowork users
+
+Analysts who work in the Claude **desktop app** (Cowork) can't use the plugin's
+settings dialog. Instead, each user's `claude_desktop_config.json` gets an `openl`
+entry under `mcpServers` — the analyst-facing walkthrough is
+[cowork-setup.md](cowork-setup.md). What administrators should know:
+
+- **Same requirements**: Node.js 24+ on the user's machine, Studio reachable from it
+  (VPN), a user-created PAT. The server runs locally on the user's machine — exactly
+  the same `openl-mcp` package the plugin uses; there is no extra infrastructure.
+- **Pre-provisioning**: the file is plain JSON at
+  `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) /
+  `%APPDATA%\Claude\claude_desktop_config.json` (Windows). You can distribute the
+  entry with the Studio address pre-filled via MDM/scripts, leaving only the token
+  placeholder for the user. Merge into the existing `mcpServers` object — don't
+  overwrite other entries.
+- **Token storage caveat**: in this file the PAT is stored **in plain text** (there is
+  no masked field, unlike the Claude Code plugin). The file lives in the user's
+  profile with their ACLs. Set expectations accordingly: short-ish token TTLs and
+  revocation in Studio (**User → Personal Access Tokens**) are the controls.
+- **Works only in the desktop app** (local sessions). Claude in the browser and
+  mobile cannot run local servers.
+- **Logs** for support cases: `~/Library/Logs/Claude/mcp-server-openl.log` (macOS) /
+  `%APPDATA%\Claude\logs\mcp-server-openl.log` (Windows).
 
 ## Security requirements and properties
 
 - **Secrets stay out of the model's context.** The token setting is `sensitive`:
-  masked in the UI, injected only into the MCP server's environment. The browser
-  sign-in subprocess prints only `Signed in as <user>` — never the token. Instruct
-  users to never paste tokens into the chat itself.
-- **Storage.** Sensitive settings are stored in the OS keychain on macOS, or in a
+  masked in the UI, injected only into the MCP server's environment. Instruct users to
+  never paste tokens into the chat itself.
+- **Storage.** The sensitive token is stored in the OS keychain on macOS, or in a
   protected credentials file (`~/.claude/.credentials.json`) on platforms without a
   keychain. Non-sensitive settings live in the user's Claude Code `settings.json`
-  under `pluginConfigs`. The browser sign-in cache is
-  `~/.config/openl-mcp/credentials.json`, created with file mode `0600`, keyed by
-  Studio address.
-- **Precedence.** An explicit `studio_token` always wins over a cached sign-in;
-  otherwise the cached sign-in is used; otherwise the server connects anonymously
-  (only meaningful for single-user Studio). A blank/whitespace token setting is
-  treated as absent (from `openl-mcp@1.1.0`).
-- **Revocation.** Both paths end in a normal Studio PAT, visible in the user's token
-  list in Studio — named, time-limited, revocable.
+  under `pluginConfigs`.
+- **Precedence.** An explicit `studio_token` wins; otherwise the server uses a
+  credential cached at `~/.config/openl-mcp/credentials.json` by the npm package's
+  `openl-mcp login` CLI command, if such a cache exists on the machine (the plugin
+  never creates it); otherwise it connects anonymously (only meaningful for
+  single-user Studio). A blank/whitespace token setting is treated as absent (from
+  `openl-mcp@1.1.0`), so it never sends an empty credential — which also means
+  clearing the setting alone is not a guaranteed sign-out on a machine where
+  `openl-mcp login` was ever used: clean up with
+  `npx -y -p openl-mcp@1.1.0 openl-mcp logout <address>`, or simply revoke the PAT
+  in Studio.
+- **Revocation.** The credential is a normal Studio PAT, visible in the user's token
+  list in Studio — named, time-limited, revocable. Deleting it there is the kill switch.
 - **Network.** All calls are direct HTTPS from the user's machine to Studio (plus the
-  IdP for browser sign-in, and the npm registry for the first plugin launch).
+  npm registry for the first plugin launch).
 
 ## What to tell your analysts
 
 A rollout note can be as short as:
 
 > Claude Code can now work with OpenL Studio. In Claude Code, run
-> `/openl-ai:connect`, approve the sign-in in your browser, start a new Claude
-> session, and ask: "List the OpenL projects I can access."
+> `/openl-ai:connect`; Claude will help you create a Personal Access Token in Studio
+> and add it to the plugin. Then start a new Claude session and ask: "List the OpenL
+> projects I can access."
 > If anything fails, see the plugin's troubleshooting page, or send me the error text
 > (never send your access token).

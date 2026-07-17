@@ -14,21 +14,9 @@
     },
     "studio_token": {
       "type": "string",
-      "title": "Personal Access Token (optional)",
-      "description": "Usually leave empty and sign in with /openl-ai:connect instead. Fill it only if your OpenL administrator gave you a token (created in Studio under User → Personal Access Tokens). Not needed for single-user Studio.",
+      "title": "Personal Access Token",
+      "description": "Create one in OpenL Studio under User → Personal Access Tokens, then paste it here. This is how Claude signs in as you. Leave empty only for a single-user Studio that has no sign-in. Run /openl-ai:connect and Claude will walk you through it.",
       "sensitive": true,
-      "required": false
-    },
-    "oauth_issuer": {
-      "type": "string",
-      "title": "Sign-in service URL (optional, admin-provided)",
-      "description": "Enables browser sign-in via /openl-ai:connect. Your OpenL administrator provides this value (the identity-provider issuer URL, e.g. https://idp.example.com/realms/openlstudio). Leave empty if you don't have it.",
-      "required": false
-    },
-    "oauth_client_id": {
-      "type": "string",
-      "title": "Sign-in client id (optional, admin-provided)",
-      "description": "Leave empty unless your OpenL administrator gives you a value. Defaults to openl-cli.",
       "required": false
     }
   }

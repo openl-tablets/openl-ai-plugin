@@ -5,9 +5,7 @@
     "args": ["-y", "-p", "openl-mcp@1.1.0", "openl-mcp"],
     "env": {
       "OPENL_BASE_URL": "${user_config.studio_base_url}",
-      "OPENL_PERSONAL_ACCESS_TOKEN": "${user_config.studio_token}",
-      "OPENL_OAUTH_ISSUER": "${user_config.oauth_issuer}",
-      "OPENL_OAUTH_CLIENT_ID": "${user_config.oauth_client_id}"
+      "OPENL_PERSONAL_ACCESS_TOKEN": "${user_config.studio_token}"
     }
   }
 }
