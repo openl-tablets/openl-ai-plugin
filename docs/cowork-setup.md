@@ -7,10 +7,11 @@ minutes, and you don't need to be technical: every step tells you exactly what t
 click and what to paste.
 
 > **Why is this different from the plugin install in the README?**
-> The Claude desktop app can't yet ask you for plugin settings (like your token) the
-> way Claude Code does. So instead of installing the plugin, you add a small entry to
-> one settings file on your computer. Same result: Claude gets the OpenL tools and
-> works as you.
+> There is **no plugin to install in this guide** — don't look for one. The Chat and
+> Cowork tabs can't ask you for plugin settings (like your token) the way Claude Code
+> does, so a plugin installed there simply can't connect. Instead, you add a small
+> entry to one settings file on your computer — it runs the very same OpenL server
+> the plugin would. Same result: Claude gets the OpenL tools and works as you.
 
 ## What you need
 
