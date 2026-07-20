@@ -12,14 +12,20 @@ behalf — no need to click through Studio screens or know where things live:
 Setup takes about five minutes. If your organization has already set the plugin up
 for you, it's even less — skip straight to [Connect to OpenL Studio](#step-2--connect-to-openl-studio).
 
-> **Using the Claude desktop app (Cowork) instead of Claude Code?** The steps below
-> are for Claude Code. For the desktop app, follow the
-> [Claude desktop / Cowork setup guide](docs/cowork-setup.md) instead — it's a
-> different (equally simple) setup.
+> **Where do you use Claude?** The Claude desktop app has three tabs — Chat, Cowork,
+> and Code — and they are set up differently:
+>
+> - **Claude Code in a terminal or IDE** — follow the steps below as written.
+> - **The desktop app's Code tab** — same plugin, but the `/plugin …` commands don't
+>   run in the desktop chat. Run the Step 1 commands **once in a terminal** (exact
+>   lines below) — your desktop Code sessions pick the plugin up automatically.
+> - **The Chat or Cowork tab** — a different (equally simple) setup: follow the
+>   [Claude desktop / Cowork guide](docs/cowork-setup.md). The plugin below does not
+>   apply there.
 
 ## What you need
 
-- **Claude Code** installed (the terminal app, desktop app, or IDE extension).
+- **Claude Code** installed (terminal, IDE extension, or the desktop app's Code tab).
 - The **OpenL Studio address** — the web address you open in your browser to use
   OpenL Studio, for example `https://studio.example.com`.
 - Your usual OpenL Studio account.
@@ -29,11 +35,19 @@ for you, it's even less — skip straight to [Connect to OpenL Studio](#step-2--
 > Skip this step if your organization already installed the plugin for you
 > (it shows up under `/plugin` in Claude Code).
 
-In Claude Code, run:
+In a Claude Code session in the terminal, run:
 
 ```text
 /plugin marketplace add openl-tablets/openl-ai-plugin
 /plugin install openl-ai@openl-ai-plugin
+```
+
+Or, without entering a session (works for the desktop app's Code tab too — run these
+in a terminal once, then restart the desktop app):
+
+```bash
+claude plugin marketplace add openl-tablets/openl-ai-plugin
+claude plugin install openl-ai@openl-ai-plugin
 ```
 
 When Claude Code asks for the plugin settings, fill in the **OpenL Studio address**.
@@ -65,6 +79,10 @@ Claude checks your Studio and walks you through it:
   Claude — never paste it into the chat.
 - **Single-user Studio** — "Your Studio does not require sign-in"; you're done, nothing
   to add.
+
+> **Desktop app's Code tab:** `/plugin configure` opens its dialog only in a terminal
+> session — run it there once (open a terminal, run `claude`, type the command). The
+> saved settings apply to your desktop Code sessions too.
 
 The token is stored securely (see the token setting in
 [Step 1](#step-1--install-the-plugin)) and lets Claude act as you in Studio.

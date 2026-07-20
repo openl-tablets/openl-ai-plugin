@@ -1,9 +1,10 @@
 # Use OpenL in the Claude desktop app (Cowork)
 
-This guide is for people who use **Claude as a desktop application** — including
-**Cowork** sessions — rather than the Claude Code terminal. You'll connect Claude to
-OpenL Studio in about ten minutes, and you don't need to be technical: every step
-tells you exactly what to click and what to paste.
+This guide is for the **Chat and Cowork tabs** of the Claude desktop app. (For the
+**Code** tab or the Claude Code terminal, use the plugin install from the
+[README](../README.md) instead.) You'll connect Claude to OpenL Studio in about ten
+minutes, and you don't need to be technical: every step tells you exactly what to
+click and what to paste.
 
 > **Why is this different from the plugin install in the README?**
 > The Claude desktop app can't yet ask you for plugin settings (like your token) the
