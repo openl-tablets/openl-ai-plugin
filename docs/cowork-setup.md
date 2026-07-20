@@ -7,11 +7,11 @@ minutes, and you don't need to be technical: every step tells you exactly what t
 click and what to paste.
 
 > **Why is this different from the plugin install in the README?**
-> There is **no plugin to install in this guide** — don't look for one. The Chat and
-> Cowork tabs can't ask you for plugin settings (like your token) the way Claude Code
-> does, so a plugin installed there simply can't connect. Instead, you add a small
-> entry to one settings file on your computer — it runs the very same OpenL server
-> the plugin would. Same result: Claude gets the OpenL tools and works as you.
+> In the Chat and Cowork tabs the plugin can't ask you for its settings (like your
+> token) the way Claude Code does — so the connection itself comes from a small
+> entry you add to one settings file on your computer (Steps 2–4). It runs the very
+> same OpenL server the plugin uses. The plugin is still worth installing on top —
+> that's where the OpenL **skills** live (Step 6).
 
 ## What you need
 
@@ -120,6 +120,23 @@ List the OpenL projects I can access.
 ```
 
 If Claude lists your projects — you're done.
+
+## Step 6 — Add the OpenL plugin (for the skills)
+
+The settings entry above gives Claude the OpenL **tools**. The OpenL **plugin** adds
+**skills** on top — ready-made helpers you call by typing `/` in the chat, such as
+`/openl-ai:connect` (it walks you or a colleague through this very setup), with more
+to come in plugin updates.
+
+1. In the desktop app's sidebar, click **Customize**, then open **Plugins**.
+2. Add the plugin's source as a marketplace: `openl-tablets/openl-ai-plugin`
+   (marketplaces can be added by URL; the GitHub `owner/repo` form works).
+3. Install **openl-ai** from that marketplace.
+4. In a new conversation, type `/` — the `openl-ai:` skills appear in the list.
+
+Don't fill the plugin's own settings (Studio address / token) here — in Chat and
+Cowork they have no effect. Your connection keeps coming from the settings file you
+edited in Step 3.
 
 ## If something doesn't work
 

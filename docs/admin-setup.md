@@ -141,6 +141,11 @@ entry under `mcpServers` — the analyst-facing walkthrough is
   revocation in Studio (**User → Personal Access Tokens**) are the controls.
 - **Works only in the desktop app** (local sessions). Claude in the browser and
   mobile cannot run local servers.
+- **The plugin itself is still useful there — for its skills.** Users install it via
+  **Customize → Plugins** (add `openl-tablets/openl-ai-plugin` as a marketplace);
+  its skills (e.g. `/openl-ai:connect`) load in Chat/Cowork sessions, while the
+  plugin's own settings dialog does not exist there — the connection stays with the
+  `claude_desktop_config.json` entry.
 - **Logs** for support cases: `~/Library/Logs/Claude/mcp-server-openl.log` (macOS) /
   `%APPDATA%\Claude\logs\mcp-server-openl.log` (Windows).
 
