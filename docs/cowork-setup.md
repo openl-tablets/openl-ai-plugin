@@ -8,10 +8,10 @@ click and what to paste.
 
 > **Why is this different from the plugin install in the README?**
 > In the Chat and Cowork tabs the plugin can't ask you for its settings (like your
-> token) the way Claude Code does — so the connection itself comes from a small
-> entry you add to one settings file on your computer (Steps 2–4). It runs the very
-> same OpenL server the plugin uses. The plugin is still worth installing on top —
-> that's where the OpenL **skills** live (Step 6).
+> token) the way Claude Code does — so the plugin here provides the OpenL **skills**
+> (Step 1), while the connection itself comes from a small entry you add to one
+> settings file on your computer (Steps 3–5). That entry runs the very same OpenL
+> server the plugin uses.
 
 ## What you need
 
@@ -25,7 +25,25 @@ click and what to paste.
 - Your usual OpenL Studio account, and your office network or VPN if Studio is
   internal.
 
-## Step 1 — Create your access token in OpenL Studio
+## Step 1 — Add the OpenL plugin
+
+The plugin gives Claude the OpenL **skills** — ready-made helpers you call by typing
+`/` in the chat, such as `/openl-ai:connect`, with more to come in plugin updates.
+
+1. In the desktop app's sidebar, click **Customize**, then open **Plugins**.
+2. Add the plugin's source as a marketplace: `openl-tablets/openl-ai-plugin`
+   (marketplaces can be added by URL; the GitHub `owner/repo` form works).
+3. Install **openl-ai** from that marketplace.
+4. In a new conversation, type `/` — the `openl-ai:` skills appear in the list.
+
+Don't fill the plugin's own settings (Studio address / token) if you are asked — in
+Chat and Cowork they have no effect. The connection is set up in the next steps.
+
+> **Shortcut:** now that the plugin is installed, you can start a new conversation,
+> type `/openl-ai:connect` and follow along — Claude walks you through the remaining
+> steps right in the chat. The steps below are the same thing written out.
+
+## Step 2 — Create your access token in OpenL Studio
 
 1. Open OpenL Studio in your browser and sign in as usual.
 2. Open the **User** menu and go to **Personal Access Tokens**.
@@ -33,7 +51,7 @@ click and what to paste.
 4. **Copy the token now** — Studio shows it only once. It looks like
    `openl_pat_…`. Keep it to yourself: anyone who has it can act as you in Studio.
 
-## Step 2 — Open the Claude settings file
+## Step 3 — Open the Claude settings file
 
 1. In the Claude desktop app, open the **Claude menu** in your system's menu bar
    (macOS: top of the screen; Windows: the app menu) and choose **Settings…**
@@ -49,10 +67,10 @@ If you prefer to find the file yourself, it lives here:
 
 Open it in any text editor (TextEdit, Notepad).
 
-## Step 3 — Add the OpenL entry
+## Step 4 — Add the OpenL entry
 
 You will paste a small block into that file, then change **two** things in it:
-your Studio address and your token from Step 1.
+your Studio address and your token from Step 2.
 
 **If the file is empty or brand new**, make it look exactly like this:
 
@@ -98,20 +116,20 @@ Now replace the two placeholders — keep the surrounding quotes:
 
 - `PASTE-YOUR-STUDIO-ADDRESS-HERE` → your Studio address, e.g.
   `https://studio.example.com`
-- `PASTE-YOUR-TOKEN-HERE` → the token you copied in Step 1
+- `PASTE-YOUR-TOKEN-HERE` → the token you copied in Step 2
 
 Save the file.
 
 > Careful with commas and quotes — this file format is strict. If Claude ignores
 > your change after restart, a missing/extra comma is the most common reason.
 
-## Step 4 — Restart Claude
+## Step 5 — Restart Claude
 
 **Quit the Claude app completely** (macOS: Claude menu → Quit; Windows: exit from
 the system tray), then start it again. Closing the window is not enough — the file
 is read when the app starts.
 
-## Step 5 — Check that it works
+## Step 6 — Check that it works
 
 Start a new conversation (a Cowork session or a regular chat) and ask:
 
@@ -121,29 +139,12 @@ List the OpenL projects I can access.
 
 If Claude lists your projects — you're done.
 
-## Step 6 — Add the OpenL plugin (for the skills)
-
-The settings entry above gives Claude the OpenL **tools**. The OpenL **plugin** adds
-**skills** on top — ready-made helpers you call by typing `/` in the chat, such as
-`/openl-ai:connect` (it walks you or a colleague through this very setup), with more
-to come in plugin updates.
-
-1. In the desktop app's sidebar, click **Customize**, then open **Plugins**.
-2. Add the plugin's source as a marketplace: `openl-tablets/openl-ai-plugin`
-   (marketplaces can be added by URL; the GitHub `owner/repo` form works).
-3. Install **openl-ai** from that marketplace.
-4. In a new conversation, type `/` — the `openl-ai:` skills appear in the list.
-
-Don't fill the plugin's own settings (Studio address / token) here — in Chat and
-Cowork they have no effect. Your connection keeps coming from the settings file you
-edited in Step 3.
-
 ## If something doesn't work
 
 | What you see | What to do |
 |---|---|
-| Claude doesn't seem to have any OpenL abilities | 1) Make sure you fully quit and restarted Claude. 2) Re-open the file from Step 2 and check the block matches the example — commas and quotes matter. 3) Check Node.js: open Terminal (macOS) or Command Prompt (Windows), run `node --version`; if it errors or shows less than `v24`, ask your administrator to install/update Node.js. |
-| "Unauthorized" or 401 errors | First re-open the file from Step 3 and check the token line: the placeholder must be replaced with your real token (quotes kept, no spaces). If it looks right, the token expired or was revoked — create a fresh one in Studio (**User → Personal Access Tokens**), put it into the file, restart Claude. |
+| Claude doesn't seem to have any OpenL abilities | 1) Make sure you fully quit and restarted Claude. 2) Re-open the file from Step 3 and check the block matches the example — commas and quotes matter. 3) Check Node.js: open Terminal (macOS) or Command Prompt (Windows), run `node --version`; if it errors or shows less than `v24`, ask your administrator to install/update Node.js. |
+| "Unauthorized" or 401 errors | First re-open the file from Step 4 and check the token line: the placeholder must be replaced with your real token (quotes kept, no spaces). If it looks right, the token expired or was revoked — create a fresh one in Studio (**User → Personal Access Tokens**), put it into the file, restart Claude. |
 | "Cannot reach OpenL Studio" / timeouts | Check you're on the office network or VPN, and that the address in the file is exactly the one that works in your browser (including `https://`). |
 | Worked in a desktop Cowork session, but not on claude.ai in the browser | Expected: this setup works only in the **desktop app**. The web version of Claude can't run it. |
 
@@ -160,7 +161,7 @@ Claude's log file: `~/Library/Logs/Claude/mcp-server-openl.log` (macOS) or
   everywhere, instantly.
 - Tokens have an expiry date. When Claude starts answering "unauthorized" after
   months of working fine — that's usually it. Create a new token and update the
-  file (Steps 1 and 3).
+  file (Steps 2 and 4).
 - If you also use **Claude Code** (the terminal/IDE tool), use the plugin install
   from the [README](../README.md) there — it has a proper masked settings field for
   the token. Both can coexist; they don't conflict.
