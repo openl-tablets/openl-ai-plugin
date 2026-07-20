@@ -82,7 +82,7 @@ user, in this order:
    > 1. Open OpenL Studio in your browser, sign in, go to **User → Personal Access
    >    Tokens**, create a token and copy it.
    > 2. In the Claude desktop app: **Claude menu → Settings… → Developer → Edit
-   >    Config** — this opens the file `claude_desktop_config.json`.
+   >    Config** — this opens (or shows you) the file `claude_desktop_config.json`.
    > 3. Add an `"openl"` entry under `"mcpServers"` with `"command": "npx"`,
    >    `"args": ["-y", "-p", "openl-mcp@1.1.0", "openl-mcp"]`, and an `"env"` block
    >    with `OPENL_BASE_URL` = the Studio address and

@@ -21,8 +21,8 @@ for you, it's even less — skip straight to [Connect to OpenL Studio](#step-2--
 >   lines below) — your desktop Code sessions pick the plugin up automatically.
 > - **The Chat or Cowork tab** — a different (equally simple) setup: follow the
 >   [Claude desktop / Cowork guide](docs/cowork-setup.md). The steps below don't work
->   there (the plugin's settings dialog is Claude Code-only) — the guide sets up the
->   connection through a settings file and installs this plugin for its skills.
+>   there (the plugin's settings dialog is Claude Code-only) — the guide installs this
+>   plugin for its skills and sets up the connection through a settings file.
 
 ## What you need
 
