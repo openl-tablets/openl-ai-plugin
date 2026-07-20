@@ -15,9 +15,12 @@ click and what to paste.
 ## What you need
 
 - The **Claude desktop app** installed (macOS or Windows).
-- **Node.js 24 or newer** on your computer. Not sure? Just follow the guide — if
-  things don't work at the end, this is the first thing to check
-  ([how](#if-something-doesnt-work)).
+- **Node.js 24 or newer** on your computer. To check: open **Terminal** (macOS) or
+  **PowerShell** (Windows), type `node --version` and press Enter — you want `v24`
+  or higher. If it shows an error or a lower number, ask your administrator to
+  install it (or get it yourself from [nodejs.org](https://nodejs.org/)). Not sure
+  what any of this means? Just continue with the guide — if Claude has no OpenL
+  abilities at the end, this is the first thing to fix.
 - The **OpenL Studio address** — the web address you open in your browser to use
   OpenL Studio, for example `https://studio.example.com`.
 - Your usual OpenL Studio account, and your office network or VPN if Studio is
