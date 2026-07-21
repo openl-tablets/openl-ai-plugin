@@ -72,7 +72,7 @@ If you prefer to find the file yourself, it lives here:
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
-Either way, open the file in a text editor (TextEdit on macOS, Notepad on Windows).
+Either way, open the file in a plain-text editor.
 
 ## Step 4 — Add the OpenL entry
 
@@ -129,8 +129,8 @@ Save the file.
 
 > Careful with commas and quotes — this file format is strict. If Claude ignores
 > your change after restart, a missing/extra comma is the most common reason. Paste
-> the blocks rather than retyping them — some editors (TextEdit) turn straight
-> quotes into curly ones, which break the file.
+> the blocks rather than retyping them — some editors turn straight quotes into
+> curly ones, which break the file.
 
 ## Step 5 — Restart Claude
 
