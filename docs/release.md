@@ -204,7 +204,9 @@ OpenL Studio is frequently self-hosted, so private distribution matters.
 The PAT path works on every surface Claude Code runs on and with any Studio identity provider, so
 no browser sign-in is shipped. The Claude **desktop app (Cowork)** is covered by the same PAT-backed
 `openl-mcp` server configured via `claude_desktop_config.json` — see
-[cowork-setup.md](cowork-setup.md), not this plugin's settings. Only **claude.ai (web/remote)** needs
+[cowork-setup.md](cowork-setup.md), not this plugin's settings. That manual configuration follows
+the current npm release by default and offers an exact-version option for controlled deployments;
+it is independent of the pin in `.mcp.json`. Only **claude.ai (web/remote)** needs
 the separate remote MCP connector (the `openl-studio-mcp` server's embedded-OAuth mode, which
 requires an internet-reachable MCP endpoint).
 
