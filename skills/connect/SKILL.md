@@ -1,6 +1,6 @@
 ---
 name: connect
-description: Connect Claude Code or the Claude desktop app / Cowork to OpenL Studio with a Personal Access Token, so the OpenL tools authenticate as you. Use when the user wants to "connect", "sign in", "log in", "sign out", or "authenticate" to OpenL Studio, set up OpenL in Cowork, or when OpenL tools fail with 401 Unauthorized.
+description: Connect Claude Code or the Claude desktop app / Cowork to OpenL Studio with a Personal Access Token when required, or anonymously for single-user Studio. Use when the user wants to "connect", "sign in", "log in", "sign out", or "authenticate" to OpenL Studio, set up OpenL in Cowork, or when OpenL tools fail with 401 Unauthorized.
 ---
 
 # Connect to OpenL Studio

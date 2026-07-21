@@ -94,9 +94,11 @@ server via `npx -y -p openl-mcp@X.Y.Z openl-mcp`.
 
 ## Authentication design
 
-The request path is always the same: the server sends `Authorization: Token <openl_pat_…>` to
-Studio's `/rest/**`. The Personal Access Token comes from the plugin's `studio_token` setting
-(injected as `OPENL_PERSONAL_ACCESS_TOKEN`). The supported plugin modes are:
+In the supported plugin flow, requests to Studio's `/rest/**` include
+`Authorization: Token <openl_pat_…>` only when the plugin's `studio_token` setting provides
+an explicit Personal Access Token (injected as `OPENL_PERSONAL_ACCESS_TOKEN`). Anonymous
+single-user requests omit the `Authorization` header entirely; a blank token setting is treated
+as absent rather than as an empty credential. The supported plugin modes are:
 
 1. **Explicit token** — the `studio_token` setting for multi-user Studio.
 2. **Anonymous** — no token for single-user Studio, where no sign-in exists.
