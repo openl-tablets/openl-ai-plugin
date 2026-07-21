@@ -44,8 +44,13 @@ The plugin is a **packaging layer, not a fork**. The MCP server is the published
 [`openl-tablets/openl-mcp`](https://github.com/openl-tablets/openl-mcp)), launched as a **stdio**
 server via `npx -y -p openl-mcp@X.Y.Z openl-mcp`.
 
-- **Pin an exact version** (`@1.1.0`), never `@latest`, for reproducibility. Bumping the pin is a
-  plugin release (see [release.md](release.md)).
+- **Claude Code plugin:** pin an exact version (`@1.1.0`) in `.mcp.json` for
+  reproducibility. Bumping the pin is a plugin release (see [release.md](release.md)).
+- **Desktop / Cowork manual config:** use an unversioned package with
+  `--prefer-online` by default so it checks for server updates when Claude starts.
+  Administrators can replace it with an exact version for a controlled rollout. This
+  policy lives in [cowork-setup.md](cowork-setup.md) because the desktop config is not
+  managed by the plugin.
 - `npx` needs the npm registry at first launch (cached afterwards). For offline / air-gapped
   installs the documented escape hatch is a vendored single-file bundle under
   `${CLAUDE_PLUGIN_ROOT}/dist/` with `command` pointed at `node`; it is a variant, not the default.
@@ -82,9 +87,8 @@ server via `npx -y -p openl-mcp@X.Y.Z openl-mcp`.
   saved Studio address without re-asking the user.
 - An **unset optional `userConfig` value expands to `""`**, not to an unset variable. That is why
   the pin must be `openl-mcp@1.1.0` or later: it treats a blank/whitespace
-  `OPENL_PERSONAL_ACCESS_TOKEN` as absent — falling through to the credential cache, then
-  anonymous (see the precedence below) — instead of sending an empty credential and getting
-  HTTP 401.
+  `OPENL_PERSONAL_ACCESS_TOKEN` as absent, allowing single-user Studio to connect
+  anonymously instead of sending an empty credential and getting HTTP 401.
 - `${CLAUDE_PLUGIN_ROOT}` is **ephemeral** (changes on update) — never cache credentials or state
   there.
 
@@ -92,15 +96,16 @@ server via `npx -y -p openl-mcp@X.Y.Z openl-mcp`.
 
 The request path is always the same: the server sends `Authorization: Token <openl_pat_…>` to
 Studio's `/rest/**`. The Personal Access Token comes from the plugin's `studio_token` setting
-(injected as `OPENL_PERSONAL_ACCESS_TOKEN`). Server-side precedence:
+(injected as `OPENL_PERSONAL_ACCESS_TOKEN`). The supported plugin modes are:
 
-1. **Explicit token** — the `studio_token` setting. The mode this plugin configures.
-2. **Cached CLI login** — a credential cached at `~/.config/openl-mcp/credentials.json` by the
-   npm package's `openl-mcp login` command. The plugin never creates or reads this cache, but
-   the server consults it whenever no explicit token is set — which is why the connect skill's
-   sign-out guidance also runs `openl-mcp logout` (clearing the setting alone would silently
-   fall back to this cache on machines where the CLI login was ever used).
-3. **Anonymous** — no token at all (single-user Studio, where no sign-in exists).
+1. **Explicit token** — the `studio_token` setting for multi-user Studio.
+2. **Anonymous** — no token for single-user Studio, where no sign-in exists.
+
+`openl-mcp@1.1.0` retains a legacy fallback to a PAT cached by a past direct CLI
+sign-in when no explicit token is set. The plugin never creates or manages that
+cache, so this is not a supported plugin authentication mode. Until the bundled pin
+moves to a server version without that fallback, complete sign-out means revoking in
+Studio both the configured PAT and any older PATs created for Claude or OpenL MCP.
 
 The user creates the PAT in Studio's own UI (**User → Personal Access Tokens**), where they have
 already authenticated through whatever sign-in their organization uses, and pastes it into the
@@ -116,7 +121,8 @@ browser flow and no subprocess.
   stored in the OS keychain or a protected credentials file — see integration notes); the model
   is instructed never to read it or echo a pasted token.
 - **Revocation** is a normal Studio PAT operation: named, time-limited, individually revocable in
-  the user's Studio token list.
+  the user's Studio token list. Revoking every applicable PAT in Studio is the
+  supported sign-out operation; no CLI operation is involved.
 
 ## Alternatives considered
 
@@ -126,10 +132,8 @@ browser flow and no subprocess.
   worked when the browser and Claude Code ran on the same machine, and could not work at all in
   Cowork/remote sessions (the loopback callback is unreachable from the user's real browser). PAT
   entry covers every deployment with far less setup, so the flow and its `userConfig` options
-  (`oauth_issuer`, `oauth_client_id`) were dropped from the plugin. The `openl-mcp` package
-  still ships `login`/`logout` and its credential cache for direct CLI users; the plugin no
-  longer invokes the login, but the server-side cache fallback remains active (see the
-  precedence above), which the sign-out guidance accounts for.
+  (`oauth_issuer`, `oauth_client_id`) were dropped from the plugin. Direct CLI authentication
+  features of the underlying package are outside the plugin's supported authentication flow.
 - **Remote streamable-HTTP MCP** with full MCP OAuth (Studio fronted by an OAuth 2.1
   authorization server, or the MCP server acting as its own AS) — this is the path for
   Cowork / claude.ai, implemented separately in the `openl-studio-mcp` server's embedded-OAuth

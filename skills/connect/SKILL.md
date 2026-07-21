@@ -1,6 +1,6 @@
 ---
 name: connect
-description: Connect Claude Code to OpenL Studio by adding a Personal Access Token to the plugin settings, so the OpenL tools authenticate as you. Use when the user wants to "connect", "sign in", "log in", "sign out", or "authenticate" to OpenL Studio, or when OpenL tools fail with 401 Unauthorized.
+description: Connect Claude Code or the Claude desktop app / Cowork to OpenL Studio with a Personal Access Token, so the OpenL tools authenticate as you. Use when the user wants to "connect", "sign in", "log in", "sign out", or "authenticate" to OpenL Studio, set up OpenL in Cowork, or when OpenL tools fail with 401 Unauthorized.
 ---
 
 # Connect to OpenL Studio
@@ -14,8 +14,8 @@ Authentication is a **Personal Access Token (PAT)**: the user creates it once in
 Studio's own web UI (where they log in with their usual account, through whatever
 sign-in their organization uses) and pastes it into the plugin's settings. Claude then
 acts as that user. There is no browser sign-in run from Claude Code — do not attempt
-one, and do not bring up OAuth, issuers, or `openl-mcp login` when talking to the
-user (the internal sign-out cleanup below is the one exception where the CLI is run).
+one, and do not bring up OAuth, issuers, or CLI authentication when talking to the
+user.
 
 **Detect the surface first.** In **Claude Code** (terminal/IDE), plugin settings work
 and the steps below apply as written. In a **Claude desktop app / Cowork session**
@@ -91,10 +91,16 @@ never concatenate it into a larger shell string and never pass it to `eval`.
    > 2. In the Claude desktop app: **Claude menu → Settings… → Developer → Edit
    >    Config** — this opens (or shows you) the file `claude_desktop_config.json`.
    > 3. Add an `"openl"` entry under `"mcpServers"` with `"command": "npx"`,
-   >    `"args": ["-y", "-p", "openl-mcp@1.1.0", "openl-mcp"]`, and an `"env"` block
+   >    `"args": ["-y", "--prefer-online", "-p", "openl-mcp", "openl-mcp"]`, and an `"env"` block
    >    with `OPENL_BASE_URL` = the Studio address and
    >    `OPENL_PERSONAL_ACCESS_TOKEN` = the copied token.
    > 4. Quit the Claude app completely and start it again.
+
+   Use the unversioned package above by default so the desktop app checks for a new
+   `openl-mcp` release when it starts. If the user explicitly asks for a reproducible
+   setup, or their administrator provides an exact version, replace `openl-mcp` after
+   `-p` with `openl-mcp@X.Y.Z` and omit `--prefer-online`. Explain that a pinned
+   version changes only when the config is edited manually.
 
    You may write the JSON entry into the file for the user if you have file access
    and they agree — but **never fill in the token value yourself and never ask them
@@ -115,27 +121,25 @@ never concatenate it into a larger shell string and never pass it to `eval`.
 
 ## Signing out / rotating
 
-To sign out or replace the token: in Claude Code, run
-`/plugin configure openl-ai@openl-ai-plugin` and clear (or overwrite) the Personal
-Access Token field, then start a new session; in the desktop app, edit the token
-value in `claude_desktop_config.json` (Claude menu → Settings… → Developer → Edit
-Config) and restart the app. To fully revoke access, the user deletes the token in
-OpenL Studio under **User → Personal Access Tokens** — that is the authoritative
-kill switch.
+To sign out, revoke the configured token in OpenL Studio under **User → Personal
+Access Tokens**. Also revoke any older tokens the user previously created for Claude
+or OpenL MCP: older server versions can fall back to a token cached by a past direct
+CLI sign-in. Studio-side revocation is the authoritative operation that invalidates
+each token everywhere. Then remove the obsolete value from the client: in Claude
+Code, clear the Personal Access Token field with
+`/plugin configure openl-ai@openl-ai-plugin` and start a new session; in the desktop
+app, remove the token value (or the whole `openl` entry) from
+`claude_desktop_config.json` and restart the app.
 
-One caveat: clearing the token field alone is **not** a guaranteed sign-out. If the
-`openl-mcp login` CLI command was ever used on this machine (it is part of the
-underlying npm package; this plugin never runs it), the server falls back to the
-credential it cached. When signing out, also run (internal command — don't display
-it unless asked): `npx -y -p openl-mcp@1.1.0 openl-mcp logout "<studio_base_url>"` —
-it is harmless when no cache exists. Deleting the token in Studio makes this moot:
-a revoked PAT stops working everywhere at once.
+To rotate a token, create a replacement in Studio, update the client setting, restart
+the client, verify the connection, and then revoke the old token in Studio. Never run
+CLI authentication commands as part of either flow.
 
 ## Rules
 
-- **Never print, log, or read the token value.** Don't read masked settings fields
-  or `~/.config/openl-mcp/credentials.json`; don't echo a token the user pastes.
-- **No browser sign-in.** Never run `openl-mcp login` or open a browser for
-  authentication — token entry is the only supported path. (`openl-mcp logout` is
-  allowed, but only as the sign-out cleanup described above.)
+- **Never print, log, or read the token value.** Don't read masked settings fields;
+  don't echo a token the user pastes.
+- **No CLI sign-in or sign-out.** Never run CLI authentication commands or open a
+  browser for authentication. Token entry and Studio-side revocation are the only
+  supported paths.
 - After any successful outcome, always offer the verification prompt from step 3.
