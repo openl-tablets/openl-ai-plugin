@@ -1,7 +1,7 @@
 # Architecture — `openl-ai` Claude Code Plugin
 
 How the plugin is put together and why: naming, the packaging model, Claude Code integration
-notes, and the browser sign-in design. This document is for developers of the plugin. For
+notes, and the authentication design. This document is for developers of the plugin. For
 versioning/release/distribution see [release.md](release.md); for operational setup
 (versions, IdP configuration, rollout) see [admin-setup.md](admin-setup.md).
 
@@ -31,7 +31,7 @@ openl-ai-plugin/
 │   └── marketplace.json     # this repo is its own marketplace
 ├── .mcp.json                # bundled MCP server (kept as a separate root file — see below)
 ├── skills/
-│   └── connect/SKILL.md     # /openl-ai:connect → browser sign-in
+│   └── connect/SKILL.md     # /openl-ai:connect → guided Personal Access Token setup
 ├── docs/
 ├── CHANGELOG.md
 └── README.md
@@ -71,8 +71,8 @@ server via `npx -y -p openl-mcp@X.Y.Z openl-mcp`.
     the versions where the other forms were broken, and re-verify on a live install first.
 - Plugin options require **Claude Code 2.1.83+** (`manifest.userConfig` introduced there) and
   practically **2.1.119+** for this plugin: 2.1.119 fixed plugin MCP servers failing when
-  `${user_config.*}` references an optional field left blank, and three of our four options
-  are optional and typically blank.
+  `${user_config.*}` references an optional field left blank, and the token option is optional
+  and blank on single-user Studio (and until the user adds a token).
 - `userConfig` stays in `plugin.json`. Claude Code prompts for the values at install/enable time,
   stores `sensitive` ones in the OS keychain on macOS (or a protected credentials file,
   `~/.claude/.credentials.json`, on platforms without a keychain), keeps non-sensitive ones in
@@ -82,54 +82,55 @@ server via `npx -y -p openl-mcp@X.Y.Z openl-mcp`.
   saved Studio address without re-asking the user.
 - An **unset optional `userConfig` value expands to `""`**, not to an unset variable. That is why
   the pin must be `openl-mcp@1.1.0` or later: it treats a blank/whitespace
-  `OPENL_PERSONAL_ACCESS_TOKEN` as absent and falls through to the cached `/connect` login
-  (earlier versions sent the empty token and got HTTP 401).
+  `OPENL_PERSONAL_ACCESS_TOKEN` as absent — falling through to the credential cache, then
+  anonymous (see the precedence below) — instead of sending an empty credential and getting
+  HTTP 401.
 - `${CLAUDE_PLUGIN_ROOT}` is **ephemeral** (changes on update) — never cache credentials or state
-  there. The sign-in cache lives in `~/.config/openl-mcp/`.
+  there.
 
 ## Authentication design
 
 The request path is always the same: the server sends `Authorization: Token <openl_pat_…>` to
-Studio's `/rest/**`. What varies is how that Personal Access Token is obtained. Server-side
-precedence:
+Studio's `/rest/**`. The Personal Access Token comes from the plugin's `studio_token` setting
+(injected as `OPENL_PERSONAL_ACCESS_TOKEN`). Server-side precedence:
 
-1. **Explicit token** — the plugin's `studio_token` setting (injected as
-   `OPENL_PERSONAL_ACCESS_TOKEN`). Manual mode; works everywhere, including Cowork.
-2. **Cached browser sign-in** — the credential minted by `/openl-ai:connect`.
-3. **Anonymous** — no token at all (single-user Studio).
+1. **Explicit token** — the `studio_token` setting. The mode this plugin configures.
+2. **Cached CLI login** — a credential cached at `~/.config/openl-mcp/credentials.json` by the
+   npm package's `openl-mcp login` command. The plugin never creates or reads this cache, but
+   the server consults it whenever no explicit token is set — which is why the connect skill's
+   sign-out guidance also runs `openl-mcp logout` (clearing the setting alone would silently
+   fall back to this cache on machines where the CLI login was ever used).
+3. **Anonymous** — no token at all (single-user Studio, where no sign-in exists).
 
-### Browser sign-in (`/openl-ai:connect`)
+The user creates the PAT in Studio's own UI (**User → Personal Access Tokens**), where they have
+already authenticated through whatever sign-in their organization uses, and pastes it into the
+masked setting. The `/openl-ai:connect` skill is pure guidance: it probes
+`<base-url>/rest/settings` → `supportedFeatures.personalAccessToken` / `userMode` to tell single-
+from multi-user Studio, then walks the user through creating and pasting the token. It runs no
+browser flow and no subprocess.
 
-The skill runs `openl-mcp login <base-url> --issuer <idp-issuer>`, which:
-
-1. opens the system browser to the IdP and runs an **OAuth 2.0 Authorization Code + PKCE** flow
-   (RFC 8252) with a loopback redirect `http://127.0.0.1:<ephemeral-port>/callback`;
-2. uses the resulting session to **mint a PAT** via Studio's existing
-   `POST /rest/users/personal-access-tokens`;
-3. caches it at `~/.config/openl-mcp/credentials.json` (file mode `0600`), keyed by base URL.
-
-Design decisions behind that:
-
-- **Login is a subcommand, not part of the MCP protocol.** A stdio MCP server takes credentials
-  out-of-band (env, files); OAuth does not run inside the stdio session.
-- **A PAT is minted instead of caching IdP tokens.** The PAT appears in the user's Studio token
-  list (named, with a TTL, individually revocable) and reuses the exact existing
-  `Token <PAT>` request path — no change to how the server talks to Studio.
-- **IdP requirements:** a **public** client (no secret) with **PKCE** enabled and a loopback
-  redirect `http://127.0.0.1/*` — the IP literal, not `localhost` (per RFC 8252 the port is
-  ignored for loopback IPs, which is what makes the ephemeral-port flow work). The confidential
-  web client Studio itself uses to log users in will not work.
-- **Constraints:** PAT issuance exists only in `oauth2`/`saml` user modes — the skill probes
-  `<base-url>/rest/settings` → `supportedFeatures.personalAccessToken` before attempting login.
-  The browser and the MCP subprocess must run on the same machine (in Cowork, use the manual
-  token instead).
+- **Why PAT-only.** A token created in Studio works with any Studio identity provider with no IdP
+  changes, and — unlike a loopback OAuth flow — works on the surfaces analysts actually use,
+  including remote/VM setups where a `127.0.0.1` callback is unreachable.
 - **Secrets stay out of the model's context:** the `studio_token` field is `sensitive` (masked,
-  stored in the OS keychain or a protected credentials file — see integration notes), and
-  `openl-mcp login` prints only `Signed in as <user>` — never the token.
+  stored in the OS keychain or a protected credentials file — see integration notes); the model
+  is instructed never to read it or echo a pasted token.
+- **Revocation** is a normal Studio PAT operation: named, time-limited, individually revocable in
+  the user's Studio token list.
 
 ## Alternatives considered
 
-- **Device Authorization Grant (RFC 8628)** — a headless/SSH fallback (no local port needed);
-  a natural later addition to `openl-mcp login`.
+- **Browser sign-in from Claude Code** (`openl-mcp login`, OAuth 2.0 Authorization Code + PKCE
+  with an RFC 8252 loopback redirect, minting a PAT via `POST /rest/users/personal-access-tokens`)
+  — **removed.** It required an IdP-side public client with a `http://127.0.0.1/*` redirect, only
+  worked when the browser and Claude Code ran on the same machine, and could not work at all in
+  Cowork/remote sessions (the loopback callback is unreachable from the user's real browser). PAT
+  entry covers every deployment with far less setup, so the flow and its `userConfig` options
+  (`oauth_issuer`, `oauth_client_id`) were dropped from the plugin. The `openl-mcp` package
+  still ships `login`/`logout` and its credential cache for direct CLI users; the plugin no
+  longer invokes the login, but the server-side cache fallback remains active (see the
+  precedence above), which the sign-out guidance accounts for.
 - **Remote streamable-HTTP MCP** with full MCP OAuth (Studio fronted by an OAuth 2.1
-  authorization server) — deferred; only justified for a hosted multi-tenant offering.
+  authorization server, or the MCP server acting as its own AS) — this is the path for
+  Cowork / claude.ai, implemented separately in the `openl-studio-mcp` server's embedded-OAuth
+  mode, not in this Claude Code plugin.
