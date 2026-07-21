@@ -42,6 +42,13 @@ user, in this order:
    own settings/configuration files to recover it — they can contain unrelated
    secrets and must never enter the conversation.
 
+Before using the address in any command below, **validate it**: it must be a plain
+absolute `http://` or `https://` URL (scheme + host, optional port and path, no
+spaces, quotes, `$`, backticks, `;`, `|`, `&`, or other shell metacharacters). If it
+doesn't look like that, ask the user again — do not run anything. When you do run a
+command, pass the address as a **single quoted argument** to `curl` / `openl-mcp`;
+never concatenate it into a larger shell string and never pass it to `eval`.
+
 ## Steps
 
 1. **Probe the deployment.** Fetch `<studio_base_url>/rest/settings` (public, no
