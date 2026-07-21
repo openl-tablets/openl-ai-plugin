@@ -24,8 +24,10 @@ users only need the [README](../README.md); when they hit problems, point them t
 | **Node.js** | **24 or later, on every user's machine** | The plugin's backend is the [`openl-mcp`](https://www.npmjs.com/package/openl-mcp) npm package (`engines: node >= 24`), launched locally via `npx` on the machine where Claude Code runs. This applies **even when the organization pre-installs the plugin** — there is no server-side variant. First launch downloads the package from the npm registry (cached afterwards). |
 | **OpenL Studio** | A deployment reachable from user machines | See [Studio address](#studio-address) below. |
 
-The plugin pins `openl-mcp@1.1.0`, the first version that treats a blank token setting
-as absent instead of sending an empty credential.
+The Claude Code plugin pins `openl-mcp@1.1.0`, the first version that treats a blank
+token setting as absent instead of sending an empty credential. The separate desktop /
+Cowork setup uses the current npm release by default; administrators can pin it for a
+controlled rollout as described below.
 
 ## Installing for the organization
 
@@ -90,10 +92,8 @@ receives them directly.
 ## How authentication works per deployment type
 
 The plugin authenticates to Studio with a Personal Access Token (PAT) supplied in the
-`studio_token` setting. The server's precedence is: an explicit `studio_token` → a
-credential cached by the `openl-mcp login` CLI command, if one exists on the machine
-(the command ships in the underlying npm package; the plugin itself never runs it) →
-anonymous (single-user Studio only). There is no browser sign-in run from Claude Code.
+`studio_token` setting. Multi-user Studio requires an explicit PAT; single-user Studio
+connects anonymously. There is no browser or CLI sign-in run from Claude Code.
 
 | Studio user mode | What analysts should do | Your setup work |
 |---|---|---|
@@ -135,6 +135,13 @@ entry under `mcpServers` — the analyst-facing walkthrough is
   entry with the Studio address pre-filled via MDM/scripts, leaving only the token
   placeholder for the user. Merge into the existing `mcpServers` object — don't
   overwrite other entries.
+- **Version policy**: the analyst guide uses
+  `npx -y --prefer-online -p openl-mcp openl-mcp`, so the desktop app checks for a
+  new server release when it starts. For a controlled rollout, distribute an exact
+  package spec instead, for example
+  `npx -y -p openl-mcp@1.1.0 openl-mcp`; pinned installations update only when you
+  change that version in the managed config. The Claude Code plugin remains pinned
+  independently in its bundled `.mcp.json`.
 - **Token storage caveat**: in this file the PAT is stored **in plain text** (there is
   no masked field, unlike the Claude Code plugin). The file lives in the user's
   profile with their ACLs. Set expectations accordingly: short-ish token TTLs and
@@ -158,20 +165,22 @@ entry under `mcpServers` — the analyst-facing walkthrough is
   protected credentials file (`~/.claude/.credentials.json`) on platforms without a
   keychain. Non-sensitive settings live in the user's Claude Code `settings.json`
   under `pluginConfigs`.
-- **Precedence.** An explicit `studio_token` wins; otherwise the server uses a
-  credential cached at `~/.config/openl-mcp/credentials.json` by the npm package's
-  `openl-mcp login` CLI command, if such a cache exists on the machine (the plugin
-  never creates it); otherwise it connects anonymously (only meaningful for
-  single-user Studio). A blank/whitespace token setting is treated as absent (from
-  `openl-mcp@1.1.0`), so it never sends an empty credential — which also means
-  clearing the setting alone is not a guaranteed sign-out on a machine where
-  `openl-mcp login` was ever used: clean up with
-  `npx -y -p openl-mcp@1.1.0 openl-mcp logout <address>`, or simply revoke the PAT
-  in Studio.
+- **Authentication modes.** Multi-user Studio uses the explicit PAT setting;
+  single-user Studio connects anonymously. A blank/whitespace token is treated as
+  absent from `openl-mcp@1.1.0` onward, so the plugin does not send an empty
+  credential. Compatibility note: `openl-mcp@1.1.0` can still fall back to a PAT
+  cached by an older direct CLI sign-in when the explicit setting is absent. The
+  plugin never creates or manages that cache, and it is not a supported plugin
+  authentication mode.
 - **Revocation.** The credential is a normal Studio PAT, visible in the user's token
-  list in Studio — named, time-limited, revocable. Deleting it there is the kill switch.
-- **Network.** All calls are direct HTTPS from the user's machine to Studio (plus the
-  npm registry for the first plugin launch).
+  list in Studio — named, time-limited, revocable. Deleting it there is the sign-out
+  operation and invalidates it everywhere. For machines that used direct CLI sign-in
+  in the past, revoke any additional PATs created for Claude or OpenL MCP as well.
+  Remove the obsolete value from the client configuration afterwards. No CLI
+  operation is part of this flow.
+- **Network.** All calls are direct HTTPS from the user's machine to Studio. `npx`
+  also contacts the npm registry on the first Claude Code plugin launch and whenever
+  the default desktop/Cowork configuration checks for an updated package.
 
 ## What to tell your analysts
 

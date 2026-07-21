@@ -86,7 +86,7 @@ your Studio address and your token from Step 2.
   "mcpServers": {
     "openl": {
       "command": "npx",
-      "args": ["-y", "-p", "openl-mcp@1.1.0", "openl-mcp"],
+      "args": ["-y", "--prefer-online", "-p", "openl-mcp", "openl-mcp"],
       "env": {
         "OPENL_BASE_URL": "PASTE-YOUR-STUDIO-ADDRESS-HERE",
         "OPENL_PERSONAL_ACCESS_TOKEN": "PASTE-YOUR-TOKEN-HERE"
@@ -109,7 +109,7 @@ the `"openl": { … }` part. Like this:
     },
     "openl": {
       "command": "npx",
-      "args": ["-y", "-p", "openl-mcp@1.1.0", "openl-mcp"],
+      "args": ["-y", "--prefer-online", "-p", "openl-mcp", "openl-mcp"],
       "env": {
         "OPENL_BASE_URL": "PASTE-YOUR-STUDIO-ADDRESS-HERE",
         "OPENL_PERSONAL_ACCESS_TOKEN": "PASTE-YOUR-TOKEN-HERE"
@@ -126,6 +126,21 @@ Now replace the two placeholders — keep the surrounding quotes:
 - `PASTE-YOUR-TOKEN-HERE` → the token you copied in Step 2
 
 Save the file.
+
+The example intentionally does not specify a version. `--prefer-online` makes `npx`
+check for a newer `openl-mcp` release when Claude starts, while still using npm's
+local cache for package contents.
+
+If you or your administrator need a fixed, reproducible version, replace the `args`
+line with an exact version (using the version your administrator provides), for
+example:
+
+```json
+"args": ["-y", "-p", "openl-mcp@1.1.0", "openl-mcp"]
+```
+
+A fixed version does not update automatically. Change the version number in this
+line and restart Claude whenever you want to upgrade it.
 
 > Careful with commas and quotes — this file format is strict. If Claude ignores
 > your change after restart, a missing/extra comma is the most common reason. Paste
@@ -167,11 +182,15 @@ Claude's log file: `~/Library/Logs/Claude/mcp-server-openl.log` (macOS) or
 
 - **Your token is stored as plain text** in that settings file on your computer.
   Don't share the file or its contents. To cut access at any moment, delete the
-  token in OpenL Studio (**User → Personal Access Tokens**) — that kills it
-  everywhere, instantly.
+  configured token in OpenL Studio (**User → Personal Access Tokens**) — that
+  invalidates it everywhere. If you previously used direct CLI sign-in, revoke any
+  older tokens created for Claude or OpenL MCP there as well.
 - Tokens have an expiry date. When Claude starts answering "unauthorized" after
   months of working fine — that's usually it. Create a new token, update the file, and
   restart Claude (Steps 2, 4, and 5).
+- The default configuration checks for a new `openl-mcp` version when Claude starts.
+  If your organization requires controlled upgrades, use the exact-version option
+  described in Step 4.
 - If you also use **Claude Code** (the terminal/IDE tool), use the plugin install
   from the [README](../README.md) there — it has a proper masked settings field for
   the token. Both can coexist; they don't conflict.
