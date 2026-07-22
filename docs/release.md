@@ -20,7 +20,9 @@ the server can publish freely, and the plugin adopts a server version deliberate
 ```
 openl-mcp repo ──npm publish──▶ npmjs: openl-mcp@X.Y.Z
                                         ▲
-                                        │ pinned in .mcp.json → tools.args
+                                        │ pinned in two places that must match:
+                                        │   .mcp.json → tools.args               (Claude Code)
+                                        │   OPENL_MCP_VERSION in the launcher     (Codex)
 openl-ai-plugin repo ──git tag──▶ marketplace.json ──▶ user runs /plugin install
 ```
 
@@ -154,7 +156,10 @@ claude plugin validate .          # checks plugin.json + marketplace.json schema
 2. Confirm it's resolvable: `npm view openl-mcp@X.Y.Z version`.
 
 **B. This repo: cut a plugin release**
-1. If adopting a new server: bump the pin in `.mcp.json` → `tools.args` to `openl-mcp@X.Y.Z`.
+1. If adopting a new server: bump the pin in **both** places that carry it —
+   `.mcp.json` → `tools.args` (Claude Code) **and** `OPENL_MCP_VERSION` in
+   `scripts/start-openl-mcp-codex.mjs` (Codex). They must stay equal;
+   `tests/plugin-manifests.test.mjs` fails the build if they drift.
 2. Update skills / agents / docs as needed.
 3. Bump `version` in `plugin.json` (and the entry in `marketplace.json` if it carries one).
 4. Update `CHANGELOG.md` (replace `Unreleased` with the release date on the version being cut).

@@ -1,145 +1,173 @@
 ---
 name: connect
-description: Connect Claude Code or the Claude desktop app / Cowork to OpenL Studio with a Personal Access Token when required, or anonymously for single-user Studio. Use when the user wants to "connect", "sign in", "log in", "sign out", or "authenticate" to OpenL Studio, set up OpenL in Cowork, or when OpenL tools fail with 401 Unauthorized.
+description: This skill should be used when the user asks to connect, sign in, log in, sign out, rotate credentials, or authenticate Codex, Claude Code, or Claude desktop/Cowork to OpenL Studio, or when OpenL tools fail with 401 Unauthorized.
 ---
 
 # Connect to OpenL Studio
 
-Get the user's OpenL tools authenticated with as little interaction as possible. The
-user is typically a business analyst: talk in outcomes, not in mechanics. Do not show
-internal endpoint URLs or file paths unless the user explicitly asks for technical
-details. Run the checks yourself and report the result in plain words.
+Connect the current client to OpenL Studio with a Personal Access Token (PAT) when
+the deployment requires one, or anonymously for a single-user deployment. Keep the
+conversation focused on outcomes and never ask the user to paste a PAT into chat.
 
-Authentication is a **Personal Access Token (PAT)**: the user creates it once in OpenL
-Studio's own web UI (where they log in with their usual account, through whatever
-sign-in their organization uses) and pastes it into the plugin's settings. Claude then
-acts as that user. There is no browser sign-in run from Claude Code — do not attempt
-one, and do not bring up OAuth, issuers, or CLI authentication when talking to the
-user.
+## Choose the current client first
 
-**Detect the surface first.** In **Claude Code** (terminal/IDE), plugin settings work
-and the steps below apply as written. In a **Claude desktop app / Cowork session**
-(signs: `/plugin` commands are unavailable; you work in a sandboxed workspace, e.g.
-paths like `/sessions/...`), the plugin's settings dialog does not exist — the token
-goes into the desktop app's own settings file instead. In that case use the
-**Cowork variant** of step 2, and never tell the user to run `/plugin configure`.
+Use exactly one branch:
 
-## Saved plugin settings
+- **Codex desktop or CLI:** Codex task context or the `codex plugin` command is
+  available. Follow **Codex setup**. Codex does not substitute `${user_config.*}`
+  values and does not use `/plugin configure` or `claude_desktop_config.json`.
+- **Claude Code terminal, IDE, or desktop Code tab:** `/plugin` settings are
+  available. Follow **Claude Code setup**.
+- **Claude desktop Chat or Cowork:** `/plugin` settings are unavailable and the
+  session may use sandbox paths such as `/sessions/...`. Follow **Cowork setup**.
 
-Claude Code substitutes the plugin's saved, non-sensitive settings into this skill
-when supported. Treat a blank value or a literal `${user_config...}` placeholder as
-"not available":
+If the client cannot be determined from the host context, ask which of these three
+the user is using before giving configuration instructions.
+
+Authentication is always created in OpenL Studio under **User → Personal Access
+Tokens**. Do not run an OpenL CLI login flow, browser login, or OAuth flow.
+
+## Codex setup
+
+The bundled configurator is the only supported way to save Codex connection data.
+It probes the deployment, asks for the Studio address in the user's own terminal,
+and requests a PAT only for a multi-user Studio.
+
+1. Find the installed plugin directory by running `codex plugin list --json` and
+   selecting the enabled entry whose `pluginId` is
+   `openl-ai@openl-ai-plugin`. Read only its `source.path` field. Do not search
+   Codex caches, inspect `codex.json`, or read any other configuration file.
+2. Optionally run this non-secret status check yourself:
+
+   ```bash
+   node "<source.path>/scripts/configure-codex.mjs" --status --json
+   ```
+
+   The output contains only the Studio address, authentication type, and config
+   path. It never contains the PAT.
+3. If configuration is absent or the user wants to change it, give them this exact
+   command with the resolved absolute path:
+
+   ```bash
+   node "<source.path>/scripts/configure-codex.mjs"
+   ```
+
+   Tell them to run it themselves in a normal Terminal or PowerShell window, not in
+   chat and not through an agent tool. The command requires a real TTY and hides PAT
+   input. Never run the interactive command for the user.
+4. For a multi-user Studio, tell the user to create a PAT first: sign in to Studio,
+   open **User → Personal Access Tokens**, create a token (for example, named
+   "Codex"), and copy it when Studio shows it. By default the configurator accepts a
+   PAT only over HTTPS. HTTP works without a token for loopback development; for a
+   trusted internal HTTP Studio the user can re-run the configurator with
+   `--allow-insecure` (or `OPENL_AI_ALLOW_INSECURE=1`), which permits a PAT over plain
+   HTTP and warns that the token is then sent unencrypted.
+5. After the configurator succeeds, tell the user to start a new Codex task and ask:
+   *List the OpenL projects I can access.*
+
+If `openl-ai@openl-ai-plugin` is not listed, explain that the plugin is not installed
+or enabled and point the user to `docs/codex-setup.md`. Do not guess an installation
+cache path.
+
+The Codex config stores the PAT as plaintext outside the plugin cache with owner-only
+file permissions on POSIX; Windows relies on the user's `%APPDATA%` ACLs. Do not call
+this keychain storage, and do not claim that same-user processes or backups cannot
+read it.
+
+### Codex sign-out and rotation
+
+- **Sign out:** first revoke the PAT in Studio. Then have the user run
+  `node "<source.path>/scripts/configure-codex.mjs" --clear` in their terminal and
+  start a new Codex task. Studio-side revocation is what invalidates the token.
+- **Rotate:** create a replacement PAT, rerun the configurator, start a new task and
+  verify the connection, then revoke the old PAT in Studio.
+
+## Claude Code setup
+
+Claude Code substitutes saved plugin settings into this skill when supported. Treat
+a blank value or a literal `${user_config...}` placeholder as unavailable:
 
 - Studio address: `${user_config.studio_base_url}`
 
-If the **Studio address** is not available above, recover it without bothering the
-user, in this order:
+If the address is unavailable, reuse a value already present in the conversation or
+ask once for the web address the user opens for OpenL Studio. Do not read Claude's
+settings files; they may contain unrelated secrets.
 
-1. Reuse a value already present in this conversation.
-2. Otherwise ask the user once: "What is your OpenL Studio address? It's the web
-   address you open in the browser to use OpenL Studio, for example
-   `https://studio.example.com`." Ask for nothing else. Do **not** read Claude's
-   own settings/configuration files to recover it — they can contain unrelated
-   secrets and must never enter the conversation.
+Validate the address before probing it. Require an absolute `http://` or `https://`
+URL with no credentials, query, fragment, whitespace, or shell metacharacters.
+Require HTTPS for a multi-user Studio; allow HTTP only for anonymous loopback
+development. Pass the address as one quoted argument and never use `eval`.
 
-Before using the address in any command below, **validate it**: it must be a plain
-absolute `http://` or `https://` URL (scheme + host, optional port and path, no
-spaces, quotes, `$`, backticks, `;`, `|`, `&`, or other shell metacharacters). If it
-doesn't look like that, ask the user again — do not run anything. When you do run a
-command, pass the address as a **single quoted argument** to `curl` / `openl-mcp`;
-never concatenate it into a larger shell string and never pass it to `eval`.
+Probe `<studio-address>/rest/settings` without authentication. Do not follow
+redirects. Use a 10-second timeout, cap the response at 1 MiB, and interpret it only
+when the response is HTTP 200 JSON with an object-valued `supportedFeatures` field:
 
-## Steps
+- Unreachable, timeout, redirect, oversized/non-JSON response, non-200 status, or
+  missing `supportedFeatures`: explain that Studio cannot be reached at that address
+  and suggest checking the address, office network, or VPN. Stop.
+- `userMode` absent or `null`: this is single-user Studio. No PAT is needed; continue
+  to verification.
+- `userMode` present and `supportedFeatures.personalAccessToken` is `true`: continue
+  with PAT setup.
+- `userMode` present but PAT support is not `true`: explain that this deployment
+  cannot issue the tokens required by the plugin and ask the OpenL administrator.
 
-1. **Probe the deployment.** Fetch `<studio_base_url>/rest/settings` (public, no
-   auth) so that the HTTP status is visible, e.g.
-   `curl -s -w '\nHTTP_STATUS=%{http_code}' "<studio_base_url>/rest/settings"`.
-   Interpret the fields **only** when the status is `200` **and** the body is JSON
-   containing `supportedFeatures` — an error page from a proxy or an old Studio can
-   be JSON too, and must not be mistaken for "no sign-in needed". Branch:
+For PAT setup, tell the user:
 
-   - **Unreachable, timeout, non-JSON, status other than 200, or JSON without
-     `supportedFeatures`** → tell the user: "I can't reach OpenL Studio at
-     \<address\>. Check that the address is the one you use in your browser, and
-     that you're connected to the office network or VPN." Stop.
-   - **`userMode` is null or absent** → this is a single-user Studio with no sign-in
-     at all. Tell the user: "Your Studio does not require sign-in — you can use the
-     OpenL tools right away." Do **not** ask for a token. Go to step 3.
-   - **`userMode` is present and `supportedFeatures.personalAccessToken` is `true`**
-     → multi-user Studio, a token is needed. Continue to step 2.
-   - **`userMode` is present but `personalAccessToken` is `false`** (rare, older
-     deployments) → this Studio cannot issue the access tokens the OpenL tools use.
-     Tell the user: "Your Studio doesn't support connecting from Claude Code yet.
-     Ask your OpenL administrator." Stop.
+> 1. Open OpenL Studio in your browser and sign in as usual.
+> 2. Go to **User → Personal Access Tokens**, create a token (for example, named
+>    "Claude Code"), and copy it when Studio shows it.
+> 3. Run `/plugin configure openl-ai@openl-ai-plugin` and paste it into the masked
+>    **Personal Access Token** field.
 
-2. **Guide the user to add a token.**
+If the user is in the Claude **desktop app's Code tab**, add this caveat:
+`/plugin configure` opens its dialog only in a terminal `claude` session, not in the
+desktop chat. Have them run it once in a terminal; the saved setting then applies to
+their desktop Code sessions.
 
-   **In Claude Code**, tell them, in these words:
+Tell the user to start a new Claude session and ask: *List the OpenL projects I can
+access.* A new session is required when tools already started with old settings.
 
-   > 1. Open OpenL Studio in your browser and sign in as usual.
-   > 2. Go to **User → Personal Access Tokens** and create a token (name it e.g.
-   >    "Claude Code"). Copy it — Studio shows it only once.
-   > 3. Add it to the plugin: run `/plugin configure openl-ai@openl-ai-plugin` and
-   >    paste it into the **Personal Access Token** field. The field is masked.
+### Claude Code sign-out and rotation
 
-   **In a Claude desktop app / Cowork session**, walk them through the settings-file
-   setup instead (full analyst guide: `docs/cowork-setup.md` in the plugin
-   repository — read it alongside if available):
+- **Sign out:** revoke the PAT in Studio, clear the plugin's PAT field with
+  `/plugin configure openl-ai@openl-ai-plugin`, and start a new session. Revoke any
+  older PATs created for Claude/OpenL MCP because old server versions may have cached
+  one after a direct CLI login.
+- **Rotate:** create a replacement PAT, update the masked plugin setting, start a new
+  session and verify, then revoke the old PAT.
 
-   > 1. Open OpenL Studio in your browser, sign in, go to **User → Personal Access
-   >    Tokens**, create a token and copy it.
-   > 2. In the Claude desktop app: **Claude menu → Settings… → Developer → Edit
-   >    Config** — this opens (or shows you) the file `claude_desktop_config.json`.
-   > 3. Add an `"openl"` entry under `"mcpServers"` with `"command": "npx"`,
-   >    `"args": ["-y", "--prefer-online", "-p", "openl-mcp", "openl-mcp"]`, and an `"env"` block
-   >    with `OPENL_BASE_URL` = the Studio address and
-   >    `OPENL_PERSONAL_ACCESS_TOKEN` = the copied token.
-   > 4. Quit the Claude app completely and start it again.
+## Cowork setup
 
-   Use the unversioned package above by default so the desktop app checks for a new
-   `openl-mcp` release when it starts. If the user explicitly asks for a reproducible
-   setup, or their administrator provides an exact version, replace `openl-mcp` after
-   `-p` with `openl-mcp@X.Y.Z` and omit `--prefer-online`. Explain that a pinned
-   version changes only when the config is edited manually.
+Use `docs/cowork-setup.md` when available. The desktop app has no plugin settings
+dialog for Chat/Cowork, so never suggest `/plugin configure` there.
 
-   You may write the JSON entry into the file for the user if you have file access
-   and they agree — but **never fill in the token value yourself and never ask them
-   to paste the token into the chat**: leave a clearly marked placeholder for them to
-   replace in their text editor.
+Guide the user to:
 
-   If the user pastes the token into the chat, do **not** use it and do **not**
-   repeat it back — tell them it needs to go into the masked plugin setting (Claude
-   Code) or the settings file (desktop app), not the conversation, and that they
-   should treat any token already pasted in chat as exposed and create a fresh one.
+1. Create a PAT in Studio under **User → Personal Access Tokens**.
+2. Open **Claude menu → Settings… → Developer → Edit Config**.
+3. Add an `openl` entry under `mcpServers` using command `npx`, arguments
+   `-y --prefer-online -p openl-mcp openl-mcp`, and an `env` block containing the
+   Studio address and PAT.
+4. Quit the Claude app completely and restart it, then ask: *List the OpenL projects
+   I can access.*
 
-3. **Verify.** The token is picked up when the OpenL tools start. Tell the user:
-   in Claude Code — "Start a new Claude session and try: *List the OpenL projects I
-   can access.*"; in the desktop app — "Quit and restart the Claude app, then try:
-   *List the OpenL projects I can access.*" If the OpenL tools already failed with
-   401 earlier in this session, mention that the restart/new session is what makes
-   the newly added token take effect.
+The desktop config contains the PAT in plaintext. If writing a template for the user,
+leave an obvious placeholder and have the user replace it in their editor. Never put
+the real value into a tool call, file edit, or conversation. Use an exact
+`openl-mcp@X.Y.Z` pin only when the user or administrator requests reproducibility.
 
-## Signing out / rotating
+For sign-out, revoke the PAT in Studio first, then remove the token or entire `openl`
+entry and restart the app. For rotation, update and verify the replacement before
+revoking the old PAT.
 
-To sign out, revoke the configured token in OpenL Studio under **User → Personal
-Access Tokens**. Also revoke any older tokens the user previously created for Claude
-or OpenL MCP: older server versions can fall back to a token cached by a past direct
-CLI sign-in. Studio-side revocation is the authoritative operation that invalidates
-each token everywhere. Then remove the obsolete value from the client: in Claude
-Code, clear the Personal Access Token field with
-`/plugin configure openl-ai@openl-ai-plugin` and start a new session; in the desktop
-app, remove the token value (or the whole `openl` entry) from
-`claude_desktop_config.json` and restart the app.
+## Safety rules
 
-To rotate a token, create a replacement in Studio, update the client setting, restart
-the client, verify the connection, and then revoke the old token in Studio. Never run
-CLI authentication commands as part of either flow.
-
-## Rules
-
-- **Never print, log, or read the token value.** Don't read masked settings fields;
-  don't echo a token the user pastes.
-- **No CLI sign-in or sign-out.** Never run CLI authentication commands or open a
-  browser for authentication. Token entry and Studio-side revocation are the only
-  supported paths.
-- After any successful outcome, always offer the verification prompt from step 3.
+- Never print, log, read, or repeat a PAT. If one appears in chat, tell the user to
+  treat it as exposed, revoke it, and create a replacement.
+- Never pass a PAT through command arguments, environment variables supplied by the
+  user, a pipe, or an agent-run interactive command.
+- Never use CLI authentication commands. PAT creation and Studio-side revocation are
+  the supported authentication operations.
+- Always finish with the appropriate restart/new-task step and the verification
+  prompt.

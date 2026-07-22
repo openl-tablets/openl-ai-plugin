@@ -1,8 +1,9 @@
-# OpenL AI plugin for Claude Code
+# OpenL AI plugin for Claude Code and Codex
 
-Work with **OpenL Studio** by simply asking [Claude](https://code.claude.com) in plain
-language. Once connected, Claude can look things up in Studio for you and act on your
-behalf — no need to click through Studio screens or know where things live:
+Work with **OpenL Studio** by simply asking your AI assistant in plain language. This
+plugin connects **Claude Code**, the **Claude desktop app**, or **Codex** to OpenL
+Studio; once connected, the assistant can look things up in Studio for you and act on
+your behalf — no need to click through Studio screens or know where things live:
 
 - **Explore** — "Which projects do I have? Show me the tables in the Rating project."
 - **Understand** — "Explain what the LossRatio table calculates, in business terms."
@@ -12,21 +13,27 @@ behalf — no need to click through Studio screens or know where things live:
 Setup takes about five minutes. If your organization has already set the plugin up
 for you, it's even less — skip straight to [Connect to OpenL Studio](#step-2--connect-to-openl-studio).
 
-> **Where do you use Claude?** The Claude desktop app has three tabs — Chat, Cowork,
-> and Code — and they are set up differently:
+> **Which tool do you use?** The steps below are for **Claude Code**. Other tools set
+> up differently:
 >
 > - **Claude Code in a terminal or IDE** — follow the steps below as written.
-> - **The desktop app's Code tab** — same plugin, but the `/plugin …` commands don't
->   run in the desktop chat. Run the Step 1 commands **once in a terminal** (exact
->   lines below) — your desktop Code sessions pick the plugin up automatically.
-> - **The Chat or Cowork tab** — a different (equally simple) setup: follow the
->   [Claude desktop / Cowork guide](docs/cowork-setup.md). The steps below don't work
->   there (the plugin's settings dialog is Claude Code-only) — the guide installs this
->   plugin for its skills and sets up the connection through a settings file.
+> - **The Claude desktop app's Code tab** — same plugin, but the `/plugin …` commands
+>   don't run in the desktop chat. Run the Step 1 commands **once in a terminal**
+>   (exact lines below) — your desktop Code sessions pick the plugin up automatically.
+> - **The Claude desktop app's Chat or Cowork tab** — a different (equally simple)
+>   setup: follow the [Claude desktop / Cowork guide](docs/cowork-setup.md). The steps
+>   below don't work there (the plugin's settings dialog is Claude Code-only) — the
+>   guide installs this plugin for its skills and sets up the connection through a
+>   settings file.
+> - **Codex (desktop or CLI)** — a different setup again: follow the
+>   [Codex guide](docs/codex-setup.md).
 
 ## What you need
 
 - **Claude Code** installed (terminal, IDE extension, or the desktop app's Code tab).
+- **Node.js 24 or newer** on the machine running Claude Code. Not sure if you have
+  it? Just continue — [Step 1](#step-1--install-the-plugin) explains how to check,
+  and it's easy to add later.
 - The **OpenL Studio address** — the web address you open in your browser to use
   OpenL Studio, for example `https://studio.example.com`.
 - Your usual OpenL Studio account.
@@ -128,6 +135,7 @@ including what information to send your administrator if you're stuck.
 
 - [docs/cowork-setup.md](docs/cowork-setup.md) — using OpenL from the **Claude
   desktop app / Cowork** (a different setup than the plugin below).
+- [docs/codex-setup.md](docs/codex-setup.md) — using OpenL from **Codex** (desktop or CLI).
 - [docs/troubleshooting.md](docs/troubleshooting.md) — symptom → fix, for everyone.
 - [docs/admin-setup.md](docs/admin-setup.md) — for OpenL administrators: supported
   versions, organization-wide setup, authentication, security notes.
