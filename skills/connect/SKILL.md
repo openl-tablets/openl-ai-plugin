@@ -120,6 +120,11 @@ For PAT setup, tell the user:
 > 3. Run `/plugin configure openl-ai@openl-ai-plugin` and paste it into the masked
 >    **Personal Access Token** field.
 
+If the user is in the Claude **desktop app's Code tab**, add this caveat:
+`/plugin configure` opens its dialog only in a terminal `claude` session, not in the
+desktop chat. Have them run it once in a terminal; the saved setting then applies to
+their desktop Code sessions.
+
 Tell the user to start a new Claude session and ask: *List the OpenL projects I can
 access.* A new session is required when tools already started with old settings.
 

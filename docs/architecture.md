@@ -1,7 +1,7 @@
-# Architecture — `openl-ai` Claude Code Plugin
+# Architecture — `openl-ai` plugin
 
-How the plugin is put together and why: naming, the packaging model, Claude Code integration
-notes, and the authentication design. This document is for developers of the plugin. For
+How the plugin is put together and why: naming, the packaging model, Claude Code and Codex
+integration notes, and the authentication design. This document is for developers of the plugin. For
 versioning/release/distribution see [release.md](release.md); for operational setup
 (versions, IdP configuration, rollout) see [admin-setup.md](admin-setup.md).
 
@@ -27,11 +27,20 @@ the tool prefix (the plugin name and `mcp` are already there) and avoids collisi
 ```
 openl-ai-plugin/
 ├── .claude-plugin/
-│   ├── plugin.json          # manifest: name, description, version, userConfig
+│   ├── plugin.json          # Claude Code manifest: name, description, version, userConfig
 │   └── marketplace.json     # this repo is its own marketplace
-├── .mcp.json                # bundled MCP server (kept as a separate root file — see below)
+├── .codex-plugin/
+│   └── plugin.json          # Codex manifest: MCP server (openl-ai), skills, interface
+├── .mcp.json                # Claude Code MCP server (kept as a separate root file — see below)
+├── scripts/                 # Codex-only Node helpers (Claude Code needs none of these)
+│   ├── start-openl-mcp-codex.mjs   # launcher: reads saved config, spawns openl-mcp
+│   ├── configure-codex.mjs         # interactive, no-echo PAT/address setup
+│   └── codex-config.mjs            # shared config read/write + Studio probe helpers
 ├── skills/
 │   └── connect/SKILL.md     # /openl-ai:connect → guided Personal Access Token setup
+├── tests/                   # node --test suite (manifests, config, launcher)
+├── .github/workflows/       # CI: runs the test suite
+├── package.json             # test runner + Node engines
 ├── docs/
 ├── CHANGELOG.md
 └── README.md
@@ -51,6 +60,14 @@ server via `npx -y -p openl-mcp@X.Y.Z openl-mcp`.
   Administrators can replace it with an exact version for a controlled rollout. This
   policy lives in [cowork-setup.md](cowork-setup.md) because the desktop config is not
   managed by the plugin.
+- **Codex plugin:** Codex substitutes no `${user_config.*}` values, so
+  `.codex-plugin/plugin.json` points its MCP server at a bundled Node launcher
+  (`node ./scripts/start-openl-mcp-codex.mjs`) rather than at `npx` directly. The
+  launcher reads the Studio address and PAT from a private `~/.config/openl-ai/codex.json`
+  (written by `scripts/configure-codex.mjs` with owner-only permissions), then spawns the
+  same `npx -y -p openl-mcp@X.Y.Z openl-mcp` in an isolated config dir. It carries its
+  **own** version pin (`OPENL_MCP_VERSION`), kept equal to the `.mcp.json` pin by a test
+  in `tests/plugin-manifests.test.mjs` — see [release.md](release.md).
 - `npx` needs the npm registry at first launch (cached afterwards). For offline / air-gapped
   installs the documented escape hatch is a vendored single-file bundle under
   `${CLAUDE_PLUGIN_ROOT}/dist/` with `command` pointed at `node`; it is a variant, not the default.

@@ -7,6 +7,8 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { assertSupportedNode, readCodexConfig } from "./codex-config.mjs";
 
+// Keep this in lockstep with the openl-mcp pin in .mcp.json (Claude Code).
+// tests/plugin-manifests.test.mjs fails the build if the two versions drift.
 const OPENL_MCP_VERSION = "1.1.0";
 
 export function buildMcpEnvironment(config, isolatedConfigDirectory, inheritedEnv = process.env) {

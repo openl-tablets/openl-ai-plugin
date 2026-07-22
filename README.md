@@ -31,6 +31,9 @@ for you, it's even less — skip straight to [Connect to OpenL Studio](#step-2--
 ## What you need
 
 - **Claude Code** installed (terminal, IDE extension, or the desktop app's Code tab).
+- **Node.js 24 or newer** on the machine running Claude Code. Not sure if you have
+  it? Just continue — [Step 1](#step-1--install-the-plugin) explains how to check,
+  and it's easy to add later.
 - The **OpenL Studio address** — the web address you open in your browser to use
   OpenL Studio, for example `https://studio.example.com`.
 - Your usual OpenL Studio account.

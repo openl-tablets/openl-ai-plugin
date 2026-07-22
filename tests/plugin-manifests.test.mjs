@@ -37,7 +37,27 @@ test("Claude keeps its existing MCP contract and pin", async () => {
   assert.deepEqual(Object.keys(claudeMcp), ["tools"]);
   assert.match(claudeMcpText, /\$\{user_config\.studio_base_url\}/);
   assert.ok(claudeMcp.tools.args.includes("openl-mcp@1.1.0"));
+});
+
+// The server version is pinned twice — .mcp.json (Claude Code) and
+// OPENL_MCP_VERSION in the Codex launcher — with no shared source of truth.
+// This guard fails the build if the two ever drift, so a release bump that
+// touches only one place cannot silently ship Codex users a stale server.
+test("Claude and Codex pin the same openl-mcp version", async () => {
+  const claudeMcp = await readJson(".mcp.json");
+  const pinnedArg = claudeMcp.tools.args.find((arg) => arg.startsWith("openl-mcp@"));
+  assert.ok(pinnedArg, ".mcp.json must pin an exact openl-mcp@<version>");
+  const claudePin = pinnedArg.slice("openl-mcp@".length);
 
   const launcherText = await readFile("scripts/start-openl-mcp-codex.mjs", "utf8");
-  assert.match(launcherText, /OPENL_MCP_VERSION = "1\.1\.0"/);
+  const launcherMatch = launcherText.match(/OPENL_MCP_VERSION = "([^"]+)"/);
+  assert.ok(launcherMatch, "the Codex launcher must define OPENL_MCP_VERSION");
+  const codexPin = launcherMatch[1];
+
+  assert.equal(
+    codexPin,
+    claudePin,
+    `openl-mcp pin drift: .mcp.json pins ${claudePin} but ` +
+      `scripts/start-openl-mcp-codex.mjs pins ${codexPin}. Bump both together (see docs/release.md).`,
+  );
 });
