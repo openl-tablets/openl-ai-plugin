@@ -23,7 +23,7 @@ users only need the [README](../README.md); when they hit problems, point them t
 | Component | Requirement | Why |
 |---|---|---|
 | **Claude Code** | **2.1.119 or later** | The plugin's settings dialog uses `manifest.userConfig`, introduced in Claude Code 2.1.83; 2.1.119 additionally fixed plugin MCP servers failing when an optional setting referenced via `${user_config.*}` is left blank — and this plugin's token setting is blank on single-user Studio and until the user adds a token. (Source: the official [Claude Code changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md), entries 2.1.83 and 2.1.119; verified 2026-07-13.) |
-| **Codex** | A desktop/CLI build with `codex plugin marketplace` and native `.codex-plugin` support | Codex installs the same marketplace but reads its own native manifest and bundled launcher. |
+| **Codex** | A desktop/CLI build with `codex plugin marketplace` and `codex plugin add` (verified with `codex-cli 0.145.0-alpha.30`) | Codex installs the same marketplace but reads its own native `.codex-plugin` manifest and bundled launcher; older preview builds without `plugin add` are not supported. |
 | **Node.js** | **24 or later, on every user's machine** | The plugin's backend is the [`openl-mcp`](https://www.npmjs.com/package/openl-mcp) npm package (`engines: node >= 24`), launched locally via `npx` for Claude Code, Codex, or Cowork. This applies **even when the organization pre-installs the plugin** — there is no server-side variant. First launch downloads the package from the npm registry (cached afterwards). |
 | **OpenL Studio** | A deployment reachable from user machines | See [Studio address](#studio-address) below. |
 

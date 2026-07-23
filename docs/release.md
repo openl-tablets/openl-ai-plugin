@@ -169,6 +169,10 @@ claude plugin validate .          # checks plugin.json + marketplace.json schema
 5. Run `npm test` and `claude plugin validate .`, then smoke-install through an
    isolated `CODEX_HOME` and confirm `codex mcp list --json` shows only the native
    `openl-ai` server (never Claude's `${user_config.*}` placeholders).
+   In a live test Studio, also verify the manifest's `writes` approval mode: a
+   read-only listing uses the normal read path, a harmless write requests approval,
+   the launcher remains the configured process, and no PAT appears in prompts,
+   process arguments, stdout, stderr, or captured MCP traffic.
 6. Commit, tag `vA.B.C`, push.
 7. (Optional) create a GitHub Release with notes pulled from `CHANGELOG.md`.
 

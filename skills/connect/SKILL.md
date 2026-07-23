@@ -25,7 +25,9 @@ If the client cannot be determined from the host context, ask which of these thr
 the user is using before giving configuration instructions.
 
 Authentication is always created in OpenL Studio under **User → Personal Access
-Tokens**. Do not run an OpenL CLI login flow, browser login, or OAuth flow.
+Tokens**. Allow and instruct the user to sign in to Studio in their normal browser
+to create that PAT. Do not start a client-side browser/OAuth authentication flow or
+run an OpenL CLI login flow from the AI client.
 
 ## Codex setup
 

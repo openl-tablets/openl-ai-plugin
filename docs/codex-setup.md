@@ -11,7 +11,9 @@ chat and out of the process list.
 
 ## What you need
 
-- **Codex** (desktop app or CLI) installed.
+- **Codex** (desktop app or CLI) with `codex plugin add` support installed (verified
+  with `codex-cli 0.145.0-alpha.30`; older preview builds without that command are
+  not supported).
 - **Node.js 24 or newer.** Check in a terminal: `node --version` — you want `v24` or
   higher.
 - The **OpenL Studio address** — the web address you open in your browser, e.g.
