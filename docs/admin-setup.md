@@ -1,4 +1,4 @@
-# Administrator Setup — `openl-ai` Claude Code Plugin
+# Administrator Setup — `openl-ai` Plugin
 
 This guide is for OpenL Studio administrators and IT staff who roll the plugin out to
 analysts. It covers supported versions, organization-wide installation, how
@@ -6,8 +6,10 @@ authentication works for each Studio deployment type, and the security model. En
 users only need the [README](../README.md); when they hit problems, point them to
 [troubleshooting.md](troubleshooting.md).
 
-> **Scope.** This plugin is the **Claude Code** (terminal / IDE) integration. It
-> authenticates with a Personal Access Token (PAT). The Claude **desktop app**
+> **Scope.** The repository supports **Claude Code** (terminal / IDE) and **Codex**
+> (desktop / CLI) with native manifests and a Personal Access Token (PAT). Codex uses
+> its bundled configurator because it has no Claude-style `userConfig` substitution;
+> see [codex-setup.md](codex-setup.md). The Claude **desktop app**
 > (including Cowork sessions) does not support plugin settings, so the plugin cannot
 > deliver the PAT there — on that surface the OpenL server is added through the
 > desktop app's own config file instead: see [cowork-setup.md](cowork-setup.md)
@@ -21,7 +23,8 @@ users only need the [README](../README.md); when they hit problems, point them t
 | Component | Requirement | Why |
 |---|---|---|
 | **Claude Code** | **2.1.119 or later** | The plugin's settings dialog uses `manifest.userConfig`, introduced in Claude Code 2.1.83; 2.1.119 additionally fixed plugin MCP servers failing when an optional setting referenced via `${user_config.*}` is left blank — and this plugin's token setting is blank on single-user Studio and until the user adds a token. (Source: the official [Claude Code changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md), entries 2.1.83 and 2.1.119; verified 2026-07-13.) |
-| **Node.js** | **24 or later, on every user's machine** | The plugin's backend is the [`openl-mcp`](https://www.npmjs.com/package/openl-mcp) npm package (`engines: node >= 24`), launched locally via `npx` on the machine where Claude Code runs. This applies **even when the organization pre-installs the plugin** — there is no server-side variant. First launch downloads the package from the npm registry (cached afterwards). |
+| **Codex** | A desktop/CLI build with `codex plugin marketplace` and native `.codex-plugin` support | Codex installs the same marketplace but reads its own native manifest and bundled launcher. |
+| **Node.js** | **24 or later, on every user's machine** | The plugin's backend is the [`openl-mcp`](https://www.npmjs.com/package/openl-mcp) npm package (`engines: node >= 24`), launched locally via `npx` for Claude Code, Codex, or Cowork. This applies **even when the organization pre-installs the plugin** — there is no server-side variant. First launch downloads the package from the npm registry (cached afterwards). |
 | **OpenL Studio** | A deployment reachable from user machines | See [Studio address](#studio-address) below. |
 
 The Claude Code plugin pins `openl-mcp@1.1.0`, the first version that treats a blank
@@ -68,6 +71,23 @@ rollout you have three options:
 Pre-filling `studio_base_url` is what makes the analyst experience truly two-step:
 install → `/openl-ai:connect` (which guides them through adding their token).
 
+### Rolling out to Codex
+
+Install from the same marketplace with:
+
+```bash
+codex plugin marketplace add openl-tablets/openl-ai-plugin
+codex plugin add openl-ai@openl-ai-plugin
+```
+
+Do not distribute a shared PAT. Each analyst runs the bundled
+`scripts/configure-codex.mjs` from the installed plugin's `source.path` in a normal
+terminal and enters their own token with echo disabled. The resulting config lives
+outside the plugin cache: `~/.config/openl-ai/codex.json` by default on macOS/Linux
+(`$XDG_CONFIG_HOME/openl-ai/codex.json` when set), or
+`%APPDATA%\openl-ai\codex.json` on Windows. POSIX uses `0700/0600`;
+Windows relies on the user profile ACLs. The PAT is plaintext in that file.
+
 ### Plugin settings reference
 
 Settings are prompted at enable time and editable later with
@@ -87,7 +107,9 @@ receives them directly.
   path), e.g. `https://studio.example.com`. The plugin calls Studio's REST API under
   `<address>/rest/**`.
 - Studio must be reachable **from each user's machine** (VPN or office network if
-  Studio is internal). The plugin makes direct HTTPS calls; there is no relay.
+  Studio is internal). Calls use the exact `http://` or `https://` Studio address;
+  there is no relay. Local copies may use HTTP. A PAT sent over HTTP is not encrypted
+  in transit, so prefer HTTPS outside local development.
 
 ## How authentication works per deployment type
 
@@ -164,7 +186,9 @@ entry under `mcpServers` — the analyst-facing walkthrough is
 - **Storage.** The sensitive token is stored in the OS keychain on macOS, or in a
   protected credentials file (`~/.claude/.credentials.json`) on platforms without a
   keychain. Non-sensitive settings live in the user's Claude Code `settings.json`
-  under `pluginConfigs`.
+  under `pluginConfigs`. Codex instead stores the PAT as plaintext in its
+  platform-specific `openl-ai/codex.json` with the filesystem protections described
+  above. Cowork stores it as plaintext in `claude_desktop_config.json`.
 - **Authentication modes.** Multi-user Studio uses the explicit PAT setting;
   single-user Studio connects anonymously. A blank/whitespace token is treated as
   absent from `openl-mcp@1.1.0` onward, so the plugin does not send an empty
@@ -178,7 +202,8 @@ entry under `mcpServers` — the analyst-facing walkthrough is
   in the past, revoke any additional PATs created for Claude or OpenL MCP as well.
   Remove the obsolete value from the client configuration afterwards. No CLI
   operation is part of this flow.
-- **Network.** All calls are direct HTTPS from the user's machine to Studio. `npx`
+- **Network.** All calls are direct from the user's machine to Studio using the
+  configured HTTP or HTTPS scheme. HTTP does not encrypt a PAT in transit. `npx`
   also contacts the npm registry on the first Claude Code plugin launch and whenever
   the default desktop/Cowork configuration checks for an updated package.
 

@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { chmod, lstat, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { isIP } from "node:net";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 
@@ -7,6 +8,14 @@ const CONFIG_VERSION = 1;
 const CONFIG_FILE = "codex.json";
 const MAX_SETTINGS_BYTES = 1024 * 1024;
 const PROBE_TIMEOUT_MS = 10_000;
+
+export class CodexConfigNotFoundError extends Error {
+  constructor() {
+    super("Codex is not configured for OpenL Studio. Run the bundled configure-codex.mjs script first.");
+    this.name = "CodexConfigNotFoundError";
+    this.code = "OPENL_AI_NOT_CONFIGURED";
+  }
+}
 
 export function assertSupportedNode(version = process.versions.node) {
   const major = Number.parseInt(String(version).split(".", 1)[0], 10);
@@ -40,6 +49,28 @@ export function isInsecureOptIn(value) {
   return ["1", "true", "yes", "on"].includes(String(value ?? "").trim().toLowerCase());
 }
 
+export function classifyStudioTransport(rawValue, { allowInsecure = false } = {}) {
+  const url = rawValue instanceof URL ? rawValue : new URL(rawValue);
+  const isHttps = url.protocol === "https:";
+  const isHttp = url.protocol === "http:";
+  const hostname = url.hostname
+    .toLowerCase()
+    .replace(/^\[|\]$/g, "")
+    .replace(/\.$/, "");
+  const ipVersion = isIP(hostname);
+  const isLoopback = hostname === "localhost" ||
+    (ipVersion === 4 && hostname.split(".", 1)[0] === "127") ||
+    hostname === "::1" ||
+    /^::ffff:7f[0-9a-f]{2}:/u.test(hostname);
+  return {
+    isHttps,
+    isHttp,
+    isLoopback,
+    allowed: isHttps || (isHttp && (isLoopback || allowInsecure)),
+    requiresOptIn: isHttp && !isLoopback,
+  };
+}
+
 export function normalizeBaseUrl(rawValue, { allowInsecure = false } = {}) {
   const value = String(rawValue ?? "").trim();
   if (!value) {
@@ -54,7 +85,7 @@ export function normalizeBaseUrl(rawValue, { allowInsecure = false } = {}) {
   }
 
   if (url.protocol !== "https:" && url.protocol !== "http:") {
-    throw new Error("OpenL Studio address must use https:// (or http:// for loopback development only).");
+    throw new Error("OpenL Studio address must use http:// or https://.");
   }
   if (url.username || url.password) {
     throw new Error("OpenL Studio address must not contain a username or password.");
@@ -68,12 +99,7 @@ export function normalizeBaseUrl(rawValue, { allowInsecure = false } = {}) {
   // internal network can opt in explicitly (--allow-insecure /
   // OPENL_AI_ALLOW_INSECURE=1), which is persisted in the config so the launcher
   // honors it too.
-  const loopbackHosts = new Set(["localhost", "127.0.0.1", "[::1]", "::1"]);
-  if (
-    url.protocol === "http:" &&
-    !loopbackHosts.has(url.hostname.toLowerCase()) &&
-    !allowInsecure
-  ) {
+  if (!classifyStudioTransport(url, { allowInsecure }).allowed) {
     throw new Error(
       "Use HTTPS when connecting to a non-local OpenL Studio so credentials stay encrypted. " +
         "For a trusted internal HTTP deployment, opt in with --allow-insecure (or OPENL_AI_ALLOW_INSECURE=1).",
@@ -241,7 +267,7 @@ export async function readCodexConfig({
     await inspectPrivateFile(configPath, platform);
   } catch (error) {
     if (error?.code === "ENOENT") {
-      throw new Error("Codex is not configured for OpenL Studio. Run the bundled configure-codex.mjs script first.");
+      throw new CodexConfigNotFoundError();
     }
     throw error;
   }
@@ -251,7 +277,7 @@ export async function readCodexConfig({
     raw = await readFile(configPath, "utf8");
   } catch (error) {
     if (error?.code === "ENOENT") {
-      throw new Error(`Codex is not configured for OpenL Studio. Run the bundled configure-codex.mjs script first.`);
+      throw new CodexConfigNotFoundError();
     }
     throw error;
   }
@@ -320,6 +346,6 @@ export function safeConfigStatus(config) {
     configured: true,
     baseUrl: config.baseUrl,
     authentication: config.personalAccessToken ? "personal-access-token" : "anonymous",
-    ...(config.allowInsecure ? { insecure: true } : {}),
+    ...(new URL(config.baseUrl).protocol === "http:" ? { insecure: true } : {}),
   };
 }

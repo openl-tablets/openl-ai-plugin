@@ -4,7 +4,9 @@ import { createInterface } from "node:readline/promises";
 import { stdin, stdout } from "node:process";
 import {
   assertSupportedNode,
+  classifyStudioTransport,
   clearCodexConfig,
+  CodexConfigNotFoundError,
   isInsecureOptIn,
   probeStudio,
   readCodexConfig,
@@ -24,9 +26,10 @@ Usage:
 The token is prompted for with terminal echo disabled. There is intentionally no
 --token argument, so a token cannot be left in shell history or a process list.
 
-By default a non-loopback Studio must use HTTPS so the token stays encrypted in
-transit. --allow-insecure (or OPENL_AI_ALLOW_INSECURE=1) permits a plain http://
-Studio on a trusted internal network; the token is then sent unencrypted.`;
+Loopback http:// addresses work without an extra flag, including when a local Studio
+requires a token, but the token is sent unencrypted. A non-loopback Studio must use
+HTTPS by default. --allow-insecure (or OPENL_AI_ALLOW_INSECURE=1) explicitly permits
+plain HTTP on a trusted internal network.`;
 }
 
 function parseArgs(argv) {
@@ -128,10 +131,11 @@ async function showStatus(json) {
     } else {
       console.log(`Configured Studio: ${status.baseUrl}`);
       console.log(`Authentication: ${status.authentication}`);
+      console.log(`Transport: ${status.insecure ? "HTTP (unencrypted)" : "HTTPS"}`);
       console.log(`Configuration file: ${configPath}`);
     }
   } catch (error) {
-    if (json) {
+    if (json && error instanceof CodexConfigNotFoundError) {
       console.log(JSON.stringify({ configured: false, configPath }));
       return;
     }
@@ -156,20 +160,20 @@ async function configure(baseUrlArgument, { allowInsecure = false } = {}) {
 
   console.error("Checking OpenL Studio…");
   const deployment = await probeStudio(baseUrl, { allowInsecure });
-  const isHttps = new URL(deployment.baseUrl).protocol === "https:";
-  // Only treat the run as insecure when the opt-in was actually exercised — i.e.
-  // the resolved Studio really is non-HTTPS. Opting in against an HTTPS Studio
-  // must NOT warn, must NOT persist allowInsecure, and must NOT report insecure.
-  const persistInsecure = allowInsecure && !isHttps;
-  if (persistInsecure) {
+  const transport = classifyStudioTransport(deployment.baseUrl, { allowInsecure });
+  // Persist the opt-in only when a non-loopback HTTP address actually needs it.
+  // Loopback HTTP is accepted without an opt-in, but is still reported and warned
+  // as unencrypted transport.
+  const persistInsecure = transport.requiresOptIn && allowInsecure;
+  if (!transport.isHttps) {
     console.error(
       "\n⚠️  INSECURE: connecting over plain HTTP. Any Personal Access Token you enter " +
-        "is sent unencrypted — use this only on a trusted internal network.",
+        "is sent unencrypted — use this only for a local copy or on a trusted internal network.",
     );
   }
   let personalAccessToken;
   if (deployment.multiUser) {
-    if (!isHttps && !allowInsecure) {
+    if (!transport.isHttps && !transport.isLoopback && !allowInsecure) {
       throw new Error(
         "A multi-user OpenL Studio must use HTTPS before a Personal Access Token can be entered. " +
           "For a trusted internal HTTP deployment, re-run with --allow-insecure (or OPENL_AI_ALLOW_INSECURE=1).",
@@ -195,7 +199,9 @@ async function configure(baseUrlArgument, { allowInsecure = false } = {}) {
 
   console.log(`\nOpenL AI is configured for ${deployment.baseUrl}.`);
   console.log(deployment.multiUser
-    ? "The token was saved outside Codex with owner-only file permissions."
+    ? (process.platform === "win32"
+      ? "The token was saved outside Codex; access relies on your Windows user-profile ACLs."
+      : "The token was saved outside Codex with owner-only file permissions.")
     : "This Studio is single-user; no token was stored.");
   console.log(`Configuration file: ${configPath}`);
   console.log("Start a new Codex task, then ask: List the OpenL projects I can access.");

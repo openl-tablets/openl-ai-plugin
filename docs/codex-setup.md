@@ -60,8 +60,10 @@ node "<source.path>/scripts/configure-codex.mjs"
 It asks for your Studio address, checks the deployment, and — for a multi-user Studio —
 prompts for the token **with the input hidden** (nothing is echoed, and there is no
 `--token` flag, so the token never lands in your shell history or the process list).
-The address and token are saved to a private file (`~/.config/openl-ai/codex.json`,
-owner-only permissions), separate from Codex.
+The address and token are saved separately from Codex. On macOS/Linux the default is
+`~/.config/openl-ai/codex.json`, or `$XDG_CONFIG_HOME/openl-ai/codex.json` when that
+variable is set, with owner-only permissions. On Windows it is
+`%APPDATA%\openl-ai\codex.json` and relies on the user profile's ACLs.
 
 Useful variants:
 
@@ -72,9 +74,10 @@ node "<source.path>/scripts/configure-codex.mjs" --clear    # remove the local c
 
 ### HTTPS, and the exception for internal HTTP
 
-By default the configurator sends your token only over **HTTPS**, so it can't travel
-unencrypted. Plain `http://` is allowed without a token for **loopback** development
-(`localhost` / `127.0.0.1`).
+Prefer **HTTPS**, which encrypts the token in transit. Local Studio copies on a
+loopback address (`localhost`, any `127.x.x.x`, or `::1`) may use plain `http://`,
+including when they require a PAT; the configurator allows this without an extra
+flag and prints an unencrypted-transport warning.
 
 If your Studio runs over plain HTTP on a **trusted internal network** (for example
 `http://studio.internal:8080`) and you accept that the token is sent unencrypted on
@@ -85,9 +88,8 @@ node "<source.path>/scripts/configure-codex.mjs" --allow-insecure
 # or: OPENL_AI_ALLOW_INSECURE=1 node "<source.path>/scripts/configure-codex.mjs"
 ```
 
-The configurator warns you when it does this, and the choice is saved with the
-configuration so the server starts the same way later. Prefer HTTPS whenever the
-Studio supports it.
+The configurator warns you when it does this, and the non-loopback opt-in is saved
+with the configuration so the server starts the same way later.
 
 ## Step 4 — Verify
 
@@ -113,16 +115,19 @@ If Codex lists your projects — you're done.
 |---|---|
 | Codex has no OpenL abilities | Confirm the plugin is installed/enabled (`codex plugin list`), and that you ran the configurator (Step 3). Restart the Codex task afterwards. |
 | "Node.js 24 or later is required" | Install/update Node.js (`node --version` must be `v24`+). |
-| "must use HTTPS before a Personal Access Token can be entered" | Your Studio isn't HTTPS. Use its HTTPS address, or — only on a trusted internal network — re-run with `--allow-insecure` (see Step 3). |
+| The configurator asks for `--allow-insecure` | The HTTP address is not loopback. Use its HTTPS address, or — only on a trusted internal network — re-run with `--allow-insecure` (see Step 3). |
 | "Unauthorized" / 401 | The token is missing, expired, or revoked. Create a fresh one in Studio and rerun the configurator. |
 | "Cannot reach OpenL Studio" | Check the address and your office network or VPN. |
 
 ## Good to know
 
-- **The token is stored as plain text** in `~/.config/openl-ai/codex.json` (owner-only
-  on macOS/Linux; on Windows it relies on your `%APPDATA%` permissions). Anyone who
+- **The token is stored as plain text** in the platform-specific config file described
+  in Step 3 (owner-only on macOS/Linux; Windows relies on `%APPDATA%` ACLs). Anyone who
   can read your user account's files could read it — revoke it in Studio if in doubt.
 - The MCP server version is pinned by the plugin release; it updates when you update
-  the plugin (`codex plugin` update commands).
+  the plugin. Run `codex plugin marketplace upgrade openl-ai-plugin`, then
+  `codex plugin remove openl-ai@openl-ai-plugin` and
+  `codex plugin add openl-ai@openl-ai-plugin`. The config file is outside the plugin
+  cache and remains in place; start a new task afterwards.
 - If you also use Claude Code or the Claude desktop app, those set up separately (see
   the links at the top) and don't conflict with this.

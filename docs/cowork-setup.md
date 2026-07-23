@@ -51,6 +51,9 @@ without the plugin — and come back to it later.
 
 ## Step 2 — Create your access token in OpenL Studio
 
+If Studio has no login screen (single-user mode), skip this step. In Step 4, keep the
+Studio address but omit the `OPENL_PERSONAL_ACCESS_TOKEN` line.
+
 1. Open OpenL Studio in your browser and sign in as usual.
 2. Open the **User** menu and go to **Personal Access Tokens**.
 3. Create a new token. Name it so you'll recognize it later, e.g. `Claude`.
@@ -76,8 +79,8 @@ Either way, open the file in a plain-text editor.
 
 ## Step 4 — Add the OpenL entry
 
-You will paste a small block into that file, then change **two** things in it:
-your Studio address and your token from Step 2.
+You will paste a small block into that file, then change your Studio address and —
+for multi-user Studio — your token from Step 2.
 
 **If the file is empty or brand new**, make it look exactly like this:
 
@@ -125,6 +128,11 @@ Now replace the two placeholders — keep the surrounding quotes:
   `https://studio.example.com`
 - `PASTE-YOUR-TOKEN-HERE` → the token you copied in Step 2
 
+For single-user Studio, remove the entire `OPENL_PERSONAL_ACCESS_TOKEN` line and the
+comma after the `OPENL_BASE_URL` line. For a local Studio whose browser address starts
+with `http://`, keep that exact scheme. HTTP is supported, but if a PAT is required it
+travels without transport encryption; prefer HTTPS outside local development.
+
 Save the file.
 
 The example intentionally does not specify a version. `--prefer-online` makes `npx`
@@ -169,7 +177,7 @@ If Claude lists your projects — you're done.
 |---|---|
 | Claude doesn't seem to have any OpenL abilities | 1) Make sure you fully quit and restarted Claude. 2) Re-open the settings file (Step 3) and check the block matches the example in Step 4 — commas and quotes matter. 3) Check Node.js: open Terminal (macOS) or PowerShell (Windows), run `node --version`; if it errors or shows less than `v24`, ask your administrator to install/update Node.js. |
 | "Unauthorized" or 401 errors | First re-open the settings file (Step 3) and check the token line: the placeholder must be replaced with your real token (quotes kept, no spaces). If it looks right, the token expired or was revoked — create a fresh one in Studio (**User → Personal Access Tokens**), put it into the file, restart Claude. |
-| "Cannot reach OpenL Studio" / timeouts | Check you're on the office network or VPN, and that the address in the file is exactly the one that works in your browser (including `https://`). |
+| "Cannot reach OpenL Studio" / timeouts | Check you're on the office network or VPN, and that the address in the file is exactly the one that works in your browser, including its `http://` or `https://` scheme. |
 | Worked in a desktop Cowork session, but not on claude.ai in the browser | Expected: this setup works only in the **desktop app**. The web version of Claude can't run it. |
 | Can't find **Customize → Plugins** (Step 1) | Update the Claude desktop app to the latest version — or skip Step 1 for now: the connection (Steps 2–6) works without the plugin. |
 

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { access, readFile, readdir } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
 import test from "node:test";
 
 async function readJson(path) {
@@ -12,6 +13,8 @@ test("Claude and Codex manifests stay version-aligned", async () => {
   const packageJson = await readJson("package.json");
   assert.equal(codex.version, claude.version);
   assert.equal(packageJson.version, claude.version);
+  const changelog = await readFile("CHANGELOG.md", "utf8");
+  assert.match(changelog, new RegExp(`^## \\[${claude.version.replaceAll(".", "\\.")}\\] - Unreleased$`, "m"));
 });
 
 test("Codex uses only its native launcher and never Claude placeholders", async () => {
@@ -60,4 +63,23 @@ test("Claude and Codex pin the same openl-mcp version", async () => {
     `openl-mcp pin drift: .mcp.json pins ${claudePin} but ` +
       `scripts/start-openl-mcp-codex.mjs pins ${codexPin}. Bump both together (see docs/release.md).`,
   );
+});
+
+test("local Markdown links resolve", async () => {
+  const markdownFiles = [
+    "README.md",
+    "CHANGELOG.md",
+    ...(await readdir("docs")).filter((name) => name.endsWith(".md")).map((name) => join("docs", name)),
+  ];
+  for (const file of markdownFiles) {
+    const markdown = await readFile(file, "utf8");
+    for (const match of markdown.matchAll(/\[[^\]]+\]\(([^)]+)\)/gu)) {
+      const target = match[1].split("#", 1)[0];
+      if (!target || /^(?:https?:|mailto:)/u.test(target)) {
+        continue;
+      }
+      const resolved = resolve(dirname(file), decodeURIComponent(target));
+      await assert.doesNotReject(access(resolved), `${file} links to missing ${target}`);
+    }
+  }
 });

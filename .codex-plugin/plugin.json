@@ -1,6 +1,6 @@
 {
   "name": "openl-ai",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Work with OpenL Studio from Codex or Claude Code — manage rules, projects, tables and tests over the OpenL MCP server.",
   "author": {
     "name": "OpenL Tablets"

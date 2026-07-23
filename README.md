@@ -88,6 +88,10 @@ Claude checks your Studio and walks you through it:
 - **Single-user Studio** — "Your Studio does not require sign-in"; you're done, nothing
   to add.
 
+Use the exact Studio address from the browser, including its scheme. Local copies
+may use `http://`; when a PAT is required, Claude warns that HTTP sends it without
+transport encryption. Prefer HTTPS outside local development.
+
 > **Desktop app's Code tab:** `/plugin configure` opens its dialog only in a terminal
 > session — run it there once (open a terminal, run `claude`, type the command). The
 > saved settings apply to your desktop Code sessions too.

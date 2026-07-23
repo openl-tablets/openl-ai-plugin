@@ -10,9 +10,10 @@ There are **two independent release streams**:
 
 1. **The MCP server** — `openl-mcp`, published to **npm** from the MCP repo (`npm publish`). This is the
    source of truth for behaviour.
-2. **The plugin** — this repo, delivered through a **Claude Code marketplace** (a git repo containing
-   `.claude-plugin/marketplace.json`). A plugin "release" is a git tag + a bumped `version` + (when needed) a
-   bumped `openl-mcp` pin.
+2. **The plugin** — this repo, delivered through a marketplace rooted at
+   `.claude-plugin/marketplace.json` and consumed by both Claude Code and Codex. A
+   plugin release is a git tag + matching bumped versions in both manifests and
+   `package.json` + (when needed) a bumped `openl-mcp` pin.
 
 The plugin **pins** a specific server version (`npx -y -p openl-mcp@X.Y.Z openl-mcp`), so the two streams are decoupled:
 the server can publish freely, and the plugin adopts a server version deliberately by bumping the pin.
@@ -136,8 +137,9 @@ claude plugin validate .          # checks plugin.json + marketplace.json schema
 
 ## 3. Versioning model
 
-- The plugin's version is the **`version` field in `plugin.json`** (semver, e.g. `"0.1.0"`). It is optional but
-  **we will always set it**.
+- The plugin version is the matching **`version` field in
+  `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json`, and `package.json`**
+  (semver, e.g. `"0.2.0"`). Always set and bump all three together.
 - Version resolution order: `plugin.json` `version` → marketplace entry version → git commit SHA → `"unknown"`.
 - **Update behaviour:**
   - With an explicit `version`: users only receive an update when you **bump it**. Pushing commits without a bump
@@ -161,14 +163,20 @@ claude plugin validate .          # checks plugin.json + marketplace.json schema
    `scripts/start-openl-mcp-codex.mjs` (Codex). They must stay equal;
    `tests/plugin-manifests.test.mjs` fails the build if they drift.
 2. Update skills / agents / docs as needed.
-3. Bump `version` in `plugin.json` (and the entry in `marketplace.json` if it carries one).
+3. Bump `version` in both plugin manifests and `package.json` (and the entry in
+   `marketplace.json` if it carries one).
 4. Update `CHANGELOG.md` (replace `Unreleased` with the release date on the version being cut).
-5. `claude plugin validate .`
+5. Run `npm test` and `claude plugin validate .`, then smoke-install through an
+   isolated `CODEX_HOME` and confirm `codex mcp list --json` shows only the native
+   `openl-ai` server (never Claude's `${user_config.*}` placeholders).
 6. Commit, tag `vA.B.C`, push.
 7. (Optional) create a GitHub Release with notes pulled from `CHANGELOG.md`.
 
 **C. Users update**
 - `/plugin marketplace update openl-ai-plugin` then `/plugin update openl-ai@openl-ai-plugin`.
+- Codex: `codex plugin marketplace upgrade openl-ai-plugin`, then remove and add
+  `openl-ai@openl-ai-plugin` again. The Codex connection config stays outside the
+  plugin cache; start a new task after reinstalling.
 
 ---
 
@@ -204,7 +212,8 @@ OpenL Studio is frequently self-hosted, so private distribution matters.
 
 | Plugin release | `openl-mcp` pin | What users get |
 |---|---|---|
-| `0.1.x` | `@1.1.0` | Personal Access Token via `userConfig`; `/openl-ai:connect` guides the user through creating and pasting it. Single-user Studio needs no token. |
+| `0.1.x` | `@1.1.0` | Claude Code and desktop/Cowork PAT setup; single-user Studio needs no token. |
+| `0.2.x` | `@1.1.0` | First-class Codex manifest, safe interactive config, isolated launcher, and platform-aware connect skill. |
 
 The PAT path works on every surface Claude Code runs on and with any Studio identity provider, so
 no browser sign-in is shipped. The Claude **desktop app (Cowork)** is covered by the same PAT-backed

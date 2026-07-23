@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { chmod, lstat, mkdir, mkdtemp, readFile, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import {
   assertSupportedNode,
+  classifyStudioTransport,
   clearCodexConfig,
   isInsecureOptIn,
   normalizeBaseUrl,
@@ -58,6 +60,37 @@ test("non-loopback http needs the explicit insecure opt-in", () => {
   );
 });
 
+test("loopback HTTP supports local token-based Studio without an opt-in", () => {
+  for (const value of [
+    "http://localhost:8080",
+    "http://localhost.:8080",
+    "http://127.0.0.1:8080/openl",
+    "http://127.0.0.2:8080/openl",
+    "http://[::1]:8080",
+    "http://[::ffff:127.0.0.1]:8080",
+  ]) {
+    assert.deepEqual(classifyStudioTransport(value), {
+      isHttps: false,
+      isHttp: true,
+      isLoopback: true,
+      allowed: true,
+      requiresOptIn: false,
+    });
+  }
+
+  assert.deepEqual(classifyStudioTransport("http://studio.internal:8080"), {
+    isHttps: false,
+    isHttp: true,
+    isLoopback: false,
+    allowed: false,
+    requiresOptIn: true,
+  });
+  assert.equal(
+    classifyStudioTransport("http://studio.internal:8080", { allowInsecure: true }).allowed,
+    true,
+  );
+});
+
 test("isInsecureOptIn reads only explicit truthy values", () => {
   for (const value of ["1", "true", "TRUE", "yes", "on"]) {
     assert.equal(isInsecureOptIn(value), true);
@@ -85,6 +118,52 @@ test("insecure config round-trips and the launcher can read it", async (t) => {
   assert.equal(config.baseUrl, "http://studio.internal:8080");
   assert.equal(config.allowInsecure, true);
   assert.equal(safeConfigStatus(config).insecure, true);
+});
+
+test("loopback HTTP PAT config works without storing an opt-in", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "openl-ai-loopback-test-"));
+  const configPath = join(root, "codex.json");
+  t.after(async () => clearCodexConfig({ configPath }));
+  const { config } = await writeCodexConfig({
+    version: 1,
+    baseUrl: "http://localhost:8080",
+    personalAccessToken: "local-test-token",
+  }, { configPath });
+  assert.equal(config.allowInsecure, undefined);
+  assert.equal((await readCodexConfig({ configPath })).personalAccessToken, "local-test-token");
+  assert.deepEqual(safeConfigStatus(config), {
+    configured: true,
+    baseUrl: "http://localhost:8080",
+    authentication: "personal-access-token",
+    insecure: true,
+  });
+});
+
+test("status distinguishes missing config from invalid config and reports HTTP", async () => {
+  const root = await mkdtemp(join(tmpdir(), "openl-ai-status-test-"));
+  const command = join(process.cwd(), "scripts/configure-codex.mjs");
+  const run = (...args) => spawnSync(process.execPath, [command, ...args], {
+    encoding: "utf8",
+    env: { ...process.env, OPENL_AI_CONFIG_DIR: root },
+  });
+
+  const missing = run("--status", "--json");
+  assert.equal(missing.status, 0, missing.stderr);
+  assert.equal(JSON.parse(missing.stdout).configured, false);
+
+  await writeCodexConfig({
+    version: 1,
+    baseUrl: "http://localhost:8080",
+  }, { configPath: join(root, "codex.json") });
+  const httpStatus = run("--status");
+  assert.equal(httpStatus.status, 0, httpStatus.stderr);
+  assert.match(httpStatus.stdout, /Transport: HTTP \(unencrypted\)/);
+
+  await writeFile(join(root, "codex.json"), "not json\n", { mode: 0o600 });
+  const invalid = run("--status", "--json");
+  assert.notEqual(invalid.status, 0);
+  assert.doesNotMatch(invalid.stdout, /"configured":false/);
+  assert.match(invalid.stderr, /not valid JSON/);
 });
 
 test("probe accepts absent or null userMode as single-user", async () => {

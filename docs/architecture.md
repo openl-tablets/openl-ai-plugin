@@ -11,7 +11,8 @@ versioning/release/distribution see [release.md](release.md); for operational se
 |---|---|---|
 | Repository & marketplace | `openl-ai-plugin` | `/plugin marketplace add openl-tablets/openl-ai-plugin` |
 | Plugin (`plugin.json` → `name`) | `openl-ai` | `/openl-ai:<skill>`, `/plugin install openl-ai@openl-ai-plugin` |
-| MCP server key (top-level key in `.mcp.json`) | `tools` | `mcp__plugin_openl-ai_tools__<tool>` |
+| Claude Code MCP server key (top-level key in `.mcp.json`) | `tools` | `mcp__plugin_openl-ai_tools__<tool>` |
+| Codex MCP server key (inline native manifest entry) | `openl-ai` | Codex MCP configuration and approvals |
 | What it is | lives in the `description` fields, not the name | marketplace / `/plugin` UI |
 
 Rationale: the **plugin** is named `openl-ai` — it is the user-visible namespace (`/openl-ai:…`
@@ -63,11 +64,18 @@ server via `npx -y -p openl-mcp@X.Y.Z openl-mcp`.
 - **Codex plugin:** Codex substitutes no `${user_config.*}` values, so
   `.codex-plugin/plugin.json` points its MCP server at a bundled Node launcher
   (`node ./scripts/start-openl-mcp-codex.mjs`) rather than at `npx` directly. The
-  launcher reads the Studio address and PAT from a private `~/.config/openl-ai/codex.json`
-  (written by `scripts/configure-codex.mjs` with owner-only permissions), then spawns the
-  same `npx -y -p openl-mcp@X.Y.Z openl-mcp` in an isolated config dir. It carries its
+  launcher reads the Studio address and PAT from the platform-specific user config
+  written by `scripts/configure-codex.mjs`: owner-only `0700/0600` storage on POSIX,
+  while Windows relies on `%APPDATA%` user-profile ACLs. It then spawns the same
+  `npx -y -p openl-mcp@X.Y.Z openl-mcp` in an isolated config dir. It carries its
   **own** version pin (`OPENL_MCP_VERSION`), kept equal to the `.mcp.json` pin by a test
   in `tests/plugin-manifests.test.mjs` — see [release.md](release.md).
+- **Codex config schema:** version 1 stores `baseUrl`, an optional
+  `personalAccessToken`, and `allowInsecure: true` only for an explicitly accepted
+  non-loopback HTTP address. Loopback HTTP supports local Studio copies without the
+  opt-in, but status/configuration still report it as unencrypted. The launcher clears
+  inherited OpenL credentials and gives every start a fresh `OPENL_CONFIG_DIR`, so an
+  old CLI token cache cannot silently override the configured Codex identity.
 - `npx` needs the npm registry at first launch (cached afterwards). For offline / air-gapped
   installs the documented escape hatch is a vendored single-file bundle under
   `${CLAUDE_PLUGIN_ROOT}/dist/` with `command` pointed at `node`; it is a variant, not the default.

@@ -8,7 +8,8 @@ access token**.
 > This page covers the **Claude Code plugin**. If you set OpenL up in the **Claude
 > desktop app (Cowork)** via the settings file, use the troubleshooting table in
 > [cowork-setup.md](cowork-setup.md#if-something-doesnt-work) instead — the fixes
-> differ (settings file and app restart instead of `/plugin` commands).
+> differ (settings file and app restart instead of `/plugin` commands). For Codex,
+> use the table in [codex-setup.md](codex-setup.md#if-something-doesnt-work).
 
 ## The plugin or the OpenL tools didn't appear
 
@@ -91,7 +92,8 @@ timeouts.
    either, connect to your office network or VPN and try again.
 2. If the browser opens Studio fine, compare the address in the browser with the
    plugin's "OpenL Studio address" (`/plugin configure openl-ai@openl-ai-plugin`) —
-   they must match exactly, including `https://`.
+   they must match exactly, including the `http://` or `https://` scheme. Local
+   Studio copies may use HTTP; prefer HTTPS when a PAT crosses a network.
 
 **Contact your administrator when:** you're on the VPN, the browser opens Studio, the
 addresses match — and Claude still can't reach it.

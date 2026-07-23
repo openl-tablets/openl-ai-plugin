@@ -57,9 +57,10 @@ and requests a PAT only for a multi-user Studio.
    input. Never run the interactive command for the user.
 4. For a multi-user Studio, tell the user to create a PAT first: sign in to Studio,
    open **User → Personal Access Tokens**, create a token (for example, named
-   "Codex"), and copy it when Studio shows it. By default the configurator accepts a
-   PAT only over HTTPS. HTTP works without a token for loopback development; for a
-   trusted internal HTTP Studio the user can re-run the configurator with
+   "Codex"), and copy it when Studio shows it. HTTPS is preferred because it encrypts
+   the PAT in transit. Loopback HTTP (`localhost`, `127.0.0.1`, or `::1`) remains
+   supported for local Studio copies, including PAT authentication, and produces an
+   unencrypted-transport warning. For another trusted internal HTTP host, re-run with
    `--allow-insecure` (or `OPENL_AI_ALLOW_INSECURE=1`), which permits a PAT over plain
    HTTP and warns that the token is then sent unencrypted.
 5. After the configurator succeeds, tell the user to start a new Codex task and ask:
@@ -95,8 +96,10 @@ settings files; they may contain unrelated secrets.
 
 Validate the address before probing it. Require an absolute `http://` or `https://`
 URL with no credentials, query, fragment, whitespace, or shell metacharacters.
-Require HTTPS for a multi-user Studio; allow HTTP only for anonymous loopback
-development. Pass the address as one quoted argument and never use `eval`.
+Accept the exact scheme used by Studio: local copies may use HTTP. When a multi-user
+Studio uses HTTP, warn that its PAT will travel unencrypted and recommend HTTPS,
+especially for any non-local deployment, but do not misreport HTTP as an invalid
+address. Pass the address as one quoted argument and never use `eval`.
 
 Probe `<studio-address>/rest/settings` without authentication. Do not follow
 redirects. Use a 10-second timeout, cap the response at 1 MiB, and interpret it only
@@ -119,6 +122,10 @@ For PAT setup, tell the user:
 >    "Claude Code"), and copy it when Studio shows it.
 > 3. Run `/plugin configure openl-ai@openl-ai-plugin` and paste it into the masked
 >    **Personal Access Token** field.
+
+For an `http://` address, add one plain warning before these steps: the local copy is
+supported, but the PAT is not encrypted in transit. Do not block the setup after the
+user chooses to use that Studio address.
 
 If the user is in the Claude **desktop app's Code tab**, add this caveat:
 `/plugin configure` opens its dialog only in a terminal `claude` session, not in the
@@ -144,18 +151,27 @@ dialog for Chat/Cowork, so never suggest `/plugin configure` there.
 
 Guide the user to:
 
-1. Create a PAT in Studio under **User → Personal Access Tokens**.
-2. Open **Claude menu → Settings… → Developer → Edit Config**.
-3. Add an `openl` entry under `mcpServers` using command `npx`, arguments
+1. Obtain the Studio address and apply the same validation and unauthenticated
+   `/rest/settings` probe used in **Claude Code setup**.
+2. For multi-user Studio, create a PAT under **User → Personal Access Tokens**. For
+   single-user Studio, do not create or configure a token.
+3. Open **Claude menu → Settings… → Developer → Edit Config**.
+4. Add an `openl` entry under `mcpServers` using command `npx`, arguments
    `-y --prefer-online -p openl-mcp openl-mcp`, and an `env` block containing the
-   Studio address and PAT.
-4. Quit the Claude app completely and restart it, then ask: *List the OpenL projects
+   Studio address. Add `OPENL_PERSONAL_ACCESS_TOKEN` only for multi-user Studio.
+5. Quit the Claude app completely and restart it, then ask: *List the OpenL projects
    I can access.*
+
+Accept an `http://` address for a local Studio copy. If a PAT is required, warn that
+HTTP sends it unencrypted and recommend HTTPS without falsely declaring the address
+unsupported.
 
 The desktop config contains the PAT in plaintext. If writing a template for the user,
 leave an obvious placeholder and have the user replace it in their editor. Never put
 the real value into a tool call, file edit, or conversation. Use an exact
 `openl-mcp@X.Y.Z` pin only when the user or administrator requests reproducibility.
+Tell the user to use a plain-text editor, paste the provided JSON template instead of
+retyping it, and keep straight quotes: smart/curly quotes make the JSON invalid.
 
 For sign-out, revoke the PAT in Studio first, then remove the token or entire `openl`
 entry and restart the app. For rotation, update and verify the replacement before
@@ -165,8 +181,10 @@ revoking the old PAT.
 
 - Never print, log, read, or repeat a PAT. If one appears in chat, tell the user to
   treat it as exposed, revoke it, and create a replacement.
-- Never pass a PAT through command arguments, environment variables supplied by the
-  user, a pipe, or an agent-run interactive command.
+- Never pass a PAT through command arguments, an ad hoc shell environment, a pipe,
+  or an agent-run interactive command. The supported Cowork `env` object belongs in
+  `claude_desktop_config.json`; leave its real PAT value for the user to enter in a
+  plain-text editor, never through an agent tool.
 - Never use CLI authentication commands. PAT creation and Studio-side revocation are
   the supported authentication operations.
 - Always finish with the appropriate restart/new-task step and the verification
