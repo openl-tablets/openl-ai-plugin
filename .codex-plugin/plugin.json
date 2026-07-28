@@ -1,5 +1,5 @@
 {
-  "name": "openl-ai",
+  "name": "openl",
   "version": "0.2.0",
   "description": "Work with OpenL Studio from Codex or Claude Code — manage rules, projects, tables and tests over the OpenL MCP server.",
   "author": {

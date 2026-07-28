@@ -47,7 +47,7 @@ In a Claude Code session in the terminal, run:
 
 ```text
 /plugin marketplace add openl-tablets/openl-ai-plugin
-/plugin install openl-ai@openl-ai-plugin
+/plugin install openl@openl-ai-plugin
 ```
 
 Or, without entering a session (works for the desktop app's Code tab too — run these
@@ -55,13 +55,13 @@ in a terminal once, then restart the desktop app):
 
 ```bash
 claude plugin marketplace add openl-tablets/openl-ai-plugin
-claude plugin install openl-ai@openl-ai-plugin
+claude plugin install openl@openl-ai-plugin
 ```
 
 When Claude Code asks for the plugin settings, fill in the **OpenL Studio address**.
 You can leave the **Personal Access Token** empty for now — [Step 2](#step-2--connect-to-openl-studio)
 walks you through adding it. You can change the settings any time with
-`/plugin configure openl-ai@openl-ai-plugin`.
+`/plugin configure openl@openl-ai-plugin`.
 
 > One technical prerequisite: the computer running Claude Code needs **Node.js 24 or
 > newer** installed. If you're not sure whether you have it, just continue — if the
@@ -75,14 +75,14 @@ You connect by giving the plugin a **Personal Access Token** — a token you cre
 OpenL Studio's own screen. In Claude Code, run:
 
 ```text
-/openl-ai:connect
+/openl:connect
 ```
 
 Claude checks your Studio and walks you through it:
 
 - **Multi-user Studio** — Claude asks you to create a token: open OpenL Studio in your
   browser, go to **User → Personal Access Tokens**, create one (name it e.g. "Claude
-  Code"), then run `/plugin configure openl-ai@openl-ai-plugin` and paste it into the
+  Code"), then run `/plugin configure openl@openl-ai-plugin` and paste it into the
   **Personal Access Token** field. The field is masked and the token is not shown to
   Claude — never paste it into the chat.
 - **Single-user Studio** — "Your Studio does not require sign-in"; you're done, nothing
@@ -129,7 +129,7 @@ projects, tables, tests, tracing, and deployment.
 | What you see | First thing to try |
 |---|---|
 | The OpenL tools or the plugin didn't appear | Start a new Claude session; then see [Troubleshooting](docs/troubleshooting.md#the-plugin-or-the-openl-tools-didnt-appear) |
-| "Unauthorized" or 401 errors | Your token is missing, expired, or revoked — create a fresh one in Studio (**User → Personal Access Tokens**), update it with `/plugin configure openl-ai@openl-ai-plugin`, then start a new session |
+| "Unauthorized" or 401 errors | Your token is missing, expired, or revoked — create a fresh one in Studio (**User → Personal Access Tokens**), update it with `/plugin configure openl@openl-ai-plugin`, then start a new session |
 | "Cannot reach OpenL Studio" | Check the address and your VPN / office network connection |
 
 More symptoms and fixes: [docs/troubleshooting.md](docs/troubleshooting.md) —

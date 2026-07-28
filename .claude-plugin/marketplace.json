@@ -6,7 +6,7 @@
   },
   "plugins": [
     {
-      "name": "openl-ai",
+      "name": "openl",
       "source": "./",
       "description": "Work with OpenL Studio from Codex or Claude Code — manage rules, projects, tables and tests over the OpenL MCP server."
     }

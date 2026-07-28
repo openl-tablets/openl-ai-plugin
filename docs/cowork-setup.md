@@ -28,13 +28,13 @@ click and what to paste.
 ## Step 1 — Add the OpenL plugin
 
 The plugin gives Claude the OpenL **skills** — ready-made helpers you call by typing
-`/` in the chat, such as `/openl-ai:connect`, with more to come in plugin updates.
+`/` in the chat, such as `/openl:connect`, with more to come in plugin updates.
 
 1. In the desktop app's sidebar, click **Customize**, then open **Plugins**.
 2. Add the plugin's source as a marketplace: `openl-tablets/openl-ai-plugin`
    (marketplaces can be added by URL; the GitHub `owner/repo` form works).
-3. Install **openl-ai** from that marketplace.
-4. In a new conversation, type `/` — `openl-ai:connect` appears in the list.
+3. Install **openl** from that marketplace.
+4. In a new conversation, type `/` — `openl:connect` appears in the list.
 
 If anything offers you the plugin's own settings (Studio address / token), skip
 them — in Chat and Cowork they have no effect. The connection is set up in the next
@@ -44,7 +44,7 @@ Trouble with this step? You can skip it for now — the connection (Steps 2–6)
 without the plugin — and come back to it later.
 
 > **Shortcut:** now that the plugin is installed, you can start a new conversation,
-> type `/openl-ai:connect` and follow along — Claude walks you through the remaining
+> type `/openl:connect` and follow along — Claude walks you through the remaining
 > steps right in the chat. (The walkthrough ends with restarting the Claude app —
 > that closes the chat; you then check that everything works in a fresh
 > conversation, as in Step 6.) The steps below are the same thing written out.

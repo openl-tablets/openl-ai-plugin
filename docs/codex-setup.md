@@ -27,7 +27,7 @@ Add the marketplace and install the plugin with the Codex plugin commands:
 
 ```bash
 codex plugin marketplace add openl-tablets/openl-ai-plugin
-codex plugin add openl-ai@openl-ai-plugin
+codex plugin add openl@openl-ai-plugin
 ```
 
 (Or install from the desktop app's plugin browser, if your Codex build has one.)
@@ -52,7 +52,7 @@ Find the installed plugin's folder:
 codex plugin list --json
 ```
 
-Take the `source.path` of the `openl-ai@openl-ai-plugin` entry, then run **in your own
+Take the `source.path` of the `openl@openl-ai-plugin` entry, then run **in your own
 terminal** (not inside a Codex chat):
 
 ```bash
@@ -128,8 +128,8 @@ If Codex lists your projects — you're done.
   can read your user account's files could read it — revoke it in Studio if in doubt.
 - The MCP server version is pinned by the plugin release; it updates when you update
   the plugin. Run `codex plugin marketplace upgrade openl-ai-plugin`, then
-  `codex plugin remove openl-ai@openl-ai-plugin` and
-  `codex plugin add openl-ai@openl-ai-plugin`. The config file is outside the plugin
+  `codex plugin remove openl@openl-ai-plugin` and
+  `codex plugin add openl@openl-ai-plugin`. The config file is outside the plugin
   cache and remains in place; start a new task afterwards.
 - If you also use Claude Code or the Claude desktop app, those set up separately (see
   the links at the top) and don't conflict with this.

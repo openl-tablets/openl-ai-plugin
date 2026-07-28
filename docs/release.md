@@ -1,4 +1,4 @@
-# Release & Distribution — `openl-ai` plugin
+# Release & Distribution — `openl` plugin
 
 _How this plugin is versioned, released, and delivered to users. This document is for plugin
 maintainers. Verified against the Claude Code docs (`code.claude.com`) as of 2026-06-26; the
@@ -42,7 +42,7 @@ a single plugin is to make **this repo both the plugin and the marketplace**.
   "owner": { "name": "OpenL Tablets" },
   "plugins": [
     {
-      "name": "openl-ai",
+      "name": "openl",
       "source": "./",
       "description": "Work with OpenL Studio from Claude Code — manage rules, projects, tables and tests."
     }
@@ -104,22 +104,22 @@ In Claude Code, run:
 /plugin marketplace add openl-tablets/openl-ai-plugin
 
 # install + enable the plugin
-/plugin install openl-ai@openl-ai-plugin
+/plugin install openl@openl-ai-plugin
 #   → on enable, Claude Code prompts for studio_base_url (+ the optional token /
 #     sign-in settings), stores the sensitive token in secure storage (OS keychain
 #     on macOS, protected credentials file elsewhere), and starts the MCP server.
 
 # reconfigure later
-/plugin configure openl-ai@openl-ai-plugin
+/plugin configure openl@openl-ai-plugin
 
 # manage
 /plugin list                       # what's installed / enabled
-/plugin disable openl-ai@openl-ai-plugin
-/plugin enable  openl-ai@openl-ai-plugin
+/plugin disable openl@openl-ai-plugin
+/plugin enable  openl@openl-ai-plugin
 
 # updates
 /plugin marketplace update openl-ai-plugin   # refresh the marketplace metadata
-/plugin update openl-ai@openl-ai-plugin   # pull the new plugin version
+/plugin update openl@openl-ai-plugin   # pull the new plugin version
 ```
 
 CLI equivalents (terminal): `claude plugin marketplace add|list|update|remove`,
@@ -177,9 +177,9 @@ claude plugin validate .          # checks plugin.json + marketplace.json schema
 7. (Optional) create a GitHub Release with notes pulled from `CHANGELOG.md`.
 
 **C. Users update**
-- `/plugin marketplace update openl-ai-plugin` then `/plugin update openl-ai@openl-ai-plugin`.
+- `/plugin marketplace update openl-ai-plugin` then `/plugin update openl@openl-ai-plugin`.
 - Codex: `codex plugin marketplace upgrade openl-ai-plugin`, then remove and add
-  `openl-ai@openl-ai-plugin` again. The Codex connection config stays outside the
+  `openl@openl-ai-plugin` again. The Codex connection config stays outside the
   plugin cache; start a new task after reinstalling.
 
 ---

@@ -1,4 +1,4 @@
-# Architecture — `openl-ai` plugin
+# Architecture — `openl` plugin
 
 How the plugin is put together and why: naming, the packaging model, Claude Code and Codex
 integration notes, and the authentication design. This document is for developers of the plugin. For
@@ -10,13 +10,13 @@ versioning/release/distribution see [release.md](release.md); for operational se
 | Thing | Value | Where it shows up |
 |---|---|---|
 | Repository & marketplace | `openl-ai-plugin` | `/plugin marketplace add openl-tablets/openl-ai-plugin` |
-| Plugin (`plugin.json` → `name`) | `openl-ai` | `/openl-ai:<skill>`, `/plugin install openl-ai@openl-ai-plugin` |
-| Claude Code MCP server key (top-level key in `.mcp.json`) | `tools` | `mcp__plugin_openl-ai_tools__<tool>` |
+| Plugin (`plugin.json` → `name`) | `openl` | `/openl:<skill>`, `/plugin install openl@openl-ai-plugin` |
+| Claude Code MCP server key (top-level key in `.mcp.json`) | `tools` | `mcp__plugin_openl_tools__<tool>` |
 | Codex MCP server key (inline native manifest entry) | `openl-ai` | Codex MCP configuration and approvals |
 | What it is | lives in the `description` fields, not the name | marketplace / `/plugin` UI |
 
-Rationale: the **plugin** is named `openl-ai` — it is the user-visible namespace (`/openl-ai:…`
-skills, `mcp__plugin_openl-ai_…` tool prefix), so it stays short. The **repository and
+Rationale: the **plugin** is named `openl` — it is the user-visible namespace (`/openl:…`
+skills, `mcp__plugin_openl_…` tool prefix), so it stays short. The **repository and
 marketplace** are named `openl-ai-plugin` — describing what the repo contains. The two names
 are deliberately different, one per role. `tools` as the server key avoids stuttering inside
 the tool prefix (the plugin name and `mcp` are already there) and avoids collisions with
@@ -38,7 +38,7 @@ openl-ai-plugin/
 │   ├── configure-codex.mjs         # interactive, no-echo PAT/address setup
 │   └── codex-config.mjs            # shared config read/write + Studio probe helpers
 ├── skills/
-│   └── connect/SKILL.md     # /openl-ai:connect → guided Personal Access Token setup
+│   └── connect/SKILL.md     # /openl:connect → guided Personal Access Token setup
 ├── tests/                   # node --test suite (manifests, config, launcher)
 ├── .github/workflows/       # CI: runs the test suite
 ├── package.json             # test runner + Node engines
@@ -136,7 +136,7 @@ Studio both the configured PAT and any older PATs created for Claude or OpenL MC
 
 The user creates the PAT in Studio's own UI (**User → Personal Access Tokens**), where they have
 already authenticated through whatever sign-in their organization uses, and pastes it into the
-masked setting. The `/openl-ai:connect` skill is pure guidance: it probes
+masked setting. The `/openl:connect` skill is pure guidance: it probes
 `<base-url>/rest/settings` → `supportedFeatures.personalAccessToken` / `userMode` to tell single-
 from multi-user Studio, then walks the user through creating and pasting the token. It runs no
 browser flow and no subprocess.

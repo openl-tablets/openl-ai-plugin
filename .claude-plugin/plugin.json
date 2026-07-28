@@ -1,5 +1,5 @@
 {
-  "name": "openl-ai",
+  "name": "openl",
   "description": "Work with OpenL Studio from Codex or Claude Code — manage rules, projects, tables and tests over the OpenL MCP server.",
   "version": "0.2.0",
   "author": { "name": "OpenL Tablets" },
@@ -15,7 +15,7 @@
     "studio_token": {
       "type": "string",
       "title": "Personal Access Token",
-      "description": "Create one in OpenL Studio under User → Personal Access Tokens, then paste it here. This is how Claude signs in as you. Leave empty only for a single-user Studio that has no sign-in. Run /openl-ai:connect and Claude will walk you through it.",
+      "description": "Create one in OpenL Studio under User → Personal Access Tokens, then paste it here. This is how Claude signs in as you. Leave empty only for a single-user Studio that has no sign-in. Run /openl:connect and Claude will walk you through it.",
       "sensitive": true,
       "required": false
     }

@@ -1,4 +1,4 @@
-# Administrator Setup — `openl-ai` Plugin
+# Administrator Setup — `openl` Plugin
 
 This guide is for OpenL Studio administrators and IT staff who roll the plugin out to
 analysts. It covers supported versions, organization-wide installation, how
@@ -47,7 +47,7 @@ rollout you have three options:
          "source": { "source": "github", "repo": "openl-tablets/openl-ai-plugin" }
        }
      },
-     "enabledPlugins": { "openl-ai@openl-ai-plugin": true }
+     "enabledPlugins": { "openl@openl-ai-plugin": true }
    }
    ```
 
@@ -58,7 +58,7 @@ rollout you have three options:
 
    ```bash
    claude plugin marketplace add openl-tablets/openl-ai-plugin
-   claude plugin install openl-ai@openl-ai-plugin \
+   claude plugin install openl@openl-ai-plugin \
      --config studio_base_url=https://studio.example.com
    ```
 
@@ -69,7 +69,7 @@ rollout you have three options:
    internally; see [release.md](release.md#6-enterprise--private-distribution).
 
 Pre-filling `studio_base_url` is what makes the analyst experience truly two-step:
-install → `/openl-ai:connect` (which guides them through adding their token).
+install → `/openl:connect` (which guides them through adding their token).
 
 ### Rolling out to Codex
 
@@ -77,7 +77,7 @@ Install from the same marketplace with:
 
 ```bash
 codex plugin marketplace add openl-tablets/openl-ai-plugin
-codex plugin add openl-ai@openl-ai-plugin
+codex plugin add openl@openl-ai-plugin
 ```
 
 Do not distribute a shared PAT. Each analyst runs the bundled
@@ -91,7 +91,7 @@ Windows relies on the user profile ACLs. The PAT is plaintext in that file.
 ### Plugin settings reference
 
 Settings are prompted at enable time and editable later with
-`/plugin configure openl-ai@openl-ai-plugin` (or pre-filled headlessly with
+`/plugin configure openl@openl-ai-plugin` (or pre-filled headlessly with
 `claude plugin install … --config`, see above — both store values via the same path).
 Each is injected into the MCP server process environment — the model itself never
 receives them directly.
@@ -119,12 +119,12 @@ connects anonymously. There is no browser or CLI sign-in run from Claude Code.
 
 | Studio user mode | What analysts should do | Your setup work |
 |---|---|---|
-| **Single-user** (`user.mode=single`) | Nothing — no sign-in exists. `/openl-ai:connect` detects this and says so. | None. |
+| **Single-user** (`user.mode=single`) | Nothing — no sign-in exists. `/openl:connect` detects this and says so. | None. |
 | **Multi-user** (`user.mode=multi`, Active Directory, OAuth2/OIDC, SAML — any IdP) | Sign in to Studio in the browser, create a PAT (**User → Personal Access Tokens**), and paste it into the plugin's token setting. | Tell users where to create tokens. No IdP changes are needed — the PAT works regardless of how Studio authenticates users. |
 
 PAT issuance requires a multi-user Studio: `GET <address>/rest/settings` (public)
 reports `supportedFeatures.personalAccessToken` and `userMode` (`null` for
-single-user). The `/openl-ai:connect` skill probes this endpoint to pick the right
+single-user). The `/openl:connect` skill probes this endpoint to pick the right
 guidance automatically.
 
 ## Access token (PAT)
@@ -135,7 +135,7 @@ Works with any multi-user Studio and any identity provider, with no IdP changes:
    organization uses — the PAT step is the same afterwards).
 2. **User → Personal Access Tokens → create token** (name it e.g. "Claude Code").
 3. The user pastes the token into the plugin's **Personal Access Token** setting
-   (`/plugin configure openl-ai@openl-ai-plugin`). The field is masked.
+   (`/plugin configure openl@openl-ai-plugin`). The field is masked.
 
 PATs are user-scoped, have an expiry date, and are individually revocable in Studio —
 treat expiry/revocation as your lever for offboarding. When a PAT expires, tools start
@@ -172,7 +172,7 @@ entry under `mcpServers` — the analyst-facing walkthrough is
   mobile cannot run local servers.
 - **The plugin itself is still useful there — for its skills.** Users install it via
   **Customize → Plugins** (add `openl-tablets/openl-ai-plugin` as a marketplace);
-  its skills (e.g. `/openl-ai:connect`) load in Chat/Cowork sessions, while the
+  its skills (e.g. `/openl:connect`) load in Chat/Cowork sessions, while the
   plugin's own settings dialog does not exist there — the connection stays with the
   `claude_desktop_config.json` entry.
 - **Logs** for support cases: `~/Library/Logs/Claude/mcp-server-openl.log` (macOS) /
@@ -212,7 +212,7 @@ entry under `mcpServers` — the analyst-facing walkthrough is
 A rollout note can be as short as:
 
 > Claude Code can now work with OpenL Studio. In Claude Code, run
-> `/openl-ai:connect`; Claude will help you create a Personal Access Token in Studio
+> `/openl:connect`; Claude will help you create a Personal Access Token in Studio
 > and add it to the plugin. Then start a new Claude session and ask: "List the OpenL
 > projects I can access."
 > If anything fails, see the plugin's troubleshooting page, or send me the error text

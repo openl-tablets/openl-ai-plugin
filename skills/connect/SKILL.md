@@ -37,7 +37,7 @@ and requests a PAT only for a multi-user Studio.
 
 1. Find the installed plugin directory by running `codex plugin list --json` and
    selecting the enabled entry whose `pluginId` is
-   `openl-ai@openl-ai-plugin`. Read only its `source.path` field. Do not search
+   `openl@openl-ai-plugin`. Read only its `source.path` field. Do not search
    Codex caches, inspect `codex.json`, or read any other configuration file.
 2. Optionally run this non-secret status check yourself:
 
@@ -68,7 +68,7 @@ and requests a PAT only for a multi-user Studio.
 5. After the configurator succeeds, tell the user to start a new Codex task and ask:
    *List the OpenL projects I can access.*
 
-If `openl-ai@openl-ai-plugin` is not listed, explain that the plugin is not installed
+If `openl@openl-ai-plugin` is not listed, explain that the plugin is not installed
 or enabled and point the user to `docs/codex-setup.md`. Do not guess an installation
 cache path.
 
@@ -122,7 +122,7 @@ For PAT setup, tell the user:
 > 1. Open OpenL Studio in your browser and sign in as usual.
 > 2. Go to **User → Personal Access Tokens**, create a token (for example, named
 >    "Claude Code"), and copy it when Studio shows it.
-> 3. Run `/plugin configure openl-ai@openl-ai-plugin` and paste it into the masked
+> 3. Run `/plugin configure openl@openl-ai-plugin` and paste it into the masked
 >    **Personal Access Token** field.
 
 For an `http://` address, add one plain warning before these steps: the local copy is
@@ -140,7 +140,7 @@ access.* A new session is required when tools already started with old settings.
 ### Claude Code sign-out and rotation
 
 - **Sign out:** revoke the PAT in Studio, clear the plugin's PAT field with
-  `/plugin configure openl-ai@openl-ai-plugin`, and start a new session. Revoke any
+  `/plugin configure openl@openl-ai-plugin`, and start a new session. Revoke any
   older PATs created for Claude/OpenL MCP because old server versions may have cached
   one after a direct CLI login.
 - **Rotate:** create a replacement PAT, update the masked plugin setting, start a new
