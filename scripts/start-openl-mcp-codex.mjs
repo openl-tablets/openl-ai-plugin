@@ -3,7 +3,7 @@
 import { spawn } from "node:child_process";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join, resolve, win32 } from "node:path";
 import { fileURLToPath } from "node:url";
 import { assertSupportedNode, readCodexConfig } from "./codex-config.mjs";
 
@@ -12,13 +12,21 @@ import { assertSupportedNode, readCodexConfig } from "./codex-config.mjs";
 const OPENL_MCP_VERSION = "1.1.0";
 
 export function buildMcpEnvironment(config, isolatedConfigDirectory, inheritedEnv = process.env) {
-  const env = {
-    ...inheritedEnv,
-    OPENL_BASE_URL: config.baseUrl,
-    OPENL_CONFIG_DIR: isolatedConfigDirectory,
-    NO_UPDATE_NOTIFIER: "1",
-  };
-  delete env.OPENL_PERSONAL_ACCESS_TOKEN;
+  // Windows treats environment variable names case-insensitively. Filter every
+  // OpenL override before adding canonical keys so differently-cased inherited
+  // credentials cannot win when Node serializes the child environment.
+  const reservedKeys = new Set([
+    "openl_base_url",
+    "openl_personal_access_token",
+    "openl_config_dir",
+    "no_update_notifier",
+  ]);
+  const env = Object.fromEntries(
+    Object.entries(inheritedEnv).filter(([key]) => !reservedKeys.has(key.toLowerCase())),
+  );
+  env.OPENL_BASE_URL = config.baseUrl;
+  env.OPENL_CONFIG_DIR = isolatedConfigDirectory;
+  env.NO_UPDATE_NOTIFIER = "1";
   if (config.personalAccessToken) {
     env.OPENL_PERSONAL_ACCESS_TOKEN = config.personalAccessToken;
   }
@@ -39,6 +47,91 @@ export function buildNpxInvocation({
   return { command: "npx", args: npxArguments };
 }
 
+function windowsEnvironmentValue(env, name) {
+  const entry = Object.entries(env).find(([key]) => key.toLowerCase() === name.toLowerCase());
+  return entry?.[1];
+}
+
+export async function terminateProcessTree(
+  child,
+  {
+    platform = process.platform,
+    signal = "SIGTERM",
+    env = process.env,
+    killImpl = process.kill,
+    spawnImpl = spawn,
+  } = {},
+) {
+  if (!Number.isInteger(child?.pid) || child.pid <= 0) {
+    return;
+  }
+
+  if (platform !== "win32") {
+    try {
+      killImpl(-child.pid, signal);
+      return;
+    } catch (error) {
+      if (error?.code === "ESRCH") {
+        return;
+      }
+      child.kill(signal);
+      throw error;
+    }
+  }
+
+  const windowsRoot = windowsEnvironmentValue(env, "SystemRoot")
+    || windowsEnvironmentValue(env, "WINDIR");
+  const command = windowsRoot
+    ? win32.join(windowsRoot, "System32", "taskkill.exe")
+    : "taskkill.exe";
+
+  await new Promise((resolvePromise, rejectPromise) => {
+    let killer;
+    let settled = false;
+    const finish = (error) => {
+      if (settled) return;
+      settled = true;
+      killer?.off("error", onError);
+      killer?.off("exit", onExit);
+      if (!error) {
+        resolvePromise();
+        return;
+      }
+      try {
+        child.kill(signal);
+      } catch (fallbackError) {
+        rejectPromise(new AggregateError(
+          [error, fallbackError],
+          "Failed to terminate the openl-mcp process tree.",
+        ));
+        return;
+      }
+      rejectPromise(error);
+    };
+    const onError = (error) => finish(
+      new Error(`Cannot start taskkill.exe: ${error?.message ?? String(error)}`, { cause: error }),
+    );
+    const onExit = (code) => finish(
+      code === 0 ? undefined : new Error(`taskkill.exe exited with code ${code ?? "unknown"}.`),
+    );
+
+    try {
+      killer = spawnImpl(command, ["/PID", String(child.pid), "/T", "/F"], {
+        stdio: "ignore",
+        windowsHide: true,
+        shell: false,
+      });
+      killer.once("error", onError);
+      killer.once("exit", onExit);
+    } catch (error) {
+      finish(new Error(
+        `Cannot start taskkill.exe: ${error?.message ?? String(error)}`,
+        { cause: error },
+      ));
+    }
+  });
+}
+
 async function main() {
   assertSupportedNode();
   const config = await readCodexConfig();
@@ -49,29 +142,59 @@ async function main() {
 
   try {
     const child = spawn(command, args, {
+      detached: process.platform !== "win32",
       env,
       stdio: "inherit",
       windowsHide: true,
       shell: false,
     });
 
-    for (const signal of ["SIGINT", "SIGTERM"]) {
-      process.once(signal, () => child.kill(signal));
-    }
-
-    const result = await new Promise((resolve) => {
-      let settled = false;
-      const finish = (value) => {
-        if (!settled) {
-          settled = true;
-          resolve(value);
+    let terminationPromise;
+    const terminationSignals = process.platform === "win32"
+      ? ["SIGINT", "SIGTERM", "SIGBREAK"]
+      : ["SIGINT", "SIGTERM"];
+    const signalHandlers = new Map();
+    for (const signal of terminationSignals) {
+      const handler = () => {
+        if (
+          !terminationPromise
+          && child.exitCode == null
+          && child.signalCode == null
+        ) {
+          terminationPromise = terminateProcessTree(child, { signal }).then(
+            () => undefined,
+            (error) => error,
+          );
         }
       };
-      child.once("error", (error) => finish({ error }));
-      child.once("exit", (code, signal) => finish({ code, signal }));
-    });
+      signalHandlers.set(signal, handler);
+      process.once(signal, handler);
+    }
 
-    if (result.error) {
+    let result;
+    try {
+      result = await new Promise((resolvePromise) => {
+        let settled = false;
+        const finish = (value) => {
+          if (!settled) {
+            settled = true;
+            resolvePromise(value);
+          }
+        };
+        child.once("error", (error) => finish({ error }));
+        child.once("exit", (code, signal) => finish({ code, signal }));
+      });
+    } finally {
+      for (const [signal, handler] of signalHandlers) {
+        process.off(signal, handler);
+      }
+    }
+
+    const terminationError = terminationPromise ? await terminationPromise : undefined;
+    if (terminationError) {
+      console.error(`Failed to stop the complete openl-mcp process tree: ${terminationError.message}`);
+      process.exitCode = 1;
+    } else if (result.error) {
       console.error(`Failed to start openl-mcp: ${result.error.message}`);
       process.exitCode = 1;
     } else if (result.signal) {

@@ -1,8 +1,11 @@
 # Release & Distribution — `openl` plugin
 
 _How this plugin is versioned, released, and delivered to users. This document is for plugin
-maintainers. Verified against the Claude Code docs (`code.claude.com`) as of 2026-06-26; the
-marketplace `source` forms and install commands re-verified 2026-07-13._
+maintainers. The marketplace `source` forms, install commands, and `renames`
+migration were re-verified against the Claude Code docs (`code.claude.com`) on
+2026-07-30. The Codex path-based MCP descriptor and local Git marketplace install
+were re-verified with `codex-cli 0.145.0-alpha.30` and `0.146.0-alpha.3.1` on
+2026-07-30._
 
 ## TL;DR
 
@@ -46,7 +49,10 @@ a single plugin is to make **this repo both the plugin and the marketplace**.
       "source": "./",
       "description": "Work with OpenL Studio from Claude Code — manage rules, projects, tables and tests."
     }
-  ]
+  ],
+  "renames": {
+    "openl-ai": "openl"
+  }
 }
 ```
 
@@ -133,6 +139,15 @@ Validate before publishing:
 claude plugin validate .          # checks plugin.json + marketplace.json schema
 ```
 
+### One-time 0.1.x → 0.2.0 identity migration
+
+Version 0.2.0 changes the plugin identity from `openl-ai` to `openl`. The top-level,
+append-only marketplace `renames` map automatically rewrites editable
+`enabledPlugins` and `pluginConfigs` keys on Claude Code 2.1.193+. Release
+communications must still link to [migrate-to-0.2.md](migrate-to-0.2.md) for older
+clients, managed/read-only settings, shared-PAT precautions, Cowork, and prerelease
+Codex cleanup.
+
 ---
 
 ## 3. Versioning model
@@ -167,8 +182,11 @@ claude plugin validate .          # checks plugin.json + marketplace.json schema
    `marketplace.json` if it carries one).
 4. Update `CHANGELOG.md` (replace `Unreleased` with the release date on the version being cut).
 5. Run `npm test` and `claude plugin validate .`, then smoke-install through an
-   isolated `CODEX_HOME` and confirm `codex mcp list --json` shows only the native
-   `openl-ai` server (never Claude's `${user_config.*}` placeholders).
+   isolated Codex test profile and inspect only this plugin with
+   `codex mcp get openl-ai --json`. Confirm it uses the bundled launcher and never
+   Claude's `${user_config.*}` placeholders. Do not capture a global
+   `codex mcp list --json`: unrelated user-defined servers may expose their configured
+   environment values in that output.
    In a live test Studio, also verify the manifest's `writes` approval mode: a
    read-only listing uses the normal read path, a harmless write requests approval,
    the launcher remains the configured process, and no PAT appears in prompts,
@@ -177,7 +195,11 @@ claude plugin validate .          # checks plugin.json + marketplace.json schema
 7. (Optional) create a GitHub Release with notes pulled from `CHANGELOG.md`.
 
 **C. Users update**
-- `/plugin marketplace update openl-ai-plugin` then `/plugin update openl@openl-ai-plugin`.
+- Existing Claude Code 0.1.x users: refresh the marketplace; Claude Code 2.1.193+
+  applies the rename automatically. Use the
+  [identity migration](migrate-to-0.2.md) for older or managed installations.
+- Later `openl` releases: `/plugin marketplace update openl-ai-plugin` then
+  `/plugin update openl@openl-ai-plugin`.
 - Codex: `codex plugin marketplace upgrade openl-ai-plugin`, then remove and add
   `openl@openl-ai-plugin` again. The Codex connection config stays outside the
   plugin cache; start a new task after reinstalling.

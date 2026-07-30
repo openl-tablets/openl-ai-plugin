@@ -58,6 +58,11 @@ claude plugin marketplace add openl-tablets/openl-ai-plugin
 claude plugin install openl@openl-ai-plugin
 ```
 
+> **Upgrading from 0.1.x?** Version 0.2.0 renames the plugin from `openl-ai` to
+> `openl`. Current Claude Code versions migrate the installed plugin and its settings
+> automatically; older or centrally managed installations need an extra step. Follow
+> [Upgrade from `openl-ai` 0.1.x to `openl` 0.2.0](docs/migrate-to-0.2.md).
+
 When Claude Code asks for the plugin settings, fill in the **OpenL Studio address**.
 You can leave the **Personal Access Token** empty for now — [Step 2](#step-2--connect-to-openl-studio)
 walks you through adding it. You can change the settings any time with
@@ -140,6 +145,8 @@ including what information to send your administrator if you're stuck.
 - [docs/cowork-setup.md](docs/cowork-setup.md) — using OpenL from the **Claude
   desktop app / Cowork** (a different setup than the plugin below).
 - [docs/codex-setup.md](docs/codex-setup.md) — using OpenL from **Codex** (desktop or CLI).
+- [docs/migrate-to-0.2.md](docs/migrate-to-0.2.md) — one-time migration from
+  the `openl-ai` 0.1.x plugin identity to `openl` 0.2.0.
 - [docs/troubleshooting.md](docs/troubleshooting.md) — symptom → fix, for everyone.
 - [docs/admin-setup.md](docs/admin-setup.md) — for OpenL administrators: supported
   versions, organization-wide setup, authentication, security notes.

@@ -10,19 +10,30 @@ async function readJson(path) {
 test("Claude and Codex manifests stay version-aligned", async () => {
   const claude = await readJson(".claude-plugin/plugin.json");
   const codex = await readJson(".codex-plugin/plugin.json");
+  const marketplace = await readJson(".claude-plugin/marketplace.json");
   const packageJson = await readJson("package.json");
   assert.equal(codex.version, claude.version);
   assert.equal(packageJson.version, claude.version);
+  assert.deepEqual(marketplace.renames, { "openl-ai": "openl" });
+  assert.equal(marketplace.plugins.length, 1);
+  assert.equal(marketplace.plugins[0].name, claude.name);
   const changelog = await readFile("CHANGELOG.md", "utf8");
-  assert.match(changelog, new RegExp(`^## \\[${claude.version.replaceAll(".", "\\.")}\\] - Unreleased$`, "m"));
+  const currentRelease = changelog.match(/^## \[([^\]]+)\] - (Unreleased|\d{4}-\d{2}-\d{2})$/m);
+  assert.ok(currentRelease, "CHANGELOG.md must start with a versioned release heading");
+  assert.equal(currentRelease[1], claude.version);
 });
 
 test("Codex uses only its native launcher and never Claude placeholders", async () => {
   const codexText = await readFile(".codex-plugin/plugin.json", "utf8");
   const codex = JSON.parse(codexText);
-  assert.deepEqual(Object.keys(codex.mcpServers), ["openl-ai"]);
-  assert.deepEqual(codex.mcpServers["openl-ai"], {
-    type: "stdio",
+  assert.equal(codex.mcpServers, "./.mcp.codex.json");
+  const codexMcpPath = resolve(codex.mcpServers);
+  await assert.doesNotReject(access(codexMcpPath));
+
+  const codexMcpText = await readFile(codexMcpPath, "utf8");
+  const codexMcp = JSON.parse(codexMcpText);
+  assert.deepEqual(Object.keys(codexMcp), ["openl-ai"]);
+  assert.deepEqual(codexMcp["openl-ai"], {
     command: "node",
     args: ["./scripts/start-openl-mcp-codex.mjs"],
     cwd: ".",
@@ -31,7 +42,7 @@ test("Codex uses only its native launcher and never Claude placeholders", async 
     required: false,
     default_tools_approval_mode: "writes",
   });
-  assert.doesNotMatch(codexText, /\$\{user_config\./);
+  assert.doesNotMatch(`${codexText}\n${codexMcpText}`, /\$\{user_config\./);
 });
 
 test("Claude keeps its existing MCP contract and pin", async () => {

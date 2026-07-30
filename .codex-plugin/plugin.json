@@ -9,18 +9,7 @@
   "repository": "https://github.com/openl-tablets/openl-ai-plugin",
   "keywords": ["openl", "openl-tablets", "rules-engine", "brms", "mcp"],
   "skills": "./skills/",
-  "mcpServers": {
-    "openl-ai": {
-      "type": "stdio",
-      "command": "node",
-      "args": ["./scripts/start-openl-mcp-codex.mjs"],
-      "cwd": ".",
-      "startup_timeout_sec": 120,
-      "tool_timeout_sec": 300,
-      "required": false,
-      "default_tools_approval_mode": "writes"
-    }
-  },
+  "mcpServers": "./.mcp.codex.json",
   "interface": {
     "displayName": "OpenL Studio",
     "shortDescription": "Work with rules, projects, tables, and tests",

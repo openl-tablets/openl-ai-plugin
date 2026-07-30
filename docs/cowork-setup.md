@@ -6,6 +6,10 @@ This guide is for the **Chat and Cowork tabs** of the Claude desktop app. (For t
 minutes, and you don't need to be technical: every step tells you exactly what to
 click and what to paste.
 
+> **Upgrading the skills plugin from `openl-ai` 0.1.x?** Keep the MCP entry below
+> and follow the [0.2.0 identity migration](migrate-to-0.2.md) in
+> **Customize → Plugins**.
+
 > **Why is this different from the plugin install in the README?**
 > In the Chat and Cowork tabs the plugin can't ask you for its settings (like your
 > token) the way Claude Code does — so the plugin here provides the OpenL **skills**

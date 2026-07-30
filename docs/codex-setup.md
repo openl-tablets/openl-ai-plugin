@@ -12,8 +12,8 @@ chat and out of the process list.
 ## What you need
 
 - **Codex** (desktop app or CLI) with `codex plugin add` support installed (verified
-  with `codex-cli 0.145.0-alpha.30`; older preview builds without that command are
-  not supported).
+  with `codex-cli 0.145.0-alpha.30` and `0.146.0-alpha.3.1`; older preview builds
+  without that command are not supported).
 - **Node.js 24 or newer.** Check in a terminal: `node --version` — you want `v24` or
   higher.
 - The **OpenL Studio address** — the web address you open in your browser, e.g.
@@ -29,6 +29,10 @@ Add the marketplace and install the plugin with the Codex plugin commands:
 codex plugin marketplace add openl-tablets/openl-ai-plugin
 codex plugin add openl@openl-ai-plugin
 ```
+
+> **Used a prerelease Codex build named `openl-ai`?** Follow the cleanup section in
+> the [0.2.0 migration guide](migrate-to-0.2.md). Released 0.1.x versions did not
+> include Codex support.
 
 (Or install from the desktop app's plugin browser, if your Codex build has one.)
 

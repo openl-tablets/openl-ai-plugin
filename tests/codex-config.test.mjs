@@ -251,6 +251,28 @@ test("writes, reads, reports, and clears owner-only configuration", async (t) =>
   await assert.rejects(readFile(configPath, "utf8"), { code: "ENOENT" });
 });
 
+test("atomically replaces an existing configuration", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "openl-ai-replace-test-"));
+  const configPath = join(root, "codex.json");
+  t.after(async () => clearCodexConfig({ configPath }));
+
+  await writeCodexConfig({
+    version: 1,
+    baseUrl: "https://old.example.com",
+    personalAccessToken: "old-token",
+  }, { configPath });
+  await writeCodexConfig({
+    version: 1,
+    baseUrl: "https://new.example.com",
+    personalAccessToken: "new-token",
+  }, { configPath });
+
+  const config = await readCodexConfig({ configPath });
+  assert.equal(config.baseUrl, "https://new.example.com");
+  assert.equal(config.personalAccessToken, "new-token");
+  assert.doesNotMatch(await readFile(configPath, "utf8"), /old-token|old\.example/);
+});
+
 test("refuses permissive files and symlinked config paths", { skip: process.platform === "win32" }, async () => {
   const root = await mkdtemp(join(tmpdir(), "openl-ai-symlink-test-"));
   const target = join(root, "target.json");

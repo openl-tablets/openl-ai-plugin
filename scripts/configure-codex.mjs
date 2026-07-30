@@ -2,6 +2,8 @@
 
 import { createInterface } from "node:readline/promises";
 import { stdin, stdout } from "node:process";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   assertSupportedNode,
   classifyStudioTransport,
@@ -70,32 +72,130 @@ function parseArgs(argv) {
   return options;
 }
 
-function readSecret(prompt) {
-  if (!stdin.isTTY || !stdout.isTTY || typeof stdin.setRawMode !== "function") {
+const MAX_SECRET_CHARACTERS = 8192;
+const TERMINATION_SIGNALS = process.platform === "win32"
+  ? ["SIGINT", "SIGTERM", "SIGBREAK"]
+  : ["SIGINT", "SIGTERM"];
+
+export function readSecret(
+  prompt,
+  {
+    input = stdin,
+    output = stdout,
+    signalSource = process,
+    maxLength = MAX_SECRET_CHARACTERS,
+    terminationSignals = TERMINATION_SIGNALS,
+  } = {},
+) {
+  if (
+    !input.isTTY
+    || !output.isTTY
+    || typeof input.setRawMode !== "function"
+    || typeof input.on !== "function"
+    || typeof input.off !== "function"
+    || typeof output.once !== "function"
+    || typeof output.off !== "function"
+  ) {
     throw new Error("Personal Access Token entry requires an interactive terminal.");
+  }
+  if (!Number.isInteger(maxLength) || maxLength < 1) {
+    throw new Error("Secret input limit must be a positive integer.");
+  }
+  if (!Array.isArray(terminationSignals) || terminationSignals.length === 0) {
+    throw new Error("At least one termination signal is required.");
   }
 
   return new Promise((resolve, reject) => {
-    const previousRawMode = stdin.isRaw;
+    const previousRawMode = Boolean(input.isRaw);
     let secret = "";
     let settled = false;
+    let rawModeChanged = false;
+    let completePendingOutput;
+    const signalHandlers = new Map(
+      terminationSignals.map((signal) => [
+        signal,
+        () => cancel(`Configuration cancelled by ${signal}.`),
+      ]),
+    );
 
-    const cleanup = () => {
-      stdin.off("data", onData);
-      stdin.setRawMode(Boolean(previousRawMode));
-      stdin.pause();
+    const cleanupInput = () => {
+      input.off("data", onData);
+      input.off("end", onInputClosed);
+      input.off("close", onInputClosed);
+      input.off("error", onInputError);
+      for (const [signal, handler] of signalHandlers) {
+        signalSource.off(signal, handler);
+      }
+      if (rawModeChanged) {
+        try {
+          input.setRawMode(previousRawMode);
+        } catch {
+          // The terminal may already be gone. There is nothing left to restore.
+        }
+      }
+      try {
+        input.pause();
+      } catch {
+        // Ignore a stream that closed while cleanup was running.
+      }
     };
-    const finish = (callback) => {
+    const cleanupOutput = () => {
+      output.off("close", onOutputClosed);
+      output.off("error", onOutputError);
+    };
+    const finish = (callback, { writeNewline = true } = {}) => {
       if (settled) return;
       settled = true;
-      cleanup();
-      stdout.write("\n");
-      callback();
+      cleanupInput();
+      if (!writeNewline) {
+        cleanupOutput();
+        callback();
+        return;
+      }
+      let outputCompleted = false;
+      completePendingOutput = () => {
+        if (outputCompleted) return;
+        outputCompleted = true;
+        completePendingOutput = undefined;
+        cleanupOutput();
+        callback();
+      };
+      try {
+        output.write("\n", completePendingOutput);
+      } catch {
+        // Do not hide the original result when the output stream has closed.
+        completePendingOutput();
+      }
+    };
+    const cancel = (message, options) => finish(() => reject(new Error(message)), options);
+    const onInputClosed = () => cancel("Token input closed before it was completed.");
+    const onInputError = (error) => cancel(
+      `Cannot read Personal Access Token: ${error?.message ?? String(error)}`,
+    );
+    const onOutputClosed = () => {
+      if (settled) {
+        completePendingOutput?.();
+        return;
+      }
+      cancel(
+        "Token prompt output closed before input was completed.",
+        { writeNewline: false },
+      );
+    };
+    const onOutputError = (error) => {
+      if (settled) {
+        completePendingOutput?.();
+        return;
+      }
+      cancel(
+        `Cannot write Personal Access Token prompt: ${error?.message ?? String(error)}`,
+        { writeNewline: false },
+      );
     };
     const onData = (buffer) => {
       for (const character of buffer.toString("utf8")) {
         if (character === "\u0003") {
-          finish(() => reject(new Error("Configuration cancelled.")));
+          cancel("Configuration cancelled.");
           return;
         }
         if (character === "\r" || character === "\n") {
@@ -109,15 +209,37 @@ function readSecret(prompt) {
           continue;
         }
         if (character >= " ") {
+          if (secret.length + character.length > maxLength) {
+            cancel(`Personal Access Token exceeds the ${maxLength}-character safety limit.`);
+            return;
+          }
           secret += character;
         }
       }
     };
 
-    stdout.write(prompt);
-    stdin.setRawMode(true);
-    stdin.resume();
-    stdin.on("data", onData);
+    try {
+      input.on("data", onData);
+      input.once("end", onInputClosed);
+      input.once("close", onInputClosed);
+      input.once("error", onInputError);
+      output.once("close", onOutputClosed);
+      output.once("error", onOutputError);
+      for (const [signal, handler] of signalHandlers) {
+        signalSource.once(signal, handler);
+      }
+      output.write(prompt);
+      if (settled) return;
+      rawModeChanged = true;
+      input.setRawMode(true);
+      if (settled) return;
+      input.resume();
+    } catch (error) {
+      cancel(
+        `Cannot start secure token input: ${error?.message ?? String(error)}`,
+        { writeNewline: false },
+      );
+    }
   });
 }
 
@@ -228,7 +350,10 @@ async function main() {
   await configure(options.baseUrl, { allowInsecure });
 }
 
-main().catch((error) => {
-  console.error(`Configuration failed: ${error?.message ?? String(error)}`);
-  process.exitCode = 1;
-});
+const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  main().catch((error) => {
+    console.error(`Configuration failed: ${error?.message ?? String(error)}`);
+    process.exitCode = 1;
+  });
+}
