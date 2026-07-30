@@ -1,0 +1,11 @@
+{
+  "openl-ai": {
+    "command": "node",
+    "args": ["./scripts/start-openl-mcp-codex.mjs"],
+    "cwd": ".",
+    "startup_timeout_sec": 120,
+    "tool_timeout_sec": 300,
+    "required": false,
+    "default_tools_approval_mode": "writes"
+  }
+}

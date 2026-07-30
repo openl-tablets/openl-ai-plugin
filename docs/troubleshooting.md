@@ -8,12 +8,13 @@ access token**.
 > This page covers the **Claude Code plugin**. If you set OpenL up in the **Claude
 > desktop app (Cowork)** via the settings file, use the troubleshooting table in
 > [cowork-setup.md](cowork-setup.md#if-something-doesnt-work) instead — the fixes
-> differ (settings file and app restart instead of `/plugin` commands).
+> differ (settings file and app restart instead of `/plugin` commands). For Codex,
+> use the table in [codex-setup.md](codex-setup.md#if-something-doesnt-work).
 
 ## The plugin or the OpenL tools didn't appear
 
 You installed the plugin, but Claude doesn't seem to have any OpenL abilities, or
-`/openl-ai:connect` is not offered.
+`/openl:connect` is not offered.
 
 1. **Check Node.js first.** The plugin runs a small local component that needs
    Node.js 24 or newer — even when your organization installed the plugin for you.
@@ -27,9 +28,9 @@ You installed the plugin, but Claude doesn't seem to have any OpenL abilities, o
    install or update Node.js on your computer. This is the most common cause.
 2. **Start a new Claude session.** Newly installed plugins load when a session starts.
 3. **Check the plugin is installed and enabled.** In Claude Code, run `/plugin` and
-   look for `openl-ai`. If it's disabled, enable it.
+   look for `openl`. If it's disabled, enable it.
 4. **Check the Studio address is set.** In Claude Code, run
-   `/plugin configure openl-ai@openl-ai-plugin` — the "OpenL Studio address" field
+   `/plugin configure openl@openl-ai-plugin` — the "OpenL Studio address" field
    must be filled in.
 
 **Contact your administrator when:** Node.js is missing/old and you can't install
@@ -43,7 +44,7 @@ This means the Personal Access Token is missing, expired, or revoked.
 
 1. Create a token in OpenL Studio under **User → Personal Access Tokens** (or ask your
    administrator where to create one), then add it with
-   `/plugin configure openl-ai@openl-ai-plugin` — the **Personal Access Token** field.
+   `/plugin configure openl@openl-ai-plugin` — the **Personal Access Token** field.
 2. Start a new Claude session (the token is picked up when a session starts).
 3. If it still fails, see
    [My access stopped working](#my-access-stopped-working-token-expired) below.
@@ -61,7 +62,7 @@ an empty list.
    the same account. If Studio shows none either, it's a permissions question, not a
    plugin problem.
 3. Check the plugin points at the right Studio: run
-   `/plugin configure openl-ai@openl-ai-plugin` and compare the "OpenL Studio
+   `/plugin configure openl@openl-ai-plugin` and compare the "OpenL Studio
    address" with the address in your browser. Your organization may run several
    Studio instances (test/production). After correcting the address, start a new
    session.
@@ -76,7 +77,7 @@ Everything worked before, and now OpenL requests fail with "unauthorized" again.
 Personal Access Tokens have an expiry date — this is expected from time to time.
 
 1. Create a fresh token in OpenL Studio under **User → Personal Access Tokens**.
-2. Update it via `/plugin configure openl-ai@openl-ai-plugin` and start a new Claude
+2. Update it via `/plugin configure openl@openl-ai-plugin` and start a new Claude
    session.
 
 **Contact your administrator when:** you can't create a new token in Studio, or a
@@ -90,8 +91,9 @@ timeouts.
 1. Open the OpenL Studio address in your **browser**. If the browser can't open it
    either, connect to your office network or VPN and try again.
 2. If the browser opens Studio fine, compare the address in the browser with the
-   plugin's "OpenL Studio address" (`/plugin configure openl-ai@openl-ai-plugin`) —
-   they must match exactly, including `https://`.
+   plugin's "OpenL Studio address" (`/plugin configure openl@openl-ai-plugin`) —
+   they must match exactly, including the `http://` or `https://` scheme. Local
+   Studio copies may use HTTP; prefer HTTPS when a PAT crosses a network.
 
 **Contact your administrator when:** you're on the VPN, the browser opens Studio, the
 addresses match — and Claude still can't reach it.
@@ -104,7 +106,7 @@ Include:
 - Which setup you use: the **Claude Code plugin** or the **Claude desktop app
   (Cowork)** settings file.
 - Your **OpenL Studio address** — Claude Code: from
-  `/plugin configure openl-ai@openl-ai-plugin`; Claude desktop app (Cowork): from the
+  `/plugin configure openl@openl-ai-plugin`; Claude desktop app (Cowork): from the
   `openl` entry in `claude_desktop_config.json`.
 - The output of `node --version`.
 - Whether you have added a Personal Access Token — Claude Code: in the plugin
