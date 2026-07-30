@@ -14,6 +14,11 @@ node_modules/
 .env.*.local
 **/credentials.json
 .config/openl-mcp/
+# The Codex configurator stores a plaintext PAT in codex.json under an
+# openl-ai config dir (default ~/.config/openl-ai, overridable via
+# OPENL_AI_CONFIG_DIR). Guard against it ever landing inside the repo.
+**/codex.json
+.config/openl-ai/
 
 # Build artifacts / vendored server tarballs
 *.tgz

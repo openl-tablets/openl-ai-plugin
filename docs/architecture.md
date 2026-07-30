@@ -1,7 +1,7 @@
-# Architecture — `openl-ai` Claude Code Plugin
+# Architecture — `openl` plugin
 
-How the plugin is put together and why: naming, the packaging model, Claude Code integration
-notes, and the authentication design. This document is for developers of the plugin. For
+How the plugin is put together and why: naming, the packaging model, Claude Code and Codex
+integration notes, and the authentication design. This document is for developers of the plugin. For
 versioning/release/distribution see [release.md](release.md); for operational setup
 (versions, IdP configuration, rollout) see [admin-setup.md](admin-setup.md).
 
@@ -10,12 +10,13 @@ versioning/release/distribution see [release.md](release.md); for operational se
 | Thing | Value | Where it shows up |
 |---|---|---|
 | Repository & marketplace | `openl-ai-plugin` | `/plugin marketplace add openl-tablets/openl-ai-plugin` |
-| Plugin (`plugin.json` → `name`) | `openl-ai` | `/openl-ai:<skill>`, `/plugin install openl-ai@openl-ai-plugin` |
-| MCP server key (top-level key in `.mcp.json`) | `tools` | `mcp__plugin_openl-ai_tools__<tool>` |
+| Plugin (`plugin.json` → `name`) | `openl` | `/openl:<skill>`, `/plugin install openl@openl-ai-plugin` |
+| Claude Code MCP server key (top-level key in `.mcp.json`) | `tools` | `mcp__plugin_openl_tools__<tool>` |
+| Codex MCP server key (`.mcp.codex.json`) | `openl-ai` | Codex MCP configuration and approvals |
 | What it is | lives in the `description` fields, not the name | marketplace / `/plugin` UI |
 
-Rationale: the **plugin** is named `openl-ai` — it is the user-visible namespace (`/openl-ai:…`
-skills, `mcp__plugin_openl-ai_…` tool prefix), so it stays short. The **repository and
+Rationale: the **plugin** is named `openl` — it is the user-visible namespace (`/openl:…`
+skills, `mcp__plugin_openl_…` tool prefix), so it stays short. The **repository and
 marketplace** are named `openl-ai-plugin` — describing what the repo contains. The two names
 are deliberately different, one per role. `tools` as the server key avoids stuttering inside
 the tool prefix (the plugin name and `mcp` are already there) and avoids collisions with
@@ -27,11 +28,21 @@ the tool prefix (the plugin name and `mcp` are already there) and avoids collisi
 ```
 openl-ai-plugin/
 ├── .claude-plugin/
-│   ├── plugin.json          # manifest: name, description, version, userConfig
+│   ├── plugin.json          # Claude Code manifest: name, description, version, userConfig
 │   └── marketplace.json     # this repo is its own marketplace
-├── .mcp.json                # bundled MCP server (kept as a separate root file — see below)
+├── .codex-plugin/
+│   └── plugin.json          # Codex manifest: skills, interface, MCP descriptor path
+├── .mcp.json                # Claude Code MCP server (kept as a separate root file — see below)
+├── .mcp.codex.json          # Codex MCP server (openl-ai) → bundled launcher
+├── scripts/                 # Codex-only Node helpers (Claude Code needs none of these)
+│   ├── start-openl-mcp-codex.mjs   # launcher: reads saved config, spawns openl-mcp
+│   ├── configure-codex.mjs         # interactive, no-echo PAT/address setup
+│   └── codex-config.mjs            # shared config read/write + Studio probe helpers
 ├── skills/
-│   └── connect/SKILL.md     # /openl-ai:connect → guided Personal Access Token setup
+│   └── connect/SKILL.md     # /openl:connect → guided Personal Access Token setup
+├── tests/                   # node --test suite (manifests, config, launcher)
+├── .github/workflows/       # CI: runs the test suite
+├── package.json             # test runner + Node engines
 ├── docs/
 ├── CHANGELOG.md
 └── README.md
@@ -51,6 +62,28 @@ server via `npx -y -p openl-mcp@X.Y.Z openl-mcp`.
   Administrators can replace it with an exact version for a controlled rollout. This
   policy lives in [cowork-setup.md](cowork-setup.md) because the desktop config is not
   managed by the plugin.
+- **Codex plugin:** Codex substitutes no `${user_config.*}` values, so its manifest
+  points `mcpServers` at `.mcp.codex.json`; that descriptor starts a bundled Node
+  launcher (`node ./scripts/start-openl-mcp-codex.mjs`) rather than `npx` directly. The
+  launcher reads the Studio address and PAT from the platform-specific user config
+  written by `scripts/configure-codex.mjs`: owner-only `0700/0600` storage on POSIX,
+  while Windows relies on `%APPDATA%` user-profile ACLs. It then spawns the same
+  `npx -y -p openl-mcp@X.Y.Z openl-mcp` in an isolated config dir. It carries its
+  **own** version pin (`OPENL_MCP_VERSION`), kept equal to the `.mcp.json` pin by a test
+  in `tests/plugin-manifests.test.mjs` — see [release.md](release.md).
+  This path-based descriptor was smoke-installed with `codex-cli
+  0.145.0-alpha.30` and `0.146.0-alpha.3.1` on 2026-07-30: Codex copied it into
+  the plugin cache and registered `openl-ai` with the installed plugin directory
+  as `cwd`.
+- **Codex config schema:** version 1 stores `baseUrl`, an optional
+  `personalAccessToken`, and `allowInsecure: true` only for an explicitly accepted
+  non-loopback HTTP address. Loopback HTTP supports local Studio copies without the
+  opt-in, but status/configuration still report it as unencrypted. The launcher clears
+  inherited OpenL credentials (case-insensitively, which matters on Windows) and
+  gives every start a fresh `OPENL_CONFIG_DIR`, so an old CLI token cache cannot
+  silently override the configured Codex identity. On handled termination signals,
+  the launcher stops the full POSIX process group or Windows process tree before
+  removing the isolated directory.
 - `npx` needs the npm registry at first launch (cached afterwards). For offline / air-gapped
   installs the documented escape hatch is a vendored single-file bundle under
   `${CLAUDE_PLUGIN_ROOT}/dist/` with `command` pointed at `node`; it is a variant, not the default.
@@ -78,6 +111,10 @@ server via `npx -y -p openl-mcp@X.Y.Z openl-mcp`.
   practically **2.1.119+** for this plugin: 2.1.119 fixed plugin MCP servers failing when
   `${user_config.*}` references an optional field left blank, and the token option is optional
   and blank on single-user Studio (and until the user adds a token).
+- The marketplace's append-only `renames` map moves `openl-ai` installations to
+  `openl` on Claude Code 2.1.193+. Claude Code rewrites editable `enabledPlugins`
+  and `pluginConfigs` keys. Administrators must update managed/read-only settings
+  themselves; see [migrate-to-0.2.md](migrate-to-0.2.md).
 - `userConfig` stays in `plugin.json`. Claude Code prompts for the values at install/enable time,
   stores `sensitive` ones in the OS keychain on macOS (or a protected credentials file,
   `~/.claude/.credentials.json`, on platforms without a keychain), keeps non-sensitive ones in
@@ -111,7 +148,7 @@ Studio both the configured PAT and any older PATs created for Claude or OpenL MC
 
 The user creates the PAT in Studio's own UI (**User → Personal Access Tokens**), where they have
 already authenticated through whatever sign-in their organization uses, and pastes it into the
-masked setting. The `/openl-ai:connect` skill is pure guidance: it probes
+masked setting. The `/openl:connect` skill is pure guidance: it probes
 `<base-url>/rest/settings` → `supportedFeatures.personalAccessToken` / `userMode` to tell single-
 from multi-user Studio, then walks the user through creating and pasting the token. It runs no
 browser flow and no subprocess.
@@ -132,11 +169,12 @@ browser flow and no subprocess.
   with an RFC 8252 loopback redirect, minting a PAT via `POST /rest/users/personal-access-tokens`)
   — **removed.** It required an IdP-side public client with a `http://127.0.0.1/*` redirect, only
   worked when the browser and Claude Code ran on the same machine, and could not work at all in
-  Cowork/remote sessions (the loopback callback is unreachable from the user's real browser). PAT
-  entry covers every deployment with far less setup, so the flow and its `userConfig` options
+  remote CLI/VM sessions when the user's browser is on another machine. PAT entry
+  covers every local-client deployment with far less setup, so the flow and its `userConfig` options
   (`oauth_issuer`, `oauth_client_id`) were dropped from the plugin. Direct CLI authentication
   features of the underlying package are outside the plugin's supported authentication flow.
 - **Remote streamable-HTTP MCP** with full MCP OAuth (Studio fronted by an OAuth 2.1
-  authorization server, or the MCP server acting as its own AS) — this is the path for
-  Cowork / claude.ai, implemented separately in the `openl-studio-mcp` server's embedded-OAuth
-  mode, not in this Claude Code plugin.
+  authorization server, or the MCP server acting as its own AS) — this is the path
+  for **claude.ai/web**, implemented separately in the `openl-studio-mcp` server's
+  embedded-OAuth mode, not in this plugin. Desktop Cowork uses the local stdio
+  server from `claude_desktop_config.json`.
