@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmod, lstat, mkdir, mkdtemp, readFile, symlink, writeFile } from "node:fs/promises";
+import { chmod, lstat, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -103,7 +103,7 @@ test("isInsecureOptIn reads only explicit truthy values", () => {
 test("insecure config round-trips and the launcher can read it", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "openl-ai-insecure-test-"));
   const configPath = join(root, "codex.json");
-  t.after(async () => clearCodexConfig({ configPath }));
+  t.after(() => rm(root, { recursive: true, force: true }));
 
   await writeCodexConfig({
     version: 1,
@@ -123,7 +123,7 @@ test("insecure config round-trips and the launcher can read it", async (t) => {
 test("loopback HTTP PAT config works without storing an opt-in", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "openl-ai-loopback-test-"));
   const configPath = join(root, "codex.json");
-  t.after(async () => clearCodexConfig({ configPath }));
+  t.after(() => rm(root, { recursive: true, force: true }));
   const { config } = await writeCodexConfig({
     version: 1,
     baseUrl: "http://localhost:8080",
@@ -139,8 +139,9 @@ test("loopback HTTP PAT config works without storing an opt-in", async (t) => {
   });
 });
 
-test("status distinguishes missing config from invalid config and reports HTTP", async () => {
+test("status distinguishes missing config from invalid config and reports HTTP", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "openl-ai-status-test-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
   const command = join(process.cwd(), "scripts/configure-codex.mjs");
   const run = (...args) => spawnSync(process.execPath, [command, ...args], {
     encoding: "utf8",
@@ -164,6 +165,17 @@ test("status distinguishes missing config from invalid config and reports HTTP",
   assert.notEqual(invalid.status, 0);
   assert.doesNotMatch(invalid.stdout, /"configured":false/);
   assert.match(invalid.stderr, /not valid JSON/);
+});
+
+test("configure CLI runs through a symlink", { skip: process.platform === "win32" }, async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "openl-ai-configure-symlink-test-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const command = join(root, "configure-codex.mjs");
+  await symlink(join(process.cwd(), "scripts/configure-codex.mjs"), command);
+
+  const result = spawnSync(process.execPath, [command, "--help"], { encoding: "utf8" });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Usage:/);
 });
 
 test("probe accepts absent or null userMode as single-user", async () => {
@@ -222,7 +234,7 @@ test("probe rejects status, malformed shape, and oversized bodies", async () => 
 
 test("writes, reads, reports, and clears owner-only configuration", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "openl-ai-config-test-"));
-  t.after(async () => clearCodexConfig({ configPath: join(root, "codex.json") }));
+  t.after(() => rm(root, { recursive: true, force: true }));
   const configPath = join(root, "private", "codex.json");
   const personalAccessToken = "test-token-never-log";
 
@@ -254,7 +266,7 @@ test("writes, reads, reports, and clears owner-only configuration", async (t) =>
 test("atomically replaces an existing configuration", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "openl-ai-replace-test-"));
   const configPath = join(root, "codex.json");
-  t.after(async () => clearCodexConfig({ configPath }));
+  t.after(() => rm(root, { recursive: true, force: true }));
 
   await writeCodexConfig({
     version: 1,
@@ -273,8 +285,9 @@ test("atomically replaces an existing configuration", async (t) => {
   assert.doesNotMatch(await readFile(configPath, "utf8"), /old-token|old\.example/);
 });
 
-test("refuses permissive files and symlinked config paths", { skip: process.platform === "win32" }, async () => {
+test("refuses permissive files and symlinked config paths", { skip: process.platform === "win32" }, async (t) => {
   const root = await mkdtemp(join(tmpdir(), "openl-ai-symlink-test-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
   const target = join(root, "target.json");
   const configPath = join(root, "codex.json");
   await writeFile(target, '{"version":1,"baseUrl":"https://studio.example.com"}\n', { mode: 0o644 });
@@ -291,8 +304,9 @@ test("refuses permissive files and symlinked config paths", { skip: process.plat
   await assert.rejects(readCodexConfig({ configPath: unsafePath }), /permissions must be 0600/);
 });
 
-test("refuses a symlinked configuration directory", { skip: process.platform === "win32" }, async () => {
+test("refuses a symlinked configuration directory", { skip: process.platform === "win32" }, async (t) => {
   const root = await mkdtemp(join(tmpdir(), "openl-ai-dir-test-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
   const target = join(root, "target");
   const linked = join(root, "linked");
   await mkdir(target);

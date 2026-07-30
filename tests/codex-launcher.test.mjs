@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { access, chmod, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { access, chmod, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { EventEmitter } from "node:events";
 import { tmpdir } from "node:os";
@@ -70,6 +70,32 @@ test("launcher terminates the whole POSIX process group", async () => {
   assert.equal(directKills, 0);
 });
 
+test("launcher preserves both POSIX termination failures", async () => {
+  const groupError = new Error("group kill failed");
+  const directError = new Error("direct kill failed");
+  await assert.rejects(
+    terminateProcessTree(
+      {
+        pid: 1234,
+        kill: () => {
+          throw directError;
+        },
+      },
+      {
+        platform: "linux",
+        killImpl: () => {
+          throw groupError;
+        },
+      },
+    ),
+    (error) => {
+      assert.ok(error instanceof AggregateError);
+      assert.deepEqual(error.errors, [groupError, directError]);
+      return true;
+    },
+  );
+});
+
 test("launcher uses taskkill for the whole Windows process tree", async () => {
   const invocations = [];
   let directKills = 0;
@@ -121,8 +147,23 @@ test("launcher reports taskkill failure after attempting a direct fallback", asy
   assert.equal(directSignal, "SIGTERM");
 });
 
-test("launcher keeps secrets out of output and uses a fresh cache", async () => {
+test("launcher runs through a symlink", { skip: process.platform === "win32" }, async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "openl-ai-launcher-symlink-test-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const command = join(root, "start-openl-mcp-codex.mjs");
+  await symlink(join(process.cwd(), "scripts/start-openl-mcp-codex.mjs"), command);
+
+  const result = spawnSync(process.execPath, [command], {
+    encoding: "utf8",
+    env: { ...process.env, OPENL_AI_CONFIG_DIR: root },
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /OpenL AI MCP startup failed:/);
+});
+
+test("launcher keeps secrets out of output and uses a fresh cache", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "openl-ai-launcher-test-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
   const configDirectory = join(root, "config");
   const capturePath = join(root, "capture.json");
   const fakeNpx = join(root, process.platform === "win32" ? "npx.cmd" : "npx");

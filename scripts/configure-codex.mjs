@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { createInterface } from "node:readline/promises";
+import { realpathSync } from "node:fs";
 import { stdin, stdout } from "node:process";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -105,7 +106,7 @@ export function readSecret(
     throw new Error("At least one termination signal is required.");
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolvePromise, reject) => {
     const previousRawMode = Boolean(input.isRaw);
     let secret = "";
     let settled = false;
@@ -199,7 +200,7 @@ export function readSecret(
           return;
         }
         if (character === "\r" || character === "\n") {
-          finish(() => resolve(secret));
+          finish(() => resolvePromise(secret));
           return;
         }
         if (character === "\u007f" || character === "\b") {
@@ -350,7 +351,8 @@ async function main() {
   await configure(options.baseUrl, { allowInsecure });
 }
 
-const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isMain = process.argv[1]
+  && realpathSync(resolve(process.argv[1])) === realpathSync(fileURLToPath(import.meta.url));
 if (isMain) {
   main().catch((error) => {
     console.error(`Configuration failed: ${error?.message ?? String(error)}`);

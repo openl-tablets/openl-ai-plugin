@@ -10,12 +10,12 @@ click and what to paste.
 > and follow the [0.2.0 identity migration](migrate-to-0.2.md) in
 > **Customize → Plugins**.
 
-> **Why is this different from the plugin install in the README?**
-> In the Chat and Cowork tabs the plugin can't ask you for its settings (like your
-> token) the way Claude Code does — so the plugin here provides the OpenL **skills**
-> (Step 1), while the connection itself comes from a small entry you add to one
-> settings file on your computer (Steps 2–5). That entry runs the very same OpenL
-> server the plugin itself runs in Claude Code.
+**Why is this different from the plugin install in the README?** In the Chat and
+Cowork tabs the plugin can't ask you for its settings (like your token) the way
+Claude Code does — so the plugin here provides the OpenL **skills** (Step 1), while
+the connection itself comes from a small entry you add to one settings file on your
+computer (Steps 2–5). That entry runs the very same OpenL server the plugin itself
+runs in Claude Code.
 
 ## What you need
 

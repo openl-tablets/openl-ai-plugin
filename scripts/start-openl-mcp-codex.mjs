@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { spawn } from "node:child_process";
+import { realpathSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve, win32 } from "node:path";
@@ -74,7 +75,14 @@ export async function terminateProcessTree(
       if (error?.code === "ESRCH") {
         return;
       }
-      child.kill(signal);
+      try {
+        child.kill(signal);
+      } catch (fallbackError) {
+        throw new AggregateError(
+          [error, fallbackError],
+          "Failed to terminate the openl-mcp process tree.",
+        );
+      }
       throw error;
     }
   }
@@ -208,7 +216,8 @@ async function main() {
   }
 }
 
-const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isMain = process.argv[1]
+  && realpathSync(resolve(process.argv[1])) === realpathSync(fileURLToPath(import.meta.url));
 if (isMain) {
   main().catch((error) => {
     console.error(`OpenL AI MCP startup failed: ${error?.message ?? String(error)}`);
