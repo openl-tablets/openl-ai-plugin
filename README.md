@@ -1,4 +1,4 @@
-# OpenL AI plugin for Claude Code and Codex
+# OpenL AI plugin for Claude and Codex
 
 Work with **OpenL Studio** by simply asking your AI assistant in plain language. This
 plugin connects **Claude Code**, the **Claude desktop app**, or **Codex** to OpenL
@@ -10,110 +10,39 @@ your behalf — no need to click through Studio screens or know where things liv
 - **Investigate** — "Where is the final premium discount actually computed?"
 - **Verify** — "Run the tests in this project and explain the failures."
 
-Setup takes about five minutes. If your organization has already set the plugin up
-for you, it's even less — skip straight to [Connect to OpenL Studio](#step-2--connect-to-openl-studio).
+## Set up — pick the tool you use
 
-> **Which tool do you use?** The steps below are for **Claude Code**. Other tools set
-> up differently:
->
-> - **Claude Code in a terminal or IDE** — follow the steps below as written.
-> - **The Claude desktop app's Code tab** — same plugin, but the `/plugin …` commands
->   don't run in the desktop chat. Run the Step 1 commands **once in a terminal**
->   (exact lines below) — your desktop Code sessions pick the plugin up automatically.
-> - **The Claude desktop app's Chat or Cowork tab** — a different (equally simple)
->   setup: follow the [Claude desktop / Cowork guide](docs/cowork-setup.md). The steps
->   below don't work there (the plugin's settings dialog is Claude Code-only) — the
->   guide installs this plugin for its skills and sets up the connection through a
->   settings file.
-> - **Codex (desktop or CLI)** — a different setup again: follow the
->   [Codex guide](docs/codex-setup.md).
+Each tool sets up differently, so start with the guide for yours. Setup takes five to
+ten minutes.
+
+| The tool you use | Setup guide |
+|---|---|
+| **Claude Code** — terminal, IDE extension, or the Claude desktop app's **Code** tab | [docs/claude-code-setup.md](docs/claude-code-setup.md) |
+| **Claude desktop app** — the **Chat** or **Cowork** tabs | [docs/cowork-setup.md](docs/cowork-setup.md) |
+| **Codex** — desktop app or CLI | [docs/codex-setup.md](docs/codex-setup.md) |
+
+Not sure which you have? If you type your requests into a **terminal window** or a
+panel inside your IDE, it's Claude Code. If you use the **Claude app** with a sidebar
+of conversations, it's the desktop app — and the tab you're in (Code, or Chat/Cowork)
+decides which of the first two guides to follow.
+
+**Already set up by your organization?** Go straight to the "Connect to OpenL Studio"
+step of your guide. Unless your Studio is single-user (no sign-in screen), you add
+your own personal access token there — it isn't something an administrator can hand
+out for you.
+
+**Upgrading from `openl-ai` 0.1.x?** Version 0.2.0 renames the plugin to `openl`:
+[docs/migrate-to-0.2.md](docs/migrate-to-0.2.md).
 
 ## What you need
 
-- **Claude Code** installed (terminal, IDE extension, or the desktop app's Code tab).
-- **Node.js 24 or newer** on the machine running Claude Code. Not sure if you have
-  it? Just continue — [Step 1](#step-1--install-the-plugin) explains how to check,
-  and it's easy to add later.
+- One of the tools above.
+- **Node.js 24 or newer** on your own computer (the OpenL connection runs locally).
+  Each setup guide explains how to check.
 - The **OpenL Studio address** — the web address you open in your browser to use
   OpenL Studio, for example `https://studio.example.com`.
-- Your usual OpenL Studio account.
-
-## Step 1 — Install the plugin
-
-> Skip this step if your organization already installed the plugin for you
-> (it shows up under `/plugin` in Claude Code).
-
-In a Claude Code session in the terminal, run:
-
-```text
-/plugin marketplace add openl-tablets/openl-ai-plugin
-/plugin install openl@openl-ai-plugin
-```
-
-Or, without entering a session (works for the desktop app's Code tab too — run these
-in a terminal once, then restart the desktop app):
-
-```bash
-claude plugin marketplace add openl-tablets/openl-ai-plugin
-claude plugin install openl@openl-ai-plugin
-```
-
-> **Upgrading from 0.1.x?** Version 0.2.0 renames the plugin from `openl-ai` to
-> `openl`. Current Claude Code versions migrate the installed plugin and its settings
-> automatically; older or centrally managed installations need an extra step. Follow
-> [Upgrade from `openl-ai` 0.1.x to `openl` 0.2.0](docs/migrate-to-0.2.md).
-
-When Claude Code asks for the plugin settings, fill in the **OpenL Studio address**.
-You can leave the **Personal Access Token** empty for now — [Step 2](#step-2--connect-to-openl-studio)
-walks you through adding it. You can change the settings any time with
-`/plugin configure openl@openl-ai-plugin`.
-
-> One technical prerequisite: the computer running Claude Code needs **Node.js 24 or
-> newer** installed. If you're not sure whether you have it, just continue — if the
-> OpenL tools don't appear later, see
-> [Troubleshooting](docs/troubleshooting.md#the-plugin-or-the-openl-tools-didnt-appear)
-> or ask your administrator.
-
-## Step 2 — Connect to OpenL Studio
-
-You connect by giving the plugin a **Personal Access Token** — a token you create in
-OpenL Studio's own screen. In Claude Code, run:
-
-```text
-/openl:connect
-```
-
-Claude checks your Studio and walks you through it:
-
-- **Multi-user Studio** — Claude asks you to create a token: open OpenL Studio in your
-  browser, go to **User → Personal Access Tokens**, create one (name it e.g. "Claude
-  Code"), then run `/plugin configure openl@openl-ai-plugin` and paste it into the
-  **Personal Access Token** field. The field is masked and the token is not shown to
-  Claude — never paste it into the chat.
-- **Single-user Studio** — "Your Studio does not require sign-in"; you're done, nothing
-  to add.
-
-Use the exact Studio address from the browser, including its scheme. Local copies
-may use `http://`; when a PAT is required, Claude warns that HTTP sends it without
-transport encryption. Prefer HTTPS outside local development.
-
-> **Desktop app's Code tab:** `/plugin configure` opens its dialog only in a terminal
-> session — run it there once (open a terminal, run `claude`, type the command). The
-> saved settings apply to your desktop Code sessions too.
-
-The token is stored securely (see the token setting in
-[Step 1](#step-1--install-the-plugin)) and lets Claude act as you in Studio.
-
-## Step 3 — Try it
-
-Start a **new Claude session** (the connection is picked up when a session starts),
-then ask:
-
-```text
-List the OpenL projects I can access.
-```
-
-If Claude shows your projects — setup is complete.
+- Your usual OpenL Studio account, and your office network or VPN if Studio is
+  internal.
 
 ## What to ask Claude
 
@@ -131,20 +60,17 @@ projects, tables, tests, tracing, and deployment.
 
 ## If something doesn't work
 
-| What you see | First thing to try |
-|---|---|
-| The OpenL tools or the plugin didn't appear | Start a new Claude session; then see [Troubleshooting](docs/troubleshooting.md#the-plugin-or-the-openl-tools-didnt-appear) |
-| "Unauthorized" or 401 errors | Your token is missing, expired, or revoked — create a fresh one in Studio (**User → Personal Access Tokens**), update it with `/plugin configure openl@openl-ai-plugin`, then start a new session |
-| "Cannot reach OpenL Studio" | Check the address and your VPN / office network connection |
-
-More symptoms and fixes: [docs/troubleshooting.md](docs/troubleshooting.md) —
-including what information to send your administrator if you're stuck.
+Start with the "If something doesn't work" section of your setup guide — the fixes
+differ per tool. For more symptoms and fixes, including what to send your
+administrator: [docs/troubleshooting.md](docs/troubleshooting.md).
 
 ## Documentation
 
-- [docs/cowork-setup.md](docs/cowork-setup.md) — using OpenL from the **Claude
-  desktop app / Cowork** (a different setup than the plugin below).
-- [docs/codex-setup.md](docs/codex-setup.md) — using OpenL from **Codex** (desktop or CLI).
+- [docs/claude-code-setup.md](docs/claude-code-setup.md) — setup for **Claude Code**
+  (terminal, IDE, or the desktop app's Code tab).
+- [docs/cowork-setup.md](docs/cowork-setup.md) — setup for the **Claude desktop app /
+  Cowork** (Chat and Cowork tabs).
+- [docs/codex-setup.md](docs/codex-setup.md) — setup for **Codex** (desktop or CLI).
 - [docs/migrate-to-0.2.md](docs/migrate-to-0.2.md) — one-time migration from
   the `openl-ai` 0.1.x plugin identity to `openl` 0.2.0.
 - [docs/troubleshooting.md](docs/troubleshooting.md) — symptom → fix, for everyone.
