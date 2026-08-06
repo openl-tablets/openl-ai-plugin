@@ -26,8 +26,10 @@ panel inside your IDE, it's Claude Code. If you use the **Claude app** with a si
 of conversations, it's the desktop app — and the tab you're in (Code, or Chat/Cowork)
 decides which of the first two guides to follow.
 
-**Already set up by your organization?** You still add your own access token — go to
-the "Connect to OpenL Studio" step of your guide.
+**Already set up by your organization?** Go straight to the "Connect to OpenL Studio"
+step of your guide. Unless your Studio is single-user (no sign-in screen), you add
+your own personal access token there — it isn't something an administrator can hand
+out for you.
 
 **Upgrading from `openl-ai` 0.1.x?** Version 0.2.0 renames the plugin to `openl`:
 [docs/migrate-to-0.2.md](docs/migrate-to-0.2.md).

@@ -127,9 +127,10 @@ For PAT setup, tell the user:
 > 4. At that Claude Code prompt, run `/plugin configure openl@openl-ai-plugin` and
 >    paste the token into the masked **Personal Access Token** field.
 
-For an `http://` address, add one plain warning before these steps: the local copy is
-supported, but the PAT is not encrypted in transit. Do not block the setup after the
-user chooses to use that Studio address.
+For an `http://` address, add one plain warning before these steps: the PAT is not
+encrypted in transit. Loopback addresses for local Studio copies are supported as they
+are; for any other HTTP address, recommend the HTTPS address instead. Do not block the
+setup after the user chooses to use that Studio address.
 
 If the user is in the Claude **desktop app's Code tab**, restate the caveat plainly:
 `/plugin configure` opens its dialog only in a terminal `claude` session, not in the
@@ -141,12 +142,17 @@ access.* A new session is required when tools already started with old settings.
 
 ### Claude Code sign-out and rotation
 
+Both flows edit the masked plugin setting, so repeat the terminal instruction here as
+well: the user opens a terminal, starts Claude Code with `claude`, and runs
+`/plugin configure openl@openl-ai-plugin` there — the dialog does not open in the
+desktop chat or the Code tab.
+
 - **Sign out:** revoke the PAT in Studio, clear the plugin's PAT field with
-  `/plugin configure openl@openl-ai-plugin`, and start a new session. Revoke any
-  older PATs created for Claude/OpenL MCP because old server versions may have cached
-  one after a direct CLI login.
-- **Rotate:** create a replacement PAT, update the masked plugin setting, start a new
-  session and verify, then revoke the old PAT.
+  `/plugin configure openl@openl-ai-plugin` in a terminal session, and start a new
+  session. Revoke any older PATs created for Claude/OpenL MCP because old server
+  versions may have cached one after a direct CLI login.
+- **Rotate:** create a replacement PAT, update the masked plugin setting the same way
+  (terminal session), start a new session and verify, then revoke the old PAT.
 
 ## Cowork setup
 

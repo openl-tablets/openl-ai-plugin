@@ -112,8 +112,11 @@ Windows relies on the user profile ACLs. The PAT is plaintext in that file.
 ### Plugin settings reference
 
 Settings are prompted at enable time and editable later with
-`/plugin configure openl@openl-ai-plugin` (or pre-filled headlessly with
-`claude plugin install … --config`, see above — both store values via the same path).
+`/plugin configure openl@openl-ai-plugin` — in an interactive Claude Code session
+started from a terminal; the dialog does not open in the desktop app's chat or Code
+tab, and the desktop app ships without the `claude` CLI, which users install
+separately. Values can also be pre-filled headlessly with
+`claude plugin install … --config` (see above — both store values via the same path).
 Each is injected into the MCP server process environment — the model itself never
 receives them directly.
 

@@ -11,12 +11,24 @@ extension, and the Claude desktop app's **Code** tab. Setup takes about five min
 > Claude Code session in a terminal — not in the desktop app's chat and not in the
 > Code tab. Before running any `/plugin …` line below: **open a terminal and start
 > Claude Code by running `claude`**, then type the command at its prompt. You do this
-> once; your IDE and desktop Code sessions pick the saved settings up automatically.
+> once; other Claude Code sessions **on the same computer** (terminal, IDE, desktop
+> Code tab) pick the saved settings up automatically.
+
+> **No `claude` command in your terminal?** The desktop app ships Claude Code itself
+> but not the terminal CLI — that is
+> [installed separately](https://code.claude.com/docs/en/quickstart#step-1-install-claude-code),
+> and you need it for the steps below. Installing the plugin can also be done from the
+> desktop app's UI (**+** next to the prompt box → **Plugins** → **Add plugin**), but
+> the plugin's settings dialog is a terminal-session feature, so the CLI is the
+> reliable path for both steps.
 
 ## What you need
 
 - **Claude Code** installed (terminal, IDE extension, or the desktop app's Code tab),
-  version 2.1.119 or later.
+  version 2.1.119 or later, plus the `claude` terminal command (see the callout
+  above).
+- A **Local** session — or an **SSH** session, with the caveats at the end of this
+  guide. Cloud and WSL sessions can't use this plugin.
 - **Node.js 24 or newer** on the machine running Claude Code. Not sure if you have
   it? Just continue — [Step 1](#step-1--install-the-plugin) explains how to check,
   and it's easy to add later.
@@ -48,8 +60,16 @@ terminal, then restart Claude Code (and the desktop app, if you use its Code tab
 
 ```bash
 claude plugin marketplace add openl-tablets/openl-ai-plugin
-claude plugin install openl@openl-ai-plugin
 ```
+
+```bash
+claude plugin install openl@openl-ai-plugin --config studio_base_url=https://studio.example.com
+```
+
+Replace the example address with your own. This form doesn't open the settings
+dialog, so pass the address with `--config` as shown — otherwise the plugin installs
+without a Studio address and you have to add it afterwards with
+`/plugin configure openl@openl-ai-plugin` in a terminal session.
 
 > **Upgrading from 0.1.x?** Version 0.2.0 renames the plugin from `openl-ai` to
 > `openl`. Current Claude Code versions migrate the installed plugin and its settings
@@ -58,8 +78,11 @@ claude plugin install openl@openl-ai-plugin
 
 When Claude Code asks for the plugin settings, fill in the **OpenL Studio address**.
 You can leave the **Personal Access Token** empty for now — [Step 2](#step-2--connect-to-openl-studio)
-walks you through adding it. You can change the settings any time by starting Claude
-Code in a terminal and running `/plugin configure openl@openl-ai-plugin`.
+walks you through adding it. As long as these settings are yours to edit (user,
+project, or local scope), you can change them any time by starting Claude Code in a
+terminal and running `/plugin configure openl@openl-ai-plugin`. If your organization
+supplies them through managed settings, Claude Code can't rewrite them — ask your
+administrator instead.
 
 > One technical prerequisite: the computer running Claude Code needs **Node.js 24 or
 > newer** installed. If you're not sure whether you have it, just continue — if the
@@ -106,6 +129,21 @@ List the OpenL projects I can access.
 ```
 
 If Claude shows your projects — setup is complete.
+
+## Remote sessions (SSH, cloud, WSL)
+
+Everything above assumes a **Local** session — Claude Code running on your own
+computer, where the plugin, Node.js, and the saved settings all live together. The
+desktop app's other session types differ:
+
+- **SSH** — Claude Code runs on the remote machine, so that machine needs Node.js 24+
+  and network access to Studio, and the plugin and its settings have to be installed
+  there. Repeat Steps 1–2 in a terminal **on the remote host**; the settings saved on
+  your laptop do not travel with the session.
+- **Cloud** sessions — the desktop plugin browser isn't available and plugins you
+  installed locally don't apply. A cloud session would also need to reach your Studio
+  from Anthropic's infrastructure, which internal deployments usually don't allow.
+- **WSL** sessions — plugins aren't available.
 
 ## Signing out and rotating the token
 
