@@ -26,10 +26,14 @@ panel inside your IDE, it's Claude Code. If you use the **Claude app** with a si
 of conversations, it's the desktop app — and the tab you're in (Code, or Chat/Cowork)
 decides which of the first two guides to follow.
 
-**Already set up by your organization?** Go straight to the "Connect to OpenL Studio"
-step of your guide. Unless your Studio is single-user (no sign-in screen), you add
-your own personal access token there — it isn't something an administrator can hand
-out for you.
+**Claude in the browser** (claude.ai, including cloud sessions) can't be connected:
+the OpenL connection runs on your own computer, and a browser session has no way to
+start it. Use one of the tools above instead.
+
+**Already set up by your organization?** Skip the install step and start at the step
+of your guide that creates your **access token** in OpenL Studio. Unless your Studio
+is single-user (no sign-in screen), that token is yours to create — it isn't something
+an administrator can hand out for you.
 
 **Upgrading from `openl-ai` 0.1.x?** Version 0.2.0 renames the plugin to `openl`:
 [docs/migrate-to-0.2.md](docs/migrate-to-0.2.md).
@@ -44,9 +48,9 @@ out for you.
 - Your usual OpenL Studio account, and your office network or VPN if Studio is
   internal.
 
-## What to ask Claude
+## What to ask
 
-Some examples of everyday analyst tasks:
+Some examples of everyday analyst tasks — they work the same in Claude and in Codex:
 
 - "List the OpenL projects I can access."
 - "Open the Rating project and show me its tables."
@@ -55,8 +59,8 @@ Some examples of everyday analyst tasks:
 - "Run the tests in the Rating project and give me a short summary of what failed and why."
 - "Compare the AutoPremium table with the version from the previous revision — what changed?"
 
-Claude picks the right OpenL operation automatically — there are 50+ of them, covering
-projects, tables, tests, tracing, and deployment.
+Your assistant picks the right OpenL operation automatically — there are 50+ of them,
+covering projects, tables, tests, tracing, and deployment.
 
 ## If something doesn't work
 
@@ -66,11 +70,9 @@ administrator: [docs/troubleshooting.md](docs/troubleshooting.md).
 
 ## Documentation
 
-- [docs/claude-code-setup.md](docs/claude-code-setup.md) — setup for **Claude Code**
-  (terminal, IDE, or the desktop app's Code tab).
-- [docs/cowork-setup.md](docs/cowork-setup.md) — setup for the **Claude desktop app /
-  Cowork** (Chat and Cowork tabs).
-- [docs/codex-setup.md](docs/codex-setup.md) — setup for **Codex** (desktop or CLI).
+- Setup guides, one per tool (the table above): [Claude
+  Code](docs/claude-code-setup.md), [Claude desktop app /
+  Cowork](docs/cowork-setup.md), [Codex](docs/codex-setup.md).
 - [docs/migrate-to-0.2.md](docs/migrate-to-0.2.md) — one-time migration from
   the `openl-ai` 0.1.x plugin identity to `openl` 0.2.0.
 - [docs/troubleshooting.md](docs/troubleshooting.md) — symptom → fix, for everyone.
