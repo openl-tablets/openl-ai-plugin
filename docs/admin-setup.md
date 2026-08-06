@@ -3,8 +3,10 @@
 This guide is for OpenL Studio administrators and IT staff who roll the plugin out to
 analysts. It covers supported versions, organization-wide installation, how
 authentication works for each Studio deployment type, and the security model. End
-users only need the [README](../README.md); when they hit problems, point them to
-[troubleshooting.md](troubleshooting.md).
+users only need the setup guide for their tool —
+[claude-code-setup.md](claude-code-setup.md), [cowork-setup.md](cowork-setup.md), or
+[codex-setup.md](codex-setup.md), all linked from the [README](../README.md); when
+they hit problems, point them to [troubleshooting.md](troubleshooting.md).
 
 Version 0.2.0 renames the installed plugin identity from `openl-ai` to `openl`.
 Claude Code 2.1.193+ automatically migrates editable installations through the
@@ -39,7 +41,8 @@ controlled rollout as described below.
 
 ## Installing for the organization
 
-Users can always self-install with the two commands from the README. For a managed
+Users can always self-install with the two commands from
+[claude-code-setup.md](claude-code-setup.md). For a managed
 rollout you have three options:
 
 1. **Pre-provision via settings** — add the marketplace and enable the plugin in a

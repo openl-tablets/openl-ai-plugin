@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Documentation: the README no longer walks through the Claude Code setup inline.
+  It now starts with a "pick the tool you use" table linking to one guide per tool,
+  so users of the Claude desktop app don't follow Claude Code steps by mistake. The
+  Claude Code steps moved to the new `docs/claude-code-setup.md`.
+- Every place that asks for a `/plugin …` command now states up front that it runs
+  only in a terminal Claude Code session — open a terminal and run `claude` first
+  (`docs/claude-code-setup.md`, `docs/troubleshooting.md`, the connect skill).
+
 ## [0.2.0] - 2026-07-30
 
 ### Added

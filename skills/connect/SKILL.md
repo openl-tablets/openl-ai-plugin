@@ -122,17 +122,19 @@ For PAT setup, tell the user:
 > 1. Open OpenL Studio in your browser and sign in as usual.
 > 2. Go to **User → Personal Access Tokens**, create a token (for example, named
 >    "Claude Code"), and copy it when Studio shows it.
-> 3. Run `/plugin configure openl@openl-ai-plugin` and paste it into the masked
->    **Personal Access Token** field.
+> 3. Open a terminal and start Claude Code there by running `claude` — the settings
+>    dialog opens only in a terminal session.
+> 4. At that Claude Code prompt, run `/plugin configure openl@openl-ai-plugin` and
+>    paste the token into the masked **Personal Access Token** field.
 
 For an `http://` address, add one plain warning before these steps: the local copy is
 supported, but the PAT is not encrypted in transit. Do not block the setup after the
 user chooses to use that Studio address.
 
-If the user is in the Claude **desktop app's Code tab**, add this caveat:
+If the user is in the Claude **desktop app's Code tab**, restate the caveat plainly:
 `/plugin configure` opens its dialog only in a terminal `claude` session, not in the
-desktop chat. Have them run it once in a terminal; the saved setting then applies to
-their desktop Code sessions.
+desktop chat or the Code tab. Have them run it once in a terminal; the saved setting
+then applies to their desktop Code sessions.
 
 Tell the user to start a new Claude session and ask: *List the OpenL projects I can
 access.* A new session is required when tools already started with old settings.
