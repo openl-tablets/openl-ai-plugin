@@ -122,29 +122,37 @@ For PAT setup, tell the user:
 > 1. Open OpenL Studio in your browser and sign in as usual.
 > 2. Go to **User → Personal Access Tokens**, create a token (for example, named
 >    "Claude Code"), and copy it when Studio shows it.
-> 3. Run `/plugin configure openl@openl-ai-plugin` and paste it into the masked
->    **Personal Access Token** field.
+> 3. Open a terminal and start Claude Code there by running `claude` — the settings
+>    dialog opens only in a terminal session.
+> 4. At that Claude Code prompt, run `/plugin configure openl@openl-ai-plugin` and
+>    paste the token into the masked **Personal Access Token** field.
 
-For an `http://` address, add one plain warning before these steps: the local copy is
-supported, but the PAT is not encrypted in transit. Do not block the setup after the
-user chooses to use that Studio address.
+For an `http://` address, add one plain warning before these steps: the PAT is not
+encrypted in transit. Loopback addresses for local Studio copies are supported as they
+are; for any other HTTP address, recommend the HTTPS address instead. Do not block the
+setup after the user chooses to use that Studio address.
 
-If the user is in the Claude **desktop app's Code tab**, add this caveat:
+If the user is in the Claude **desktop app's Code tab**, restate the caveat plainly:
 `/plugin configure` opens its dialog only in a terminal `claude` session, not in the
-desktop chat. Have them run it once in a terminal; the saved setting then applies to
-their desktop Code sessions.
+desktop chat or the Code tab. Have them run it once in a terminal; the saved setting
+then applies to their desktop Code sessions.
 
 Tell the user to start a new Claude session and ask: *List the OpenL projects I can
 access.* A new session is required when tools already started with old settings.
 
 ### Claude Code sign-out and rotation
 
+Both flows edit the masked plugin setting, so repeat the terminal instruction here as
+well: the user opens a terminal, starts Claude Code with `claude`, and runs
+`/plugin configure openl@openl-ai-plugin` there — the dialog does not open in the
+desktop chat or the Code tab.
+
 - **Sign out:** revoke the PAT in Studio, clear the plugin's PAT field with
-  `/plugin configure openl@openl-ai-plugin`, and start a new session. Revoke any
-  older PATs created for Claude/OpenL MCP because old server versions may have cached
-  one after a direct CLI login.
-- **Rotate:** create a replacement PAT, update the masked plugin setting, start a new
-  session and verify, then revoke the old PAT.
+  `/plugin configure openl@openl-ai-plugin` in a terminal session, and start a new
+  session. Revoke any older PATs created for Claude/OpenL MCP because old server
+  versions may have cached one after a direct CLI login.
+- **Rotate:** create a replacement PAT, update the masked plugin setting the same way
+  (terminal session), start a new session and verify, then revoke the old PAT.
 
 ## Cowork setup
 

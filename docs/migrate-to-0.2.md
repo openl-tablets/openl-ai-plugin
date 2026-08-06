@@ -4,14 +4,22 @@ Version 0.2.0 changes the plugin identity from `openl-ai` to `openl`. Follow eve
 section below for the clients you use. Prefer a separate PAT per client: revoking a
 token invalidates every configuration that shares it.
 
+> **The `/plugin …` commands below need a terminal.** They run in an interactive
+> Claude Code session started from a terminal — not in the Claude desktop app's chat
+> and not in its Code tab. Before running them: **open a terminal and run `claude`**,
+> then type the command at its prompt. If the terminal has no `claude` command, the
+> CLI is [installed separately](https://code.claude.com/docs/en/quickstart#step-1-install-claude-code)
+> from the desktop app. See [claude-code-setup.md](claude-code-setup.md) for the full
+> setup.
+
 ## Claude Code 2.1.193 or later
 
 The marketplace contains Claude Code's native rename map. It migrates editable
 user, project, and local `enabledPlugins` and `pluginConfigs` entries — including
 the saved Studio settings — from `openl-ai` to `openl`.
 
-1. If you use the Claude desktop app's **Code** tab, open a terminal Claude Code
-   session for these plugin commands.
+1. Open a terminal and start Claude Code with `claude` — the plugin commands run
+   there (see the callout above).
 2. Refresh the marketplace:
 
    ```text
@@ -30,6 +38,8 @@ create a new PAT when automatic migration succeeds. If the tools do not appear, 
 
 Update Claude Code to 2.1.193 or later if possible. Versions 2.1.119–2.1.192 ignore
 the rename map and need this manual fallback:
+
+Run this sequence in a terminal Claude Code session too.
 
 1. Create a replacement PAT in OpenL Studio (**User → Personal Access Tokens**)
    unless the Studio is single-user.

@@ -5,11 +5,18 @@ administrator. When you do contact the administrator, send the info listed in
 [What to send your administrator](#what-to-send-your-administrator) — and **never your
 access token**.
 
-> This page covers the **Claude Code plugin**. If you set OpenL up in the **Claude
+> This page covers the **Claude Code plugin** ([setup
+> guide](claude-code-setup.md)). If you set OpenL up in the **Claude
 > desktop app (Cowork)** via the settings file, use the troubleshooting table in
 > [cowork-setup.md](cowork-setup.md#if-something-doesnt-work) instead — the fixes
 > differ (settings file and app restart instead of `/plugin` commands). For Codex,
 > use the table in [codex-setup.md](codex-setup.md#if-something-doesnt-work).
+
+> **The `/plugin …` commands below need a terminal.** They work only in an
+> interactive Claude Code session started from a terminal — not in the desktop app's
+> chat and not in its Code tab. Before running one: **open a terminal, run `claude`**,
+> then type the command at its prompt. The settings you save there apply to your IDE
+> and desktop Code sessions too.
 
 ## The plugin or the OpenL tools didn't appear
 
