@@ -1,8 +1,8 @@
 # Use OpenL in the Claude desktop app (Cowork)
 
 This guide is for the **Chat and Cowork tabs** of the Claude desktop app. (For the
-**Code** tab or the Claude Code terminal, use the plugin install from the
-[README](../README.md) instead.) You'll connect Claude to OpenL Studio in about ten
+**Code** tab or the Claude Code terminal, use
+[claude-code-setup.md](claude-code-setup.md) instead.) You'll connect Claude to OpenL Studio in about ten
 minutes, and you don't need to be technical: every step tells you exactly what to
 click and what to paste.
 
@@ -10,7 +10,7 @@ click and what to paste.
 > and follow the [0.2.0 identity migration](migrate-to-0.2.md) in
 > **Customize → Plugins**.
 
-**Why is this different from the plugin install in the README?** In the Chat and
+**Why is this different from the Claude Code plugin install?** In the Chat and
 Cowork tabs the plugin can't ask you for its settings (like your token) the way
 Claude Code does — so the plugin here provides the OpenL **skills** (Step 1), while
 the connection itself comes from a small entry you add to one settings file on your
@@ -203,6 +203,6 @@ Claude's log file: `~/Library/Logs/Claude/mcp-server-openl.log` (macOS) or
 - The default configuration checks for a new `openl-mcp` version when Claude starts.
   If your organization requires controlled upgrades, use the exact-version option
   described in Step 4.
-- If you also use **Claude Code** (the terminal/IDE tool), use the plugin install
-  from the [README](../README.md) there — it has a proper masked settings field for
+- If you also use **Claude Code** (the terminal/IDE tool), use
+  [claude-code-setup.md](claude-code-setup.md) there — it has a proper masked settings field for
   the token. Both can coexist; they don't conflict.

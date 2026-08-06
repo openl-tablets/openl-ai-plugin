@@ -6,8 +6,9 @@ your token) are saved by a small bundled configurator that keeps your token out 
 chat and out of the process list.
 
 > **Which tool are you using?** This guide is for **Codex**. For **Claude Code**
-> (terminal/IDE) use the plugin flow in the [README](../README.md); for the **Claude
-> desktop app (Chat/Cowork)** use [cowork-setup.md](cowork-setup.md).
+> (terminal, IDE, or the desktop app's Code tab) use
+> [claude-code-setup.md](claude-code-setup.md); for the **Claude desktop app
+> (Chat/Cowork)** use [cowork-setup.md](cowork-setup.md).
 
 ## What you need
 
