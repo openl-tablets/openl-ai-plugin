@@ -167,6 +167,25 @@ Cowork tabs** of the desktop app, updates work differently again; see
 managed settings — refreshing, updating, and the auto-update flag are theirs to change
 then (see [admin-setup.md](admin-setup.md#installing-for-the-organization)).
 
+## Claude offers two trace skills or asks for unavailable debugger tools
+
+Before plugin 0.3.0, the trace workflow was distributed from the `openl-mcp` repository
+as a standalone `openl-trace-investigation` directory that users copied into their own
+Claude skills folder. Installing or updating the plugin cannot remove that user-owned
+copy. If it remains, Claude sees both the old standalone workflow and the plugin's
+`/openl:trace-investigation`; their descriptions match the same requests, but the old
+workflow targets debugger tools that the plugin's pinned `openl-mcp@1.1.0` does not
+expose.
+
+If you installed that old standalone skill, delete exactly this directory:
+
+- macOS/Linux: `~/.claude/skills/openl-trace-investigation`
+- Windows: `%USERPROFILE%\.claude\skills\openl-trace-investigation`
+
+Then start a new Claude session, or run `/reload-plugins` in Claude Code. Keep the
+plugin-managed `/openl:trace-investigation` skill; do not delete files from the plugin
+cache.
+
 ## What to send your administrator
 
 Include:

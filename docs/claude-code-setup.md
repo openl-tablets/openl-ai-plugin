@@ -76,6 +76,13 @@ without a Studio address and you have to add it afterwards with
 > automatically; older or centrally managed installations need an extra step. Follow
 > [Upgrade from `openl-ai` 0.1.x to `openl` 0.2.0](migrate-to-0.2.md).
 
+> **Previously installed the trace skill by hand?** After installing plugin 0.3.0,
+> delete `~/.claude/skills/openl-trace-investigation` (macOS/Linux) or
+> `%USERPROFILE%\.claude\skills\openl-trace-investigation` (Windows), then start a new
+> Claude session. The plugin cannot remove that user-owned copy, and keeping it leaves
+> the obsolete debugger-only workflow alongside `/openl:trace-investigation`. See
+> [Troubleshooting](troubleshooting.md#claude-offers-two-trace-skills-or-asks-for-unavailable-debugger-tools).
+
 When Claude Code asks for the plugin settings, fill in the **OpenL Studio address**.
 You can leave the **Personal Access Token** empty for now — [Step 2](#step-2--connect-to-openl-studio)
 walks you through adding it. As long as these settings are yours to edit (user,

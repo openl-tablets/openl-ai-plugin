@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `/openl:trace-investigation` skill, moved into the plugin from the `openl-mcp`
+- `openl:trace-investigation` skill, moved into the plugin from the `openl-mcp`
   repository (where per-user copying into `~/.claude/skills/` was the only delivery
   path). It investigates why a rule produced an unexpected result — root cause first,
   then the minimal fix, then trace evidence — with audience-aware depth and a root-cause
@@ -36,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Users who previously copied the standalone `openl-trace-investigation` skill into
+  `~/.claude/skills/` must remove that old directory after installing 0.3.0 (on Windows,
+  `%USERPROFILE%\.claude\skills\openl-trace-investigation`). Plugin updates cannot
+  remove user-owned skills; keeping both copies leaves two matching implicit workflows,
+  and the old one targets debugger tools that `openl-mcp@1.1.0` does not expose.
 - Documentation: the README no longer walks through the Claude Code setup inline.
   It now starts with a "pick the tool you use" table linking to one guide per tool,
   so users of the Claude desktop app don't follow Claude Code steps by mistake. The

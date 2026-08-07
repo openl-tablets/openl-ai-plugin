@@ -113,8 +113,9 @@ If Codex lists your projects — you're done.
 The plugin ships its skills to Codex through its own manifest, so they're available in
 every task: `openl:connect` (this setup, and repairing it later) and
 `openl:trace-investigation` — hand it a rule input and what you expected, and it traces
-the run, names the root cause, and proposes the minimal fix. Invoke a skill by name, or
-just describe the problem:
+the run, names the root cause, and proposes the minimal fix. To invoke one explicitly,
+type `$` and select `$openl:connect` or `$openl:trace-investigation`; `/skills` opens the
+skills picker too. Or just describe the problem:
 
 ```text
 Why does this policy come out with a premium of 0? Input: { … }

@@ -212,6 +212,12 @@ Codex cleanup.
 - Existing Claude Code 0.1.x users: refresh the marketplace; Claude Code 2.1.193+
   applies the rename automatically. Use the
   [identity migration](migrate-to-0.2.md) for older or managed installations.
+- Users who manually installed the old `openl-trace-investigation` skill from the
+  `openl-mcp` repository: after installing plugin 0.3.0, delete
+  `~/.claude/skills/openl-trace-investigation` (macOS/Linux) or
+  `%USERPROFILE%\.claude\skills\openl-trace-investigation` (Windows), then start a new
+  Claude session. Announce this explicitly; a plugin update cannot remove the user-owned
+  copy.
 - Later `openl` releases: `/plugin marketplace update openl-ai-plugin` then
   `/plugin update openl@openl-ai-plugin`.
 - Codex: `codex plugin marketplace upgrade openl-ai-plugin`, then remove and add

@@ -65,17 +65,32 @@ covering projects, tables, tests, tracing, and deployment.
 
 ## Skills
 
-Skills are guided workflows the plugin adds to your assistant. Type `/` to pick one, or
-just describe the problem — the assistant starts the matching skill by itself.
+Skills are guided workflows the plugin adds to your assistant. Pick one explicitly in
+your client, or just describe the problem — the assistant can start the matching skill
+by itself.
 
 | Skill | What it does |
 |---|---|
-| `/openl:connect` | Sets up (or repairs) the connection to OpenL Studio — it is part of the setup guide for your tool (the table above). |
-| `/openl:trace-investigation` | Finds out why a rule returned an unexpected result: traces the run, names the root cause, and proposes the minimal fix. Give it the input payload and what you expected. |
+| `openl:connect` | Sets up (or repairs) the connection to OpenL Studio — it is part of the setup guide for your tool (the table above). |
+| `openl:trace-investigation` | Finds out why a rule returned an unexpected result: traces the run, names the root cause, and proposes the minimal fix. Give it the input payload and what you expected. |
 
-Both work the same way in Claude Code, in the desktop app's Chat/Cowork tabs, and in
-Codex; the trace skill needs a connected Studio and uses whichever trace tools the
-configured OpenL MCP server exposes.
+To start one explicitly:
+
+- **Claude Code or the Claude desktop app's Chat/Cowork tabs:** type
+  `/openl:connect` or `/openl:trace-investigation`.
+- **Codex:** type `$` and select `$openl:connect` or
+  `$openl:trace-investigation`; `/skills` opens the skills picker too.
+
+Once selected, both workflows behave the same across clients. The trace skill needs a
+connected Studio and uses whichever trace tools the configured OpenL MCP server exposes.
+
+> **Upgrading the old manually installed trace skill?** After installing plugin 0.3.0,
+> delete `~/.claude/skills/openl-trace-investigation` (macOS/Linux) or
+> `%USERPROFILE%\.claude\skills\openl-trace-investigation` (Windows), then start a new
+> Claude session (or run `/reload-plugins` in Claude Code). Plugin updates cannot remove
+> that user-owned copy, and leaving it in place gives Claude two competing trace
+> workflows; the old one targets trace tools that the plugin's pinned server does not
+> expose.
 
 ## If something doesn't work
 
