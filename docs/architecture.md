@@ -39,7 +39,8 @@ openl-ai-plugin/
 │   ├── configure-codex.mjs         # interactive, no-echo PAT/address setup
 │   └── codex-config.mjs            # shared config read/write + Studio probe helpers
 ├── skills/
-│   └── connect/SKILL.md     # /openl:connect → guided Personal Access Token setup
+│   ├── connect/SKILL.md     # /openl:connect → guided Personal Access Token setup
+│   └── trace-investigation/SKILL.md  # /openl:trace-investigation → root-cause a rule result
 ├── tests/                   # node --test suite (manifests, config, launcher)
 ├── .github/workflows/       # CI: runs the test suite
 ├── package.json             # test runner + Node engines
@@ -128,6 +129,36 @@ server via `npx -y -p openl-mcp@X.Y.Z openl-mcp`.
   anonymously instead of sending an empty credential and getting HTTP 401.
 - `${CLAUDE_PLUGIN_ROOT}` is **ephemeral** (changes on update) — never cache credentials or state
   there.
+
+## Skills: one directory, both clients
+
+`skills/` is the single source for every client — no per-client copy, and nothing to
+register per skill:
+
+- **Claude Code** discovers `skills/*/SKILL.md` automatically; `plugin.json` carries no
+  `skills` field. The directory name is the invocation name inside the plugin
+  namespace: `skills/trace-investigation/` → `/openl:trace-investigation`. Keep the
+  frontmatter `name` equal to the directory name.
+- **Codex** reads the directory from its own manifest (`.codex-plugin/plugin.json` →
+  `"skills": "./skills/"`), so a new sub-directory ships with no manifest change.
+- **Claude desktop Chat/Cowork** loads the same plugin skills; only the plugin's
+  settings dialog is missing there (see [cowork-setup.md](cowork-setup.md)).
+
+Consequences for skill content:
+
+- **Never assume a client.** `connect` branches per client explicitly, because setup
+  differs (`/plugin configure` vs the Codex configurator vs
+  `claude_desktop_config.json`).
+- **Never assume a tool surface.** A skill ships with the plugin, but the tools come
+  from whatever `openl-mcp` version is configured — the pin in `.mcp.json` for Claude
+  Code and in `scripts/start-openl-mcp-codex.mjs` for Codex, or a user-managed version
+  in the desktop/Cowork config. `trace-investigation` therefore checks which trace
+  tools exist and follows one of two paths: the tree-trace tools of the pinned
+  `openl-mcp@1.1.0` (`openl_start_trace` → `openl_get_trace_nodes` →
+  `openl_get_trace_node_details`), or the interactive debugger of a newer server
+  (`openl_step_trace`, `openl_watch_trace_cells`, `openl_inspect_trace_frame`, …).
+  When the pin moves to a release that carries the debugger, that path becomes the
+  primary one and the tree-trace path can be dropped.
 
 ## Authentication design
 

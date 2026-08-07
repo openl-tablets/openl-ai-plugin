@@ -86,8 +86,23 @@ Studio address and PAT. Start a new Codex task and verify the connection.
 ## Claude desktop app / Cowork
 
 The `openl` MCP entry and PAT in `claude_desktop_config.json` are independent of the
-plugin identity and do not change. In **Customize → Plugins**, update the
-`openl-ai-plugin` marketplace. If **openl-ai** remains installed, uninstall it and
-install **openl**, then start a new conversation.
+plugin identity and do not change. Only the skills plugin in **Customize → Plugins**
+needs work — and the plugin's **Update** button will not do it. The app compares the
+installed `openl-ai` against your account's copy of the marketplace, and 0.2.0 no
+longer contains a plugin under that name, so the button stays inactive however often
+you refresh. Replace the plugin instead:
 
-The skill is now `/openl:connect`.
+1. Open **Customize → Plugins** and select the OpenL plugin (**Openl ai**, 0.1.x).
+2. Open its marketplace — the `openl-ai-plugin` link next to **Source** — and use its
+   refresh (sync) action, so your account's copy contains 0.2.0. If your version of
+   the app doesn't offer one, remove the marketplace and add
+   `openl-tablets/openl-ai-plugin` again.
+3. Install **openl** from that marketplace.
+4. Uninstall **openl-ai**.
+5. Start a new conversation, type `/` and confirm `openl:connect` is listed.
+
+The skill is now `/openl:connect`. The connection keeps working throughout, because it
+lives in `claude_desktop_config.json` rather than in the plugin — there is no PAT to
+rotate for this step. See
+[Keeping OpenL up to date](cowork-setup.md#keeping-openl-up-to-date) for how updates
+reach this surface in general.

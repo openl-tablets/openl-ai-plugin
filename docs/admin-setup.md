@@ -49,7 +49,8 @@ rollout you have three options:
    {
      "extraKnownMarketplaces": {
        "openl-ai-plugin": {
-         "source": { "source": "github", "repo": "openl-tablets/openl-ai-plugin" }
+         "source": { "source": "github", "repo": "openl-tablets/openl-ai-plugin" },
+         "autoUpdate": true
        }
      },
      "enabledPlugins": { "openl@openl-ai-plugin": true }
@@ -58,6 +59,17 @@ rollout you have three options:
 
    To lock down which marketplaces users may add, use `strictKnownMarketplaces` in
    managed settings.
+
+   **`autoUpdate` is what makes deployed installations follow new releases.** Claude
+   Code refreshes a marketplace on startup by default only for the marketplaces
+   Anthropic ships; for a third-party one like this, without the flag nothing happens
+   until a user runs `/plugin marketplace update openl-ai-plugin`, and an installation
+   can sit on an old version indefinitely. Omit it (or set `false`) when releases must
+   pass your own validation first — then plan to push updates yourself. Two caveats:
+   the setting scope that defines `autoUpdate` becomes its owner (users can't toggle it
+   from a scope they can't edit), and it has no effect inside the Claude **desktop
+   app**, which starts its bundled Claude Code with the auto-updater switched off
+   (checked through Claude Code 2.1.219).
 
 2. **Scripted install** — the CLI works headlessly and can pre-fill the Studio address:
 
@@ -193,6 +205,16 @@ entry under `mcpServers` — the analyst-facing walkthrough is
   its skills (e.g. `/openl:connect`) load in Chat/Cowork sessions, while the
   plugin's own settings dialog does not exist there — the connection stays with the
   `claude_desktop_config.json` entry.
+- **Plugin updates on this surface are manual, and on a separate track.** The app
+  matches the installed plugin against an **account-scoped copy** of the marketplace
+  that Claude synced from GitHub — not against the repository itself — and enables
+  **Update** only when that copy holds a different version. A published release is
+  therefore invisible until the marketplace is refreshed from **Customize → Plugins**
+  (or removed and re-added). Put that step into release communications; `autoUpdate` in
+  Claude Code settings does not cover it. Expect **Update** to stay permanently
+  inactive for the pre-0.2.0 `openl-ai` name, which has to be replaced by `openl` —
+  see [cowork-setup.md](cowork-setup.md#keeping-openl-up-to-date) and
+  [migrate-to-0.2.md](migrate-to-0.2.md#claude-desktop-app--cowork).
 - **Logs** for support cases: `~/Library/Logs/Claude/mcp-server-openl.log` (macOS) /
   `%APPDATA%\Claude\logs\mcp-server-openl.log` (Windows).
 
@@ -233,5 +255,8 @@ A rollout note can be as short as:
 > `/openl:connect`; Claude will help you create a Personal Access Token in Studio
 > and add it to the plugin. Then start a new Claude session and ask: "List the OpenL
 > projects I can access."
+> When a rule returns something unexpected, run `/openl:trace-investigation` (or just
+> describe the problem and paste the input) — it traces the run and reports the root
+> cause with a proposed fix; it never changes a project without your confirmation.
 > If anything fails, see the plugin's troubleshooting page, or send me the error text
 > (never send your access token).

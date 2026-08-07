@@ -125,9 +125,24 @@ Some examples of everyday analyst tasks:
 - "Where in this project is the final premium calculated? Walk me through the steps."
 - "Run the tests in the Rating project and give me a short summary of what failed and why."
 - "Compare the AutoPremium table with the version from the previous revision — what changed?"
+- "Why did this policy get a premium of 0? Here's the input JSON."
 
 Claude picks the right OpenL operation automatically — there are 50+ of them, covering
 projects, tables, tests, tracing, and deployment.
+
+## Skills
+
+Skills are guided workflows the plugin adds to your assistant. Type `/` to pick one, or
+just describe the problem — the assistant starts the matching skill by itself.
+
+| Skill | What it does |
+|---|---|
+| `/openl:connect` | Sets up (or repairs) the connection to OpenL Studio — see [Step 2](#step-2--connect-to-openl-studio). |
+| `/openl:trace-investigation` | Finds out why a rule returned an unexpected result: traces the run, names the root cause, and proposes the minimal fix. Give it the input payload and what you expected. |
+
+Both work the same way in Claude Code, in the desktop app's Chat/Cowork tabs, and in
+Codex; the trace skill needs a connected Studio and uses whichever trace tools the
+configured OpenL MCP server exposes.
 
 ## If something doesn't work
 
@@ -136,6 +151,7 @@ projects, tables, tests, tracing, and deployment.
 | The OpenL tools or the plugin didn't appear | Start a new Claude session; then see [Troubleshooting](docs/troubleshooting.md#the-plugin-or-the-openl-tools-didnt-appear) |
 | "Unauthorized" or 401 errors | Your token is missing, expired, or revoked — create a fresh one in Studio (**User → Personal Access Tokens**), update it with `/plugin configure openl@openl-ai-plugin`, then start a new session |
 | "Cannot reach OpenL Studio" | Check the address and your VPN / office network connection |
+| A new plugin version is out, but you still have the old one | Updates from this marketplace aren't automatic: run `/plugin marketplace update openl-ai-plugin`, then `/plugin update openl@openl-ai-plugin` — details in [Troubleshooting](docs/troubleshooting.md#the-plugin-stays-on-an-old-version) |
 
 More symptoms and fixes: [docs/troubleshooting.md](docs/troubleshooting.md) —
 including what information to send your administrator if you're stuck.
