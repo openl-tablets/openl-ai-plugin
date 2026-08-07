@@ -58,15 +58,34 @@ Some examples of everyday analyst tasks — they work the same in Claude and in 
 - "Where in this project is the final premium calculated? Walk me through the steps."
 - "Run the tests in the Rating project and give me a short summary of what failed and why."
 - "Compare the AutoPremium table with the version from the previous revision — what changed?"
+- "Why did this policy get a premium of 0? Here's the input JSON."
 
 Your assistant picks the right OpenL operation automatically — there are 50+ of them,
 covering projects, tables, tests, tracing, and deployment.
+
+## Skills
+
+Skills are guided workflows the plugin adds to your assistant. Type `/` to pick one, or
+just describe the problem — the assistant starts the matching skill by itself.
+
+| Skill | What it does |
+|---|---|
+| `/openl:connect` | Sets up (or repairs) the connection to OpenL Studio — it is part of the setup guide for your tool (the table above). |
+| `/openl:trace-investigation` | Finds out why a rule returned an unexpected result: traces the run, names the root cause, and proposes the minimal fix. Give it the input payload and what you expected. |
+
+Both work the same way in Claude Code, in the desktop app's Chat/Cowork tabs, and in
+Codex; the trace skill needs a connected Studio and uses whichever trace tools the
+configured OpenL MCP server exposes.
 
 ## If something doesn't work
 
 Start with the "If something doesn't work" section of your setup guide — the fixes
 differ per tool. For more symptoms and fixes, including what to send your
 administrator: [docs/troubleshooting.md](docs/troubleshooting.md).
+
+Still on an old plugin version after a release? That is expected — updates from this
+marketplace are not automatic. See
+[The plugin stays on an old version](docs/troubleshooting.md#the-plugin-stays-on-an-old-version).
 
 ## Documentation
 

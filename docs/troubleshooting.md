@@ -105,6 +105,68 @@ timeouts.
 **Contact your administrator when:** you're on the VPN, the browser opens Studio, the
 addresses match — and Claude still can't reach it.
 
+## The plugin stays on an old version
+
+A new plugin release exists, but Claude Code keeps loading the old one — or it never
+offers an update in the first place.
+
+Updates from this marketplace are **not** automatic. Claude Code refreshes and
+auto-updates only the marketplaces it ships with; this one is refreshed when someone
+asks for it. In a session:
+
+```text
+/plugin marketplace update openl-ai-plugin
+/plugin update openl@openl-ai-plugin
+```
+
+Then start a new session. The same two steps in a terminal, without entering a
+session:
+
+```bash
+claude plugin marketplace update openl-ai-plugin
+```
+
+```bash
+claude plugin update openl@openl-ai-plugin
+```
+
+### Making it automatic
+
+You can switch this marketplace to auto-update yourself — you don't need an
+administrator for it. In a terminal Claude Code session, run `/plugin`, open
+**Marketplaces**, select `openl-ai-plugin`, and use its **Enable auto-update** action.
+From then on Claude Code refreshes this marketplace and updates the plugin on startup.
+
+Two caveats:
+
+- The update runs in the background and applies to the **next** session, not the one
+  you are in: your current session keeps the version it started with until you restart.
+- The toggle is only available when the marketplace was added in a settings scope you
+  can edit. If your organization declared it in managed settings, that scope owns the
+  flag and only an administrator can change it (see
+  [admin-setup.md](admin-setup.md#installing-for-the-organization)).
+
+### Before you go hunting for a bug
+
+- **Nothing is offered until the marketplace is refreshed.** Claude Code compares your
+  installed plugin against its local copy of the marketplace, so a release it has not
+  fetched yet simply doesn't exist as far as it's concerned — no update prompt, no new
+  version number.
+- **In the desktop app's Code tab, automatic plugin updates never run at all.** The app
+  manages its own bundled Claude Code and starts it with the auto-updater switched off
+  (checked through Claude Code 2.1.222), so neither the toggle above nor an `autoUpdate`
+  setting has any effect there. Run the two commands above in a terminal instead; the
+  result applies to your desktop Code sessions too.
+
+If your plugin is still the pre-0.2.0 `openl-ai`, it will never receive updates under
+that name — follow [the identity migration](migrate-to-0.2.md). For the **Chat and
+Cowork tabs** of the desktop app, updates work differently again; see
+[Keeping OpenL up to date](cowork-setup.md#keeping-openl-up-to-date).
+
+**Contact your administrator when:** your organization pre-installed the plugin through
+managed settings — refreshing, updating, and the auto-update flag are theirs to change
+then (see [admin-setup.md](admin-setup.md#installing-for-the-organization)).
+
 ## What to send your administrator
 
 Include:

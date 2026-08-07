@@ -76,11 +76,42 @@ test("Claude and Codex pin the same openl-mcp version", async () => {
   );
 });
 
+async function skillDirectories() {
+  const entries = await readdir("skills", { withFileTypes: true });
+  return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+}
+
+// Both clients take the whole skills/ directory — Claude Code by auto-discovery, Codex
+// through its manifest — and Claude Code derives the invocation name (/openl:<dir>)
+// from the directory while the frontmatter carries its own name. A mismatch, or a
+// missing description, ships a skill that cannot be invoked or never triggers.
+test("every skill is discoverable by both clients", async () => {
+  const claude = await readJson(".claude-plugin/plugin.json");
+  assert.equal(claude.skills, undefined, "Claude Code auto-discovers skills/; keep the field unset");
+  const codex = await readJson(".codex-plugin/plugin.json");
+  assert.equal(codex.skills, "./skills/");
+
+  const skills = await skillDirectories();
+  assert.deepEqual([...skills].sort(), ["connect", "trace-investigation"]);
+  for (const skill of skills) {
+    // Normalize line endings: a Windows checkout delivers CRLF, which the
+    // line-anchored frontmatter patterns below would otherwise miss.
+    const markdown = (await readFile(join("skills", skill, "SKILL.md"), "utf8")).replaceAll("\r\n", "\n");
+    const frontmatter = markdown.match(/^---\n([\s\S]*?)\n---\n/u);
+    assert.ok(frontmatter, `skills/${skill}/SKILL.md must open with YAML frontmatter`);
+    const name = frontmatter[1].match(/^name:\s*(\S+)\s*$/mu);
+    assert.ok(name, `skills/${skill}/SKILL.md must declare a name`);
+    assert.equal(name[1], skill, `skills/${skill}/SKILL.md name must match its directory`);
+    assert.match(frontmatter[1], /^description:/mu, `skills/${skill}/SKILL.md must declare a description`);
+  }
+});
+
 test("local Markdown links resolve", async () => {
   const markdownFiles = [
     "README.md",
     "CHANGELOG.md",
     ...(await readdir("docs")).filter((name) => name.endsWith(".md")).map((name) => join("docs", name)),
+    ...(await skillDirectories()).map((skill) => join("skills", skill, "SKILL.md")),
   ];
   for (const file of markdownFiles) {
     const markdown = await readFile(file, "utf8");

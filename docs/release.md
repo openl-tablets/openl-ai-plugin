@@ -133,6 +133,20 @@ CLI equivalents (terminal): `claude plugin marketplace add|list|update|remove`,
 `--config KEY=VALUE` to pre-fill `userConfig` options headlessly (useful for scripted
 rollouts — see [admin-setup.md](admin-setup.md)).
 
+**Neither update step happens on its own.** Startup marketplace refresh is on by
+default only for the marketplaces Anthropic ships, so a published `openl` release
+reaches an existing installation when a user refreshes this marketplace — or when the
+marketplace has auto-update on, either from distributed settings
+([admin-setup.md](admin-setup.md#installing-for-the-organization)) or from the
+per-marketplace toggle a user can flip in `/plugin` when the declaring scope is editable
+([troubleshooting.md](troubleshooting.md#the-plugin-stays-on-an-old-version)). Such an
+update lands in the user's next session, not the running one. Inside the Claude
+desktop app the plugin auto-updater is switched off entirely (checked through Claude
+Code 2.1.222), and its Chat/Cowork installations follow an account-scoped copy of the
+marketplace that the user syncs from the app
+([cowork-setup.md](cowork-setup.md#keeping-openl-up-to-date)). Plan release
+communications around this: pushing a tag does not move anybody's installation.
+
 Validate before publishing:
 
 ```bash
@@ -203,6 +217,14 @@ Codex cleanup.
 - Codex: `codex plugin marketplace upgrade openl-ai-plugin`, then remove and add
   `openl@openl-ai-plugin` again. The Codex connection config stays outside the
   plugin cache; start a new task after reinstalling.
+- Claude desktop app, **Chat/Cowork** installations: the release is invisible to them
+  until they refresh the `openl-ai-plugin` marketplace in **Customize → Plugins**; the
+  plugin's **Update** button stays inactive until their account's copy of the
+  marketplace has been synced. Say so explicitly in the announcement — see
+  [cowork-setup.md](cowork-setup.md#keeping-openl-up-to-date).
+- Anyone whose settings carry `autoUpdate: true` for this marketplace gets it on the
+  next Claude Code startup, except inside the desktop app. Everyone else needs the
+  commands above, so an announcement is part of the release, not an optional extra.
 
 ---
 

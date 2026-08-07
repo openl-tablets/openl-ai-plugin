@@ -108,6 +108,18 @@ List the OpenL projects I can access.
 
 If Codex lists your projects — you're done.
 
+### The skills you now have
+
+The plugin ships its skills to Codex through its own manifest, so they're available in
+every task: `openl:connect` (this setup, and repairing it later) and
+`openl:trace-investigation` — hand it a rule input and what you expected, and it traces
+the run, names the root cause, and proposes the minimal fix. Invoke a skill by name, or
+just describe the problem:
+
+```text
+Why does this policy come out with a premium of 0? Input: { … }
+```
+
 ## Signing out and rotating the token
 
 - **Sign out:** revoke the token in OpenL Studio (**User → Personal Access Tokens**) —
