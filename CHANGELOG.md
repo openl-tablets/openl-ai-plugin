@@ -5,10 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] - 2026-08-07
+
+### Added
+
+- `openl:trace-investigation` skill, moved into the plugin from the `openl-mcp`
+  repository (where per-user copying into `~/.claude/skills/` was the only delivery
+  path). It investigates why a rule produced an unexpected result — root cause first,
+  then the minimal fix, then trace evidence — with audience-aware depth and a root-cause
+  taxonomy. Because a skill ships with the plugin while the tools come from the
+  configured server, its trace phase checks the tool surface and follows one of two
+  paths: the tree-trace tools of the pinned `openl-mcp@1.1.0`
+  (`openl_start_trace` → `openl_get_trace_nodes` → `openl_get_trace_node_details`,
+  lazy values via `openl_get_trace_parameter`), or the interactive debugger of a newer
+  server (`openl_step_trace`, `openl_watch_trace_cells`, `openl_inspect_trace_frame`,
+  profiling hotspots, `@N` breakpoints). Both Claude Code and Codex pick the skill up
+  from `skills/` with no manifest change. The skill treats a trace as evidence that can
+  carry personal data (a full text export is opt-in, not the default), treats the
+  profiling overview as a top-N sample rather than proof, and never saves a project
+  without checking what else is pending in its working copy.
+- Update guidance for every surface, documenting that releases do not reach installations
+  by themselves: a "Keeping OpenL up to date" section in the Claude desktop app / Cowork
+  guide (why the plugin's **Update** button stays greyed out until the marketplace is
+  refreshed, and why it never activates for the pre-0.2.0 `openl-ai` name), a matching
+  "The plugin stays on an old version" section in the troubleshooting guide — including
+  the per-marketplace auto-update toggle users can flip themselves — explicit
+  desktop/Cowork replacement steps in the 0.2.0 migration guide, the `autoUpdate`
+  marketplace flag with its scope and desktop-app limits in the administrator guide, and
+  release-communication notes in the release guide.
 
 ### Changed
 
+- Users who previously copied the standalone `openl-trace-investigation` skill into
+  `~/.claude/skills/` must remove that old directory after installing 0.3.0 (on Windows,
+  `%USERPROFILE%\.claude\skills\openl-trace-investigation`). Plugin updates cannot
+  remove user-owned skills; keeping both copies leaves two matching implicit workflows,
+  and the old one targets debugger tools that `openl-mcp@1.1.0` does not expose.
 - Documentation: the README no longer walks through the Claude Code setup inline.
   It now starts with a "pick the tool you use" table linking to one guide per tool,
   so users of the Claude desktop app don't follow Claude Code steps by mistake. The
