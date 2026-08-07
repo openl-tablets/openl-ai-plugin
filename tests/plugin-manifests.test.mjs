@@ -102,7 +102,11 @@ test("every skill is discoverable by both clients", async () => {
     const name = frontmatter[1].match(/^name:\s*(\S+)\s*$/mu);
     assert.ok(name, `skills/${skill}/SKILL.md must declare a name`);
     assert.equal(name[1], skill, `skills/${skill}/SKILL.md name must match its directory`);
-    assert.match(frontmatter[1], /^description:/mu, `skills/${skill}/SKILL.md must declare a description`);
+    assert.match(
+      frontmatter[1],
+      /^description:[^\S\r\n]*\S.*$/mu,
+      `skills/${skill}/SKILL.md must declare a non-empty description`,
+    );
   }
 });
 

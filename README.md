@@ -81,8 +81,9 @@ To start one explicitly:
 - **Codex:** type `$` and select `$openl:connect` or
   `$openl:trace-investigation`; `/skills` opens the skills picker too.
 
-Once selected, both workflows behave the same across clients. The trace skill needs a
-connected Studio and uses whichever trace tools the configured OpenL MCP server exposes.
+The trace workflow behaves the same across clients: it needs a connected Studio and
+uses whichever trace tools the configured OpenL MCP server exposes. The `connect`
+workflow instead adapts its setup steps to Claude Code, Codex, or Claude desktop/Cowork.
 
 > **Upgrading the old manually installed trace skill?** After installing plugin 0.3.0,
 > delete `~/.claude/skills/openl-trace-investigation` (macOS/Linux) or
@@ -98,8 +99,9 @@ Start with the "If something doesn't work" section of your setup guide — the f
 differ per tool. For more symptoms and fixes, including what to send your
 administrator: [docs/troubleshooting.md](docs/troubleshooting.md).
 
-Still on an old plugin version after a release? That is expected — updates from this
-marketplace are not automatic. See
+Still on an old plugin version after a release? By default, updates from this marketplace
+are manual. Claude Code users can enable auto-update for a marketplace they control, and
+an administrator may manage it centrally; desktop Chat/Cowork updates remain manual. See
 [The plugin stays on an old version](docs/troubleshooting.md#the-plugin-stays-on-an-old-version).
 
 ## Documentation
