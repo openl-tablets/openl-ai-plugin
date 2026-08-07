@@ -32,7 +32,9 @@ runs in Claude Code.
 ## Step 1 — Add the OpenL plugin
 
 The plugin gives Claude the OpenL **skills** — ready-made helpers you call by typing
-`/` in the chat, such as `/openl:connect`, with more to come in plugin updates.
+`/` in the chat: `/openl:connect` (this setup) and `/openl:trace-investigation` (find
+out why a rule returned an unexpected result), with more to come in plugin updates.
+You can also just describe the problem — Claude starts the matching skill itself.
 
 1. In the desktop app's sidebar, click **Customize**, then open **Plugins**.
 2. Add the plugin's source as a marketplace: `openl-tablets/openl-ai-plugin`
@@ -175,6 +177,47 @@ List the OpenL projects I can access.
 
 If Claude lists your projects — you're done.
 
+## Keeping OpenL up to date
+
+Two independent parts can receive updates, and they behave differently:
+
+- **The OpenL server** (Steps 2–5). The example command checks for a newer
+  `openl-mcp` release every time Claude starts, so quitting and restarting Claude is
+  all it takes. An exact pinned version never moves on its own — see Step 4.
+- **The plugin with the skills** (Step 1). It **never updates itself** in the desktop
+  app. A new version arrives only when you ask for it, in two moves: refresh the
+  marketplace, then update the plugin.
+
+### Why the Update button is often greyed out
+
+**Customize → Plugins** compares your installed plugin against **your account's copy
+of the marketplace** — a snapshot Claude synced from the plugin's GitHub repository
+when the marketplace was added. The app doesn't check GitHub by itself, so a release
+published later is invisible to it: the version stays as it was, **Last updated**
+keeps showing the old date, and **Update** stays inactive because, as far as the app
+can tell, nothing newer exists.
+
+So refresh the marketplace first:
+
+1. Open **Customize → Plugins** and select the OpenL plugin.
+2. Open its marketplace — the `openl-ai-plugin` link next to **Source**.
+3. Use the marketplace's refresh (sync) action. If your version of the app doesn't
+   offer one, remove the marketplace and add `openl-tablets/openl-ai-plugin` again —
+   that always fetches a fresh copy.
+4. Back on the plugin, **Update** becomes available when the refreshed copy is newer
+   than what you have installed.
+
+Your connection is unaffected either way: the `claude_desktop_config.json` entry,
+the Studio address, and your token don't change when the plugin updates.
+
+### One case where Update never activates
+
+If your plugin is still called **openl-ai** (version 0.1.x), no amount of refreshing
+will light up its **Update** button. Version 0.2.0 renamed the plugin to **openl**,
+and a button that compares `openl-ai` against a marketplace that no longer contains
+that name has nothing to offer. Install **openl** and remove **openl-ai** instead —
+[the migration guide](migrate-to-0.2.md#claude-desktop-app--cowork) has the steps.
+
 ## If something doesn't work
 
 | What you see | What to do |
@@ -184,6 +227,7 @@ If Claude lists your projects — you're done.
 | "Cannot reach OpenL Studio" / timeouts | Check you're on the office network or VPN, and that the address in the file is exactly the one that works in your browser, including its `http://` or `https://` scheme. |
 | Worked in a desktop Cowork session, but not on claude.ai in the browser | Expected: this setup works only in the **desktop app**. The web version of Claude can't run it. |
 | Can't find **Customize → Plugins** (Step 1) | Update the Claude desktop app to the latest version — or skip Step 1 for now: the connection (Steps 2–6) works without the plugin. |
+| The plugin sits on an old version, and **Update** is greyed out | The app only knows the marketplace copy it synced earlier, so refresh the marketplace first — see [Keeping OpenL up to date](#keeping-openl-up-to-date). For a plugin still named **openl-ai**, **Update** never activates at all: install **openl** instead ([migration guide](migrate-to-0.2.md#claude-desktop-app--cowork)). |
 
 Still stuck? Send your administrator the error text, your Studio address, and the
 output of `node --version` — **never your token**. Administrators can also check
@@ -203,6 +247,10 @@ Claude's log file: `~/Library/Logs/Claude/mcp-server-openl.log` (macOS) or
 - The default configuration checks for a new `openl-mcp` version when Claude starts.
   If your organization requires controlled upgrades, use the exact-version option
   described in Step 4.
+- **Plugin updates here are manual.** The skills plugin never updates itself in the
+  desktop app, and it won't even offer an update until you refresh its marketplace.
+  Check for a new version now and then, as described in
+  [Keeping OpenL up to date](#keeping-openl-up-to-date).
 - If you also use **Claude Code** (the terminal/IDE tool), use
   [claude-code-setup.md](claude-code-setup.md) there — it has a proper masked settings field for
   the token. Both can coexist; they don't conflict.

@@ -58,15 +58,51 @@ Some examples of everyday analyst tasks — they work the same in Claude and in 
 - "Where in this project is the final premium calculated? Walk me through the steps."
 - "Run the tests in the Rating project and give me a short summary of what failed and why."
 - "Compare the AutoPremium table with the version from the previous revision — what changed?"
+- "Why did this policy get a premium of 0? Here's the input JSON."
 
 Your assistant picks the right OpenL operation automatically — there are 50+ of them,
 covering projects, tables, tests, tracing, and deployment.
+
+## Skills
+
+Skills are guided workflows the plugin adds to your assistant. Pick one explicitly in
+your client, or just describe the problem — the assistant can start the matching skill
+by itself.
+
+| Skill | What it does |
+|---|---|
+| `openl:connect` | Sets up (or repairs) the connection to OpenL Studio — it is part of the setup guide for your tool (the table above). |
+| `openl:trace-investigation` | Finds out why a rule returned an unexpected result: traces the run, names the root cause, and proposes the minimal fix. Give it the input payload and what you expected. |
+
+To start one explicitly:
+
+- **Claude Code or the Claude desktop app's Chat/Cowork tabs:** type
+  `/openl:connect` or `/openl:trace-investigation`.
+- **Codex:** type `$` and select `$openl:connect` or
+  `$openl:trace-investigation`; `/skills` opens the skills picker too.
+
+The trace workflow behaves the same across clients: it needs a connected Studio and
+uses whichever trace tools the configured OpenL MCP server exposes. The `connect`
+workflow instead adapts its setup steps to Claude Code, Codex, or Claude desktop/Cowork.
+
+> **Upgrading the old manually installed trace skill?** After installing plugin 0.3.0,
+> delete `~/.claude/skills/openl-trace-investigation` (macOS/Linux) or
+> `%USERPROFILE%\.claude\skills\openl-trace-investigation` (Windows), then start a new
+> Claude session (or run `/reload-plugins` in Claude Code). Plugin updates cannot remove
+> that user-owned copy, and leaving it in place gives Claude two competing trace
+> workflows; the old one targets trace tools that the plugin's pinned server does not
+> expose.
 
 ## If something doesn't work
 
 Start with the "If something doesn't work" section of your setup guide — the fixes
 differ per tool. For more symptoms and fixes, including what to send your
 administrator: [docs/troubleshooting.md](docs/troubleshooting.md).
+
+Still on an old plugin version after a release? By default, updates from this marketplace
+are manual. Claude Code users can enable auto-update for a marketplace they control, and
+an administrator may manage it centrally; desktop Chat/Cowork updates remain manual. See
+[The plugin stays on an old version](docs/troubleshooting.md#the-plugin-stays-on-an-old-version).
 
 ## Documentation
 
