@@ -1,0 +1,226 @@
+# OpenL Table Versioning — Reference
+
+Deep technical reference for `versioning`. Read from the skill's
+SKILL.md; this file holds the full property tables, schemas, and
+worked examples that don't need to live inline.
+
+## Table of Contents
+
+- [A Versioned Table with a `properties` Row](#a-versioned-table-with-a-properties-row)
+- [Versioning Properties and Matching Context Variables](#versioning-properties-and-matching-context-variables)
+- [Property Levels and Precedence](#property-levels-and-precedence)
+- [Context-Bound Datatype Fields](#context-bound-datatype-fields)
+- [Runtime Context — REST API Schema](#runtime-context--rest-api-schema)
+- [File Naming Convention for Versioned Modules](#file-naming-convention-for-versioned-modules)
+- [Context Test Columns — Full Reference](#context-test-columns--full-reference)
+
+## A Versioned Table with a `properties` Row
+
+Effective-date-only versioning:
+
+```
+| SimpleRules Double DiscountRate ( ProductCategory productCategory ) |
+| properties   | effectiveDate      | 01/01/2020             |
+|--------------|--------------------|-----------------------|
+| Electronics         | $150                                |
+| Furniture           | $130                                |
+```
+
+A second copy of the same table with `effectiveDate = 01/01/2022` replaces
+this one once `currentDate >= 2022-01-01`; both versions stay in the
+project simultaneously. Category-level and module-level Properties tables
+use the same name/value row shape but are declared once for the whole
+category/module rather than per table.
+
+## Versioning Properties and Matching Context Variables
+
+| Property name in table | Matches context variable | Type | Meaning |
+|---|---|---|---|
+| `effectiveDate` | `currentDate` | Date | Table is active on/after this date |
+| `expirationDate` | `currentDate` | Date | Table expires on this date (exclusive) |
+| `startRequestDate` | `requestDate` | Date | Rule applies to requests on/after this date |
+| `endRequestDate` | `requestDate` | Date | Rule applies to requests before this date |
+| `lob` | `lob` | String | Line of business |
+| `state` | `usState` | Enum | US state |
+| `country` | `country` | Enum | Country |
+| `usregion` | `usRegion` | Enum | US region |
+| `currency` | `currency` | Enum | Currency |
+| `lang` | `lang` | Enum | Language |
+| `region` | `region` | Enum | Economic region |
+| `caProvinces` | `caProvince` | Enum | Canada province |
+| `caRegions` | `caRegion` | Enum | Canada region |
+| `nature` | `nature` | String | User-defined business value |
+
+The most common combination is `effectiveDate` alone (time-only
+versioning), or `effectiveDate` + `startRequestDate` (rate effective date
+plus request date).
+
+## Property Levels and Precedence
+
+A `properties` row on an individual table (see the example above) is the
+most specific way to declare a versioning property, but it is not the only
+one. OpenL resolves the same set of properties from **four levels**:
+
+| Level | How it's declared | Applies to |
+|---|---|---|
+| Table | `properties` row inside the table itself | That one table only |
+| Category | A Properties table declared once for a category | Every table in that category |
+| Module | A Properties table declared once for a module | Every table in that module |
+| File name / folder name | Extraction patterns configured on the repository (`%propertyName%` placeholders — see below) | Every table in that file/folder |
+
+**A table's effective properties are the merge of every level that applies
+to it.** When the same property name is declared at more than one level,
+the more specific level wins: table-level overrides category-level, which
+overrides module-level, with file-name/folder-name-derived properties at
+the broadest end of the same hierarchy. This is the general OpenL
+precedence principle for overlapping property values; if a task depends on
+an exact edge case (for example, two non-overlapping properties declared
+at different levels combining rather than one overriding the other),
+confirm against the project's own internal versioning documentation rather
+than assuming.
+
+**Practical consequence for an agent working on a versioned table**: a
+table with no visible `properties` row is not necessarily unversioned — it
+may inherit its versioning properties from its category or module. Before
+concluding a table has no versioning behavior, check whether it belongs to
+a category or module that carries its own Properties table.
+
+Category-level and module-level Properties tables use the same name/value
+row shape as a table-level `properties` row — chained
+`<propertyName> | <value>` pairs, dates as `MM/DD/YYYY` — the difference is
+only where the table is declared and how many other tables inherit it, not
+its internal syntax.
+
+## Context-Bound Datatype Fields
+
+**This is the preferred, default pattern** for exposing runtime
+context values to rule logic — prefer it over passing `runtimeContext`
+explicitly as a REST API attribute (see the next section) whenever a
+Datatype field can carry the value instead.
+
+A Datatype field suffixed with `: context.<contextVar>` is auto-populated
+from the matching runtime context variable instead of from the caller:
+
+```
+| Datatype Order                                           |
+| String       | orderNumber                               |
+| Date         | rateEffectiveDate : context.currentDate   |
+| Date         | requestDate : context.requestDate         |
+| State        | customerState : context.usState           |
+| Integer      | accountCode                                |
+```
+
+Rely on the `: context.<contextVar>` suffix as the signal that a field is
+context-bound — not the UI highlight color OpenL Studio may render it
+with, which is theme-dependent and not authoritative.
+
+## Runtime Context — REST API Schema
+
+Available once **Provide runtime context** is checked in the project's
+Rules Deploy Configuration (OpenL Studio Repository view → project → **Rules
+Deploy Configuration** tab). This is required infrastructure regardless of
+consumption pattern — both the Datatype-binding approach above and
+versioned-table property matching depend on it — but treat passing
+`runtimeContext` explicitly as a REST API attribute as the **fallback**,
+used only when no Datatype context binding covers the value needed:
+
+```json
+{
+  "runtimeContext": {
+    "currentDate": "2022-04-07T11:28:41.878Z",
+    "requestDate": "2022-04-07T11:28:41.878Z",
+    "lob": "string",
+    "nature": "string",
+    "usState": "AL",
+    "country": "AE",
+    "usRegion": "MW",
+    "currency": "ALL",
+    "lang": "ALB",
+    "region": "NCSA",
+    "caProvince": "AB",
+    "caRegion": "QC"
+  }
+}
+```
+
+## File Naming Convention for Versioned Modules
+
+Only relevant when a project encodes version info in module filenames:
+
+```
+ProjectName-CW-YYYYMMDD-YYYYMMDD.xlsx
+```
+
+Example: `Pricing Model-CW-20210101-20210101.xlsx`. The `-CW-` segment
+followed by two dates encodes the effective window. Configure extraction at
+Repository view → edit (pencil) icon next to the project name → **Properties
+patterns for a file name**, e.g.:
+
+```
+.*-%state%-%effectiveDate%-%startRequestDate%
+.*Tests
+.*Model
+```
+
+The first pattern extracts `state`, `effectiveDate`, and `startRequestDate`
+from versioned module filenames; `.*Tests` and `.*Model` are exclusion
+patterns for files never versioned by filename.
+
+**Filenames carry property VALUES only, never property names:**
+
+| ✅ Correct filename | ❌ Wrong filename |
+|---|---|
+| `MyModule-US-20270101-20270101.xlsx` | `MyModule-Country-US-20270101-20270101.xlsx` |
+| `MyModule-AL-20270101-20270101.xlsx` | `MyModule-State-AL-20270101-20270101.xlsx` |
+
+Same rule for filename **patterns** — use `%propertyName%` as the value
+placeholder, never the property name as a literal label:
+
+| ✅ Correct pattern | ❌ Wrong pattern |
+|---|---|
+| `.*-%country%-%effectiveDate%-%startRequestDate%` | `.*-Country-%country%-%effectiveDate%-%startRequestDate%` |
+| `.*-%lob%-%effectiveDate%-%startRequestDate%` | `.*-LOB-%lob%-%effectiveDate%-%startRequestDate%` |
+
+File/folder name extraction is one of the four property levels described
+above (the broadest one), not a separate mechanism layered on top of
+table/category/module properties. Only touch the filename pattern if the
+project already uses file-based property extraction, or the user
+explicitly asks to split rules into separate files per dimension value —
+and remember a table-, category-, or module-level property will still
+override a file-name-derived one of the same name.
+
+## Context Test Columns — Full Reference
+
+The `_context_` column represents the whole `IRulesRuntimeContext` object as
+a single compound field, so its individual properties are addressed with
+OpenL's standard dot notation for nested fields: `_context_.` followed by
+the context variable name, e.g. `_context_.currentDate`. Each data row sets
+the context for that test case independently:
+
+| Test column header | Context variable set |
+|---|---|
+| `_context_.currentDate` | `currentDate` → selects by `effectiveDate`/`expirationDate` |
+| `_context_.requestDate` | `requestDate` → selects by `startRequestDate`/`endRequestDate` |
+| `_context_.lob` | `lob` |
+| `_context_.usState` | `usState` → selects by `state` |
+| `_context_.country` | `country` |
+| `_context_.usRegion` | `usRegion` |
+| `_context_.currency` | `currency` |
+| `_context_.lang` | `lang` |
+| `_context_.nature` | `nature` |
+
+Worked example — a test table exercising two date ranges of the same
+versioned table:
+
+```
+| Test DiscountRate DiscountRateTest                                |
+| _context_.currentDate   | productCategory   | _res_               |
+| Current Date            | Product Category  | Price               |
+| 06/19/2020              | Electronics       | $150                |
+| 06/19/2022              | Electronics       | $160                |
+| 08/21/2021              | Furniture         | $130                |
+| 08/21/2022              | Furniture         | $140                |
+```
+
+The display label row ("Current Date") directly under the header is
+optional but good practice for readability.
