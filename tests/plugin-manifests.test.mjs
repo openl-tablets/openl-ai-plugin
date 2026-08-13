@@ -92,7 +92,10 @@ test("every skill is discoverable by both clients", async () => {
   assert.equal(codex.skills, "./skills/");
 
   const skills = await skillDirectories();
-  assert.deepEqual([...skills].sort(), ["connect", "trace-investigation"]);
+  assert.deepEqual(
+    [...skills].sort(),
+    ["branching", "connect", "testing", "trace-investigation", "versioning"],
+  );
   for (const skill of skills) {
     // Normalize line endings: a Windows checkout delivers CRLF, which the
     // line-anchored frontmatter patterns below would otherwise miss.
