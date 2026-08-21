@@ -40,11 +40,12 @@ examples live in [references/reference.md](references/reference.md).
 ## Key Concepts
 
 - **Versioning properties can be declared at four levels**: table (a
-  `properties` row after the header row —
-  `| properties | <propertyName> | <value> | ... |`, dates as
-  `MM/DD/YYYY`), category, module, or file/folder name. Check for an
-  inherited category-/module-level property before concluding a table
-  with no `properties` row is unversioned. Full hierarchy and examples:
+  `properties` section after the header row — first cell `properties`,
+  **one `<propertyName> | <value>` pair per row**, additional properties
+  as additional rows underneath, dates as `MM/DD/YYYY`), category, module,
+  or file/folder name. Check for an inherited category-/module-level
+  property before concluding a table with no `properties` row is
+  unversioned. Full hierarchy and examples:
   [references/reference.md](references/reference.md).
 - **When levels conflict, the more specific one wins**: table > category >
   module > file/folder name. Confirm edge cases against the references if
@@ -74,12 +75,18 @@ examples live in [references/reference.md](references/reference.md).
 
 ### Choosing a Versioning Level (Default: Table)
 
-Default to a **table-level** `properties` row for a single named table.
-Don't ask the user which level to use for a routine single-table bump.
-Reach for category-/module-level Properties instead only when the project
-already uses that convention (check for an inherited property first —
-see Key Concepts), or the user explicitly asks to version many tables at
-once by the same dimension.
+Default to a **table-level** `properties` row without asking, but only
+once the task is confirmed to be scoped to that one named table — that is
+the narrow, low-impact default, not an excuse to skip confirming scope
+altogether.
+
+Category- or module-level Properties apply to **every table** in that
+category/module — a much larger blast radius. **Get the user's explicit
+confirmation before applying a change at category or module level**, even
+on a project that already uses that convention for other properties.
+Checking for an inherited category-/module-level property (see Key
+Concepts) is still fine to do silently — that's read-only; it's *writing*
+a new or changed property at that broader scope that needs confirmation.
 
 ### Creating a New Version of a Table
 
@@ -122,10 +129,10 @@ context test column names and a worked test table.
 
 1. ⬜ Create an isolated task branch, following this project's branch
    discipline.
-2. ⬜ Confirm the versioning level: default to table-level unless the
-   table already inherits from a category/module Properties table or the
-   user asked for a broader change (see "Choosing a Versioning Level"
-   above).
+2. ⬜ Confirm the versioning level: default to table-level for a
+   single-table task; get the user's explicit confirmation first if this
+   would apply a category- or module-level change (see "Choosing a
+   Versioning Level" above).
 3. ⬜ Open the module containing the current table version.
 4. ⬜ Copy the table as **New Business Dimension Version**.
 5. ⬜ Set `effectiveDate` (and any other properties) on the new copy.
@@ -159,6 +166,10 @@ context test column names and a worked test table.
 - ❌ Asking the user which property level (table/category/module) to use
   for a routine single-table version bump instead of defaulting to
   table-level and checking the existing project convention first.
+- ❌ Applying a category- or module-level property change — which affects
+  every table in that category/module — without first getting the user's
+  explicit confirmation, even on a project that already uses that
+  convention elsewhere.
 - ❌ Silently skipping or reporting complete an operation the tooling can't
   perform, instead of flagging it with the manual OpenL Studio step.
 

@@ -16,7 +16,8 @@ worked examples that don't need to live inline.
 
 ## A Versioned Table with a `properties` Row
 
-Effective-date-only versioning:
+Effective-date-only versioning — a single property, so the `properties`
+section is one row:
 
 ```text
 | SimpleRules Double DiscountRate ( ProductCategory productCategory ) |
@@ -28,8 +29,26 @@ Effective-date-only versioning:
 
 A second copy of the same table with `effectiveDate = 01/01/2022` replaces
 this one once `currentDate >= 2022-01-01`; both versions stay in the
-project simultaneously. Category-level and module-level Properties tables
-use the same name/value row shape but are declared once for the whole
+project simultaneously.
+
+**One property/value pair per row** — adding a second property (e.g. also
+scoping this version to one US state) means adding a second row
+underneath the first, not a second pair of columns on the same row. The
+`properties` label occupies the first column only once — it's a single
+cell merged down over every property row, so later rows leave that first
+column blank:
+
+```text
+| SimpleRules Double DiscountRate ( ProductCategory productCategory ) |
+| properties   | effectiveDate      | 01/01/2020             |
+|              | state              | NY                     |
+|--------------|--------------------|-----------------------|
+| Electronics         | $150                                |
+| Furniture           | $130                                |
+```
+
+Category-level and module-level Properties tables use the same
+one-property-per-row shape but are declared once for the whole
 category/module rather than per table.
 
 ## Versioning Properties and Matching Context Variables
@@ -85,11 +104,10 @@ may inherit its versioning properties from its category or module. Before
 concluding a table has no versioning behavior, check whether it belongs to
 a category or module that carries its own Properties table.
 
-Category-level and module-level Properties tables use the same name/value
-row shape as a table-level `properties` row — chained
-`<propertyName> | <value>` pairs, dates as `MM/DD/YYYY` — the difference is
-only where the table is declared and how many other tables inherit it, not
-its internal syntax.
+Category-level and module-level Properties tables use the same shape as a
+table-level `properties` section — one `<propertyName> | <value>` pair per
+row, dates as `MM/DD/YYYY` — the difference is only where the table is
+declared and how many other tables inherit it, not its internal syntax.
 
 ## Context-Bound Datatype Fields
 
