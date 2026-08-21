@@ -18,7 +18,7 @@ worked examples that don't need to live inline.
 
 Effective-date-only versioning:
 
-```
+```text
 | SimpleRules Double DiscountRate ( ProductCategory productCategory ) |
 | properties   | effectiveDate      | 01/01/2020             |
 |--------------|--------------------|-----------------------|
@@ -37,7 +37,7 @@ category/module rather than per table.
 | Property name in table | Matches context variable | Type | Meaning |
 |---|---|---|---|
 | `effectiveDate` | `currentDate` | Date | Table is active on/after this date |
-| `expirationDate` | `currentDate` | Date | Table expires on this date (exclusive) |
+| `expirationDate` | `currentDate` | Date | Table is active **through and including** this date — inactive the day after |
 | `startRequestDate` | `requestDate` | Date | Rule applies to requests on/after this date |
 | `endRequestDate` | `requestDate` | Date | Rule applies to requests before this date |
 | `lob` | `lob` | String | Line of business |
@@ -101,7 +101,7 @@ Datatype field can carry the value instead.
 A Datatype field suffixed with `: context.<contextVar>` is auto-populated
 from the matching runtime context variable instead of from the caller:
 
-```
+```text
 | Datatype Order                                           |
 | String       | orderNumber                               |
 | Date         | rateEffectiveDate : context.currentDate   |
@@ -147,16 +147,18 @@ used only when no Datatype context binding covers the value needed:
 
 Only relevant when a project encodes version info in module filenames:
 
-```
+```text
 ProjectName-CW-YYYYMMDD-YYYYMMDD.xlsx
 ```
 
-Example: `Pricing Model-CW-20210101-20210101.xlsx`. The `-CW-` segment
+Example: `Pricing Model-CW-20210101-20210101.xlsx`. Here `CW` is an OpenL
+convention for "country-wide" (i.e. no state/province segmentation) —
+not a placeholder to substitute with a property value. The `-CW-` segment
 followed by two dates encodes the effective window. Configure extraction at
 Repository view → edit (pencil) icon next to the project name → **Properties
 patterns for a file name**, e.g.:
 
-```
+```text
 .*-%state%-%effectiveDate%-%startRequestDate%
 .*Tests
 .*Model
@@ -208,11 +210,14 @@ the context for that test case independently:
 | `_context_.currency` | `currency` |
 | `_context_.lang` | `lang` |
 | `_context_.nature` | `nature` |
+| `_context_.region` | `region` |
+| `_context_.caProvince` | `caProvince` → selects by `caProvinces` |
+| `_context_.caRegion` | `caRegion` → selects by `caRegions` |
 
 Worked example — a test table exercising two date ranges of the same
 versioned table:
 
-```
+```text
 | Test DiscountRate DiscountRateTest                                |
 | _context_.currentDate   | productCategory   | _res_               |
 | Current Date            | Product Category  | Price               |
@@ -224,3 +229,11 @@ versioned table:
 
 The display label row ("Current Date") directly under the header is
 optional but good practice for readability.
+
+**Cover the `expirationDate` boundary explicitly.** Because a table stays
+active *through and including* its `expirationDate`, add one test row
+where `_context_.currentDate` equals that exact date (still expected to
+match the expiring version) and one row for the day after (expected to
+match the next version, or no active version if there isn't one). Don't
+rely on rows that only test dates well inside or well outside the range —
+the boundary itself is what regresses silently.

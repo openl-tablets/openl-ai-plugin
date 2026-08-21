@@ -69,12 +69,16 @@ rule, and post-merge cleanup.
 ### Unsaved Working Copy at Session Start
 
 If "unsaved working copy from the previous session" appears, resolve it
-immediately — never stall, discard it, or ask the user what to do with it:
+immediately — never stall or silently discard it:
 
 1. Check which branch it belongs to (shown in project status).
 2. Correct branch for this task → save it immediately and continue.
-3. Different/unknown branch → save it to *that* branch first, then close
-   and reopen on the correct branch at the latest revision.
+3. Different/unknown branch → **do not save it on your own initiative.**
+   Tell the user what it contains and which branch it belongs to, and get
+   explicit confirmation before committing it. Once confirmed, save it to
+   *that* branch, then close and reopen on the correct branch at the
+   latest revision. If the user instead says to discard it, discard it —
+   don't save it either.
 
 ### During Editing
 
@@ -100,10 +104,13 @@ merge on your own initiative.** If a merge is coming up and the branch
 hasn't been synced in a while, say so and let the user decide; do not
 sync unprompted just because it seems due.
 
-Once asked to sync, do it in both directions: **receive** the base
-branch's newer changes into the task branch, and **send** the task
-branch's own committed, tested changes back. **Re-test after every
-receive and after any conflict resolution.**
+**A plain request to "sync" is receive-only by default**: bring the base
+branch's newer changes into the task branch and re-test — do not also
+send the task branch's own changes back unless the user's request was
+explicit about that too. **Send** the task branch's committed, tested
+changes back to the base/development branch only on an explicit finalize,
+merge, or "send" request. **Re-test after every receive and after any
+conflict resolution.**
 
 **On a sync conflict**: compare the versions first — never resolve blind.
 Download **Yours**/**Theirs**/**Base** if the diff alone isn't enough.
@@ -163,15 +170,19 @@ Keep descriptions short, lowercase, no spaces/special characters.
 - ❌ Editing tables, or treating a stale branch/revision as current, without
   confirming branch and revision first. Creating a duplicate branch for a
   task that has one, or committing directly to main instead of branching.
-- ❌ Discarding an unsaved working copy, or bundling a prior session's
-  unknown pending edits into the current save instead of their own
-  branch. Accumulating unsaved edits instead of saving after each change,
-  or reporting a save complete without confirming the revision incremented.
+- ❌ Bundling a prior session's unknown pending edits into the current
+  save instead of their own branch, or saving/discarding an unsaved
+  working copy from a different/unknown branch without first getting the
+  user's explicit confirmation. Accumulating unsaved edits instead of
+  saving after each change, or reporting a save complete without
+  confirming the revision incremented.
 - ❌ Applying the generic naming convention when the repository already
   has its own configured pattern.
 - ❌ Receiving, sending, or merging a branch on your own initiative because
   a task seems ready or a merge is coming up — sync only when the user
-  explicitly asks.
+  explicitly asks. Also: sending the task branch's changes back on a
+  plain "sync" request instead of treating it as receive-only until the
+  user explicitly asks to finalize, merge, or send.
 - ❌ Resolving a sync conflict with **Use yours**/**Use theirs** without
   comparing first, skipping re-testing after a receive/conflict, or
   reporting "ready to merge" with an unresolved conflict.

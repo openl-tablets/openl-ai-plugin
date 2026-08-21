@@ -21,7 +21,7 @@ to live inline.
 | Resuming work | Open project → verify branch name and revision hash |
 | Branch exists but is stale | Close → reopen on latest revision of that branch |
 | Accidentally on main | Stop editing → create branch → reopen on new branch |
-| Unsaved working copy detected | Save it to its branch immediately → then open correct branch at latest revision |
+| Unsaved working copy detected | Correct branch → save immediately. Different/unknown branch → confirm with the user first, then save to *that* branch → open correct branch at latest revision |
 | After every edit | Save immediately → verify revision incremented |
 | User asks to sync/receive updates | Receive updates from base branch → re-test → resolve any conflicts (Compare first) |
 | Sync conflict reported | Compare → download Yours/Theirs/Base if needed → Use yours / Use theirs / Upload merged file → re-test |
@@ -47,10 +47,15 @@ Checking for an existing branch, then creating and opening one for task
 
 1. Read the working copy's branch from the project's status — say it's
    `PROJ-9999-old-task`, not the branch needed for this task.
-2. Save the pending edits with a comment noting they're a checkpoint from
-   the prior session, committing them to `PROJ-9999-old-task`.
-3. Close the project.
-4. Reopen it on `PROJ-1234-add-discount-tier` at its latest revision.
+2. Tell the user: an unsaved working copy from a prior session belongs to
+   `PROJ-9999-old-task`, not today's task branch. Ask whether to save it
+   there or discard it — do not save it on your own initiative.
+3. Once the user confirms saving it, save the pending edits with a
+   comment noting they're a checkpoint from the prior session, committing
+   them to `PROJ-9999-old-task`. If the user says to discard it instead,
+   discard it without saving.
+4. Close the project.
+5. Reopen it on `PROJ-1234-add-discount-tier` at its latest revision.
 
 ## Confirming a Save Actually Committed
 
@@ -78,7 +83,7 @@ user asks to sync it with the development branch mid-task:
    next step would be to **download Yours, Theirs, and Base** to inspect
    the underlying files directly before deciding.
 4. Manually combine both sets of changes into a single worksheet (outside
-   OpenL Studio, in Excel or the appropriate tool), then **Upload merged
+   OpenL Studio, in a suitable spreadsheet editor), then **Upload merged
    file** to resolve the conflict with both changes intact.
 5. **Re-run the full project test suite** against
    the merged state — the incoming change to `accountCode` exclusions could

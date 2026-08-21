@@ -38,9 +38,12 @@ divergence, and reporting results only from verified, per-row data.
 ## Key Concepts
 
 - **Don't trust in-memory or previously reported test results.** Always run
-  the full test suite (or the specific tests requested) against the latest
-  saved revision on the branch before reporting any result as "tested"
-  (see Pre-Test Sequence below).
+  the latest saved revision on the branch before reporting any result as
+  "tested" (see Pre-Test Sequence below). **Default to the full project
+  test suite**, not just the table you touched; run a narrower, specific
+  subset only when the user explicitly names that scope (e.g. "just run
+  `TT_DiscountEligibility`") — an unscoped request always means the full
+  suite.
 - **Never trust the summary count alone.** A newly added test row's failure
   can be excluded from it entirely. Always read per-row detail.
 - **If the tooling can't complete an operation, say so** — flag the gap
@@ -79,10 +82,14 @@ sure tests run against the latest saved revision:
 - Run the full project test suite, not just the table you touched.
 - Read the **per-row detail view**, never the summary count alone. Every
   row must pass, including rows added this session.
-- On any row failure: identify which rule produced the wrong result, fix
-  the rule configuration and save it, then **re-run the test suite.** No
-  need to close/reopen again within the same continuous session — only at
-  session start or after an external change (see Pre-Test Sequence above).
+- On any row failure: **classify it before changing anything.** Is the
+  wrong output caused by the rule's logic, by reference/lookup data the
+  rule depends on, by the test's own inputs, or by stale project/setup
+  state (see Pre-Test Sequence above)? Only once the cause is identified
+  as the rule itself, fix the rule configuration and save it, then
+  **re-run the test suite.** No need to close/reopen again within the
+  same continuous session — only at session start or after an external
+  change (see Pre-Test Sequence above).
 
 ### Reporting
 
@@ -112,6 +119,9 @@ are in [references/reference.md](references/reference.md).
   change (sync/receive), without first closing and reopening the project
   on the latest revision.
 - ❌ Running tests while compilation errors are present.
+- ❌ Changing rule configuration on a row failure before classifying
+  whether the cause is rule logic, reference data, test inputs, or stale
+  setup state.
 - ❌ Modifying, deleting, or removing an existing test row or test
   table/case without exact, named approval — including treating
   "fix the failing tests" as approval.

@@ -45,9 +45,12 @@ process):
 
 1. Read the detailed results scoped to just the failing table (e.g.
    `TT_DiscountEligibility`) to see the mismatch.
-2. Fix the rule configuration that produced the wrong output and save
-   it — never adjust the test's expected value.
-3. Re-run the test suite in place — no need to close/reopen again within
+2. Classify the mismatch before touching anything: is it the rule's own
+   logic, reference/lookup data the rule reads, the test row's inputs, or
+   stale project state that the Pre-Test Sequence should have caught?
+3. Only once the rule itself is confirmed as the cause, fix the rule
+   configuration and save it — never adjust the test's expected value.
+4. Re-run the test suite in place — no need to close/reopen again within
    this same session.
 
 ## Test Table Special Columns
@@ -84,7 +87,7 @@ returns a value. When `_error_` is present on a row:
 Worked example — a table validating that an out-of-domain input is
 rejected:
 
-```
+```text
 | Test ValidateAction                                                    |
 | actionCode | _error_                                                   |
 | Fake       | Value 'Fake' is outside of valid domain 'ActionCode'.     |
@@ -108,7 +111,7 @@ spreads across many columns, each addressing one field by path:
 
 Worked example — a pricing calculation returning a nested result:
 
-```
+```text
 | Test CalculateOrderTotal                                                    |
 | order      | _res_.$Total.$Amount | _res_.$Lines[0].$Discount.$Amount        |
 | >OrderData | 133.50               | 12.00                                    |
@@ -137,7 +140,7 @@ table.
 
 Worked example:
 
-```
+```text
 | Data Order OrderData                              |
 | orderNumber | customerTier | items[0].sku          |
 | ORD-1001    | Gold         | SKU-42                |
@@ -164,7 +167,7 @@ on failure.
 
 Worked example:
 
-```
+```text
 | Spreadsheet String ValidateAllCodesExist()                              |
 | Step                  | Formula                                        |
 | MissingCodes          | = find codes in DiscountRules missing from    |
