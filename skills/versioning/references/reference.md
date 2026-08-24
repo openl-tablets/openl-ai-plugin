@@ -47,9 +47,11 @@ column blank:
 | Furniture           | $130                                |
 ```
 
-Category-level and module-level Properties tables use the same
-one-property-per-row shape but are declared once for the whole
-category/module rather than per table.
+Category-level and module-level Properties tables are a different table
+type, not a scaled-up `properties` row — see
+[Property Levels and Precedence](#property-levels-and-precedence) below
+for their required header structure (`Properties` reserved word, `scope`,
+and `category`).
 
 ## Versioning Properties and Matching Context Variables
 
@@ -78,25 +80,27 @@ plus request date).
 
 A `properties` row on an individual table (see the example above) is the
 most specific way to declare a versioning property, but it is not the only
-one. OpenL resolves the same set of properties from **four levels**:
+one. OpenL resolves the same set of properties from **three levels**:
 
 | Level | How it's declared | Applies to |
 |---|---|---|
 | Table | `properties` row inside the table itself | That one table only |
 | Category | A Properties table declared once for a category | Every table in that category |
-| Module | A Properties table declared once for a module | Every table in that module |
-| File name / folder name | Extraction patterns configured on the repository (`%propertyName%` placeholders — see below) | Every table in that file/folder |
+| Module | A Properties table declared once for a module — or, as an alternate declaration mechanism, extracted from the module's file or folder name (`%propertyName%` placeholders — see below) | Every table in that module |
 
 **A table's effective properties are the merge of every level that applies
 to it.** When the same property name is declared at more than one level,
 the more specific level wins: table-level overrides category-level, which
-overrides module-level, with file-name/folder-name-derived properties at
-the broadest end of the same hierarchy. This is the general OpenL
-precedence principle for overlapping property values; if a task depends on
-an exact edge case (for example, two non-overlapping properties declared
-at different levels combining rather than one overriding the other),
-confirm against the project's own internal versioning documentation rather
-than assuming.
+overrides module-level. File/folder name extraction is not a separate,
+broader level — it's an alternate way to set a module-level property, and
+OpenL does not allow the same property to be declared both in the
+filename/folder pattern and the module's own Properties table; treat that
+as a conflict to avoid, not something with a defined override order. This
+is the general OpenL precedence principle for overlapping property values;
+if a task depends on an exact edge case (for example, two non-overlapping
+properties declared at different levels combining rather than one
+overriding the other), confirm against the project's own internal
+versioning documentation rather than assuming.
 
 **Practical consequence for an agent working on a versioned table**: a
 table with no visible `properties` row is not necessarily unversioned — it
@@ -104,10 +108,20 @@ may inherit its versioning properties from its category or module. Before
 concluding a table has no versioning behavior, check whether it belongs to
 a category or module that carries its own Properties table.
 
-Category-level and module-level Properties tables use the same shape as a
-table-level `properties` section — one `<propertyName> | <value>` pair per
-row, dates as `MM/DD/YYYY` — the difference is only where the table is
-declared and how many other tables inherit it, not its internal syntax.
+Category-level and module-level Properties tables are their own table
+type, not a table-level `properties` section scaled up — they need extra
+header rows a table-level `properties` row never has:
+
+| Row | Content |
+|---|---|
+| Header | The reserved word `Properties`, optionally followed by a Java identifier (exposes this table's values in rules as a field of that name, typed `TableProperties`) |
+| `scope` | `Module` — inherited by every table in the module; only one `Module`-scope Properties table is allowed per module — or `Category` — inherited by every table whose category matches |
+| `category` | Required only when `scope` is `Category`; names the category. If omitted, the category defaults to the worksheet name |
+| Property rows | One `<propertyName> \| <value>` pair per row (dates as `MM/DD/YYYY`), same shape as a table-level `properties` section — these are the properties being declared at this level |
+
+A table-level `properties` row has none of the `Properties`/`scope`/
+`category` header rows — it's only the property-name/value pairs from the
+last table above.
 
 ## Context-Bound Datatype Fields
 
@@ -201,13 +215,14 @@ placeholder, never the property name as a literal label:
 | `.*-%country%-%effectiveDate%-%startRequestDate%` | `.*-Country-%country%-%effectiveDate%-%startRequestDate%` |
 | `.*-%lob%-%effectiveDate%-%startRequestDate%` | `.*-LOB-%lob%-%effectiveDate%-%startRequestDate%` |
 
-File/folder name extraction is one of the four property levels described
-above (the broadest one), not a separate mechanism layered on top of
-table/category/module properties. Only touch the filename pattern if the
-project already uses file-based property extraction, or the user
-explicitly asks to split rules into separate files per dimension value —
-and remember a table-, category-, or module-level property will still
-override a file-name-derived one of the same name.
+File/folder name extraction is an alternate way to declare module-level
+properties (see "Property Levels and Precedence" above), not a fourth
+level of its own. Never let the same property be set both by the filename
+pattern and by a module-level Properties table — OpenL doesn't define an
+override order for that case, it's a conflict to avoid. Only touch the
+filename pattern if the project already uses file-based property
+extraction, or the user explicitly asks to split rules into separate
+files per dimension value.
 
 ## Context Test Columns — Full Reference
 

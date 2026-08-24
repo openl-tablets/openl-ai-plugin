@@ -101,7 +101,14 @@ After confirming zero failures in the per-row detail view, report:
 
 If tests fail, report:
 - Which rows failed and what the mismatch was (expected vs. actual).
-- What rule fix is needed.
+- The classified cause (rule logic, reference/lookup data, test inputs, or
+  stale project/setup state) and the corrective action for *that* cause —
+  a rule fix only when the rule itself is the cause. Otherwise say what
+  actually needs to change: e.g. the missing/incorrect reference or lookup
+  data, or a reopen-and-retest when the cause was stale state. If the
+  cause is the test's own input, don't correct it yourself — report the
+  mismatch and ask for the explicit, named approval the "Adding Test Rows"
+  rule above requires before any test row changes.
 - Never suggest updating test expectations to match incorrect rule output.
 
 ## Code Examples

@@ -39,17 +39,21 @@ examples live in [references/reference.md](references/reference.md).
 
 ## Key Concepts
 
-- **Versioning properties can be declared at four levels**: table (a
+- **Versioning properties can be declared at three levels**: table (a
   `properties` section after the header row — first cell `properties`,
   **one `<propertyName> | <value>` pair per row**, additional properties
-  as additional rows underneath, dates as `MM/DD/YYYY`), category, module,
-  or file/folder name. Check for an inherited category-/module-level
-  property before concluding a table with no `properties` row is
-  unversioned. Full hierarchy and examples:
-  [references/reference.md](references/reference.md).
+  as additional rows underneath, dates as `MM/DD/YYYY`), category, or
+  module. Check for an inherited category-/module-level property before
+  concluding a table with no `properties` row is unversioned. A module's
+  properties can also be *set* via its file or folder name instead of a
+  module-level Properties table, but never both — see File Naming below.
+  Full hierarchy and examples: [references/reference.md](references/reference.md).
 - **When levels conflict, the more specific one wins**: table > category >
-  module > file/folder name. Confirm edge cases against the references if
-  it matters for the task.
+  module. File/folder name extraction is not a fourth level above or below
+  module — it's an alternate way to *declare* module-level properties, and
+  OpenL prohibits declaring the same property both there and in the
+  module's own Properties table. Confirm edge cases against the references
+  if it matters for the task.
 - **Resolution is most-specific-match, not first-match.** OpenL picks the
   version whose properties most closely match the runtime context.
 - The common versioning properties (`effectiveDate`, `state`, `lob`,
@@ -107,14 +111,16 @@ runtime based on context.
 
 ### File Naming (Only If the Project Uses It)
 
-File name (and folder name) extraction is **one of the four property
-levels** — see Key Concepts above. It sits at the broadest end of the
-precedence hierarchy. Only touch a project's filename pattern
-(`ProjectName-CW-YYYYMMDD-YYYYMMDD.xlsx`-style) if it already uses
-file-based property extraction, or the user explicitly asks to split rules
-into separate files per dimension value. Adding a new table-, category-, or
-module-level property never by itself implies a filename pattern change.
-Full pattern syntax and correct/wrong examples:
+File name (and folder name) extraction is an **alternate way to declare
+module-level properties** — see Key Concepts above — not a fourth
+precedence level. **Never declare the same property both in the filename
+pattern and the module's Properties table**; OpenL treats that as a
+conflict to avoid, not a "more specific wins" case. Only touch a project's
+filename pattern (`ProjectName-CW-YYYYMMDD-YYYYMMDD.xlsx`-style) if it
+already uses file-based property extraction, or the user explicitly asks
+to split rules into separate files per dimension value. Adding a new
+table-, category-, or module-level property never by itself implies a
+filename pattern change. Full pattern syntax and correct/wrong examples:
 [references/reference.md](references/reference.md).
 
 ### Testing Versioned Tables

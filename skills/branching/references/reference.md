@@ -91,8 +91,11 @@ user asks to sync it with the development branch mid-task:
    didn't touch the row you added.
 6. Only once tests confirm 0 failures on the merged state, save with a
    comment noting the merge, and confirm the revision incremented.
-7. Later, once the task's own edits are complete and tested, **send your
-   updates** to push the branch's changes back to the shared repository.
+7. Sending the branch's changes back is a separate action, gated on
+   its own explicit request — never an automatic follow-on to finishing
+   and testing. Only once the user separately asks to finalize, merge, or
+   send, push the branch's changes back to the shared repository with
+   **send your updates**.
 
 **Contrast — a conflict resolved with "Use theirs":** if step 2's diff had
 shown the incoming change already covered everything your local edit was
