@@ -39,8 +39,11 @@ openl-ai-plugin/
 │   ├── configure-codex.mjs         # interactive, no-echo PAT/address setup
 │   └── codex-config.mjs            # shared config read/write + Studio probe helpers
 ├── skills/
+│   ├── branching/SKILL.md   # /openl:branching → isolated branches, sync, hotfix workflow
 │   ├── connect/SKILL.md     # /openl:connect → guided Personal Access Token setup
-│   └── trace-investigation/SKILL.md  # /openl:trace-investigation → root-cause a rule result
+│   ├── testing/SKILL.md     # /openl:testing → pre-test sequence, per-row results
+│   ├── trace-investigation/SKILL.md  # /openl:trace-investigation → root-cause a rule result
+│   └── versioning/SKILL.md  # /openl:versioning → new table versions without touching old ones
 ├── tests/                   # node --test suite (manifests, config, launcher)
 ├── .github/workflows/       # CI: runs the test suite
 ├── package.json             # test runner + Node engines
