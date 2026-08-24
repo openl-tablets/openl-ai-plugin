@@ -72,14 +72,19 @@ by itself.
 | Skill | What it does |
 |---|---|
 | `openl:connect` | Sets up (or repairs) the connection to OpenL Studio — it is part of the setup guide for your tool (the table above). |
+| `openl:branching` | Manages isolated branches for any rule or config change — opens the right revision, syncs with base/development, resolves conflicts, and handles the hotfix two-branch rule and post-merge cleanup. |
 | `openl:trace-investigation` | Finds out why a rule returned an unexpected result: traces the run, names the root cause, and proposes the minimal fix. Give it the input payload and what you expected. |
+| `openl:testing` | Adds test rows and runs the full suite after any rule change, reading per-row results before reporting anything as tested. |
+| `openl:versioning` | Adds a new effective-dated or dimension-scoped version of a table — without touching the existing version — with matching test coverage. |
 
 To start one explicitly:
 
 - **Claude Code or the Claude desktop app's Chat/Cowork tabs:** type
-  `/openl:connect` or `/openl:trace-investigation`.
-- **Codex:** type `$` and select `$openl:connect` or
-  `$openl:trace-investigation`; `/skills` opens the skills picker too.
+  `/openl:connect`, `/openl:branching`, `/openl:trace-investigation`,
+  `/openl:testing`, or `/openl:versioning`.
+- **Codex:** type `$` and select `$openl:connect`, `$openl:branching`,
+  `$openl:trace-investigation`, `$openl:testing`, or `$openl:versioning`;
+  `/skills` opens the skills picker too.
 
 The trace workflow behaves the same across clients: it needs a connected Studio and
 uses whichever trace tools the configured OpenL MCP server exposes. The `connect`

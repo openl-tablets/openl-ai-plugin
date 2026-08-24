@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - Unreleased
+
+### Added
+
+- `openl:branching`, `openl:testing`, and `openl:versioning` skills,
+  adapted from the equivalent OpenL skills already shipping in the SDLC project's skill
+  set (dropping the `eis-dev-` prefix to match this plugin's bare-verb naming, alongside
+  `connect` and `trace-investigation`). `branching` teaches isolated task branches,
+  correct revision handling, deliberate base/development syncing with dependents tested
+  before finalizing, the hotfix two-branch rule, and post-merge cleanup. `testing`
+  teaches the pre-test sequence, reading per-row results instead of trusting the summary
+  count, and never modifying an existing test row without named approval. `versioning`
+  teaches OpenL's table-versioning model — adding a new `properties`-row version,
+  runtime context, and testing both the old and new date ranges — without touching a
+  prior version in place. All three ship from `skills/` with no manifest change, picked
+  up by Claude Code and Codex the same way `connect` and `trace-investigation` are.
+
 ## [0.3.0] - 2026-08-07
 
 ### Added
