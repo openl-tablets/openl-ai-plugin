@@ -1,7 +1,7 @@
 {
   "name": "openl",
   "description": "Work with OpenL Studio from Codex or Claude Code — manage rules, projects, tables and tests over the OpenL MCP server.",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "author": { "name": "OpenL Tablets" },
   "homepage": "https://github.com/openl-tablets/openl-ai-plugin",
   "keywords": ["openl", "openl-tablets", "rules-engine", "brms", "mcp"],

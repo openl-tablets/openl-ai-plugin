@@ -268,6 +268,7 @@ OpenL Studio is frequently self-hosted, so private distribution matters.
 |---|---|---|
 | `0.1.x` | `@1.1.0` | Claude Code and desktop/Cowork PAT setup; single-user Studio needs no token. |
 | `0.2.x` | `@1.1.0` | First-class Codex manifest, safe interactive config, isolated launcher, and platform-aware connect skill. |
+| `0.5.x` | `@1.2.0` | Same PAT/anonymous modes, minus the server's legacy CLI token-cache fallback; adds the interactive trace debugger and branch-merge tools. |
 
 The PAT path works on every surface Claude Code runs on and with any Studio identity provider, so
 no browser sign-in is shipped. The Claude **desktop app (Cowork)** is covered by the same PAT-backed

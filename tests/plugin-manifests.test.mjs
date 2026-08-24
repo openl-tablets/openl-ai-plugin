@@ -50,7 +50,7 @@ test("Claude keeps its existing MCP contract and pin", async () => {
   const claudeMcp = JSON.parse(claudeMcpText);
   assert.deepEqual(Object.keys(claudeMcp), ["tools"]);
   assert.match(claudeMcpText, /\$\{user_config\.studio_base_url\}/);
-  assert.ok(claudeMcp.tools.args.includes("openl-mcp@1.1.0"));
+  assert.ok(claudeMcp.tools.args.includes("openl-mcp@1.2.0"));
 });
 
 // The server version is pinned twice — .mcp.json (Claude Code) and

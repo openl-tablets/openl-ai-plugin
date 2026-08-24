@@ -47,11 +47,11 @@ test("launcher environment replaces inherited OpenL credentials", () => {
 test("launcher uses fixed, pinned npx invocations", () => {
   assert.deepEqual(buildNpxInvocation({ platform: "linux", env: {} }), {
     command: "npx",
-    args: ["-y", "-p", "openl-mcp@1.1.0", "openl-mcp"],
+    args: ["-y", "-p", "openl-mcp@1.2.0", "openl-mcp"],
   });
   assert.deepEqual(buildNpxInvocation({ platform: "win32", env: { ComSpec: "C:\\Windows\\cmd.exe" } }), {
     command: "C:\\Windows\\cmd.exe",
-    args: ["/d", "/s", "/c", "npx.cmd -y -p openl-mcp@1.1.0 openl-mcp"],
+    args: ["/d", "/s", "/c", "npx.cmd -y -p openl-mcp@1.2.0 openl-mcp"],
   });
 });
 
@@ -215,7 +215,7 @@ writeFileSync(process.env.OPENL_TEST_CAPTURE, JSON.stringify({
   assert.doesNotMatch(`${result.stdout}${result.stderr}`, /configured-secret|inherited-secret/);
 
   const capture = JSON.parse(await readFile(capturePath, "utf8"));
-  assert.deepEqual(capture.argv, ["-y", "-p", "openl-mcp@1.1.0", "openl-mcp"]);
+  assert.deepEqual(capture.argv, ["-y", "-p", "openl-mcp@1.2.0", "openl-mcp"]);
   assert.equal(capture.baseUrl, "https://studio.example.com");
   assert.equal(capture.token, configuredToken);
   assert.notEqual(capture.configDir, join(root, "stale-cache"));
