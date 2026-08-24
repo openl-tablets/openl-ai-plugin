@@ -150,7 +150,7 @@ line with an exact version (using the version your administrator provides), for
 example:
 
 ```json
-"args": ["-y", "-p", "openl-mcp@1.1.0", "openl-mcp"]
+"args": ["-y", "-p", "openl-mcp@1.2.0", "openl-mcp"]
 ```
 
 A fixed version does not update automatically. Change the version number in this

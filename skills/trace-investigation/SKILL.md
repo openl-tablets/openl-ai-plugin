@@ -115,7 +115,8 @@ test ranges (e.g. `1-3,5`) instead of input JSON.
 
 ### Path A — tree trace (`openl_get_trace_nodes` is present)
 
-This is the surface of the server version this plugin pins.
+This is the surface of `openl-mcp@1.1.0`, which the plugin no longer pins — expect it
+only on a desktop/Cowork configuration still held on that version.
 
 1. `openl_start_trace` with the project, the entry point table, and the wrapped
    input. It returns immediately — the run is asynchronous.
@@ -142,7 +143,8 @@ carry the evidence, and use `release: true` so the trace does not sit in server 
 
 ### Path B — interactive debugger (`openl_step_trace` / `openl_watch_trace_cells` present)
 
-A newer server replaces the tree tools with a debugger. Prefer it when available.
+This is the surface of the server version this plugin pins (`openl-mcp@1.2.0`), which
+replaced the tree tools with a debugger. Prefer it whenever it is there.
 
 1. Start with a whole-run profiling pass: `openl_start_trace` with
    `stopAtEntry: false`, `profiling: true` and an explicit `breakpoints: []`. The

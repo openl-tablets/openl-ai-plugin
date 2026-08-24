@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.0] - Unreleased
+## [0.5.0] - Unreleased
 
 ### Added
 
@@ -21,6 +21,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   runtime context, and testing both the old and new date ranges — without touching a
   prior version in place. All three ship from `skills/` with no manifest change, picked
   up by Claude Code and Codex the same way `connect` and `trace-investigation` are.
+
+### Changed
+
+- The bundled MCP server pin moves from `openl-mcp@1.1.0` to **`openl-mcp@1.2.0`** in both
+  places that carry it — `.mcp.json` (Claude Code) and `OPENL_MCP_VERSION` in
+  `scripts/start-openl-mcp-codex.mjs` (Codex). The plugin's connection contract is
+  unchanged (`OPENL_BASE_URL` + `OPENL_PERSONAL_ACCESS_TOKEN`, blank token treated as
+  absent), but the server's tool surface is not: `1.2.0` **removes** the tree-trace tools
+  (`openl_get_trace_nodes`, `openl_get_trace_node_details`, `openl_get_trace_parameter`,
+  `openl_export_trace`, `openl_cancel_trace`) in favour of an interactive debugger
+  (`openl_step_trace`, `openl_resume_trace`, `openl_stop_trace`,
+  `openl_inspect_trace_frame`, `openl_set_trace_breakpoints`, `openl_get_trace_value`,
+  `openl_expand_trace_tree`, `openl_watch_trace_cells`), and adds branch-merge tools
+  (`openl_check_project_merge`, `openl_merge_project_branches`,
+  `openl_get_merge_conflicts`, `openl_read_merge_conflict_file`,
+  `openl_cancel_merge_conflicts`, `openl_list_project_branches`,
+  `openl_delete_project_branch`) plus `openl_run_table`, `openl_get_table_dependencies`,
+  `openl_list_project_modules`, `openl_list_module_sheets`,
+  `openl_list_table_property_definitions`, `openl_copy_table`, `openl_delete_project`, and
+  `openl_get_version`. The `trace-investigation` skill already branches on the tool
+  surface, so its debugger path (Path B) is now the pinned one and the tree path applies
+  only to a desktop/Cowork configuration still held on `1.1.0`.
+- `openl-mcp@1.2.0` also drops the server's legacy fallback to a PAT cached by a past
+  direct CLI sign-in, and no longer reads `OPENL_CONFIG_DIR`. The Codex launcher still
+  isolates that directory per start as a guard for older or user-managed servers.
+  Documentation updated accordingly (`docs/architecture.md`, `docs/admin-setup.md`,
+  `docs/cowork-setup.md`, `docs/troubleshooting.md`, `docs/release.md`).
 
 ## [0.3.0] - 2026-08-07
 

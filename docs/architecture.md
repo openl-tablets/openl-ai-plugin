@@ -59,7 +59,7 @@ The plugin is a **packaging layer, not a fork**. The MCP server is the published
 [`openl-tablets/openl-mcp`](https://github.com/openl-tablets/openl-mcp)), launched as a **stdio**
 server via `npx -y -p openl-mcp@X.Y.Z openl-mcp`.
 
-- **Claude Code plugin:** pin an exact version (`@1.1.0`) in `.mcp.json` for
+- **Claude Code plugin:** pin an exact version (`@1.2.0`) in `.mcp.json` for
   reproducibility. Bumping the pin is a plugin release (see [release.md](release.md)).
 - **Desktop / Cowork manual config:** use an unversioned package with
   `--prefer-online` by default so it checks for server updates when Claude starts.
@@ -84,8 +84,10 @@ server via `npx -y -p openl-mcp@X.Y.Z openl-mcp`.
   non-loopback HTTP address. Loopback HTTP supports local Studio copies without the
   opt-in, but status/configuration still report it as unencrypted. The launcher clears
   inherited OpenL credentials (case-insensitively, which matters on Windows) and
-  gives every start a fresh `OPENL_CONFIG_DIR`, so an old CLI token cache cannot
-  silently override the configured Codex identity. On handled termination signals,
+  gives every start a fresh `OPENL_CONFIG_DIR`. The pinned `openl-mcp@1.2.0` keeps no
+  CLI token cache and no longer reads that variable; the isolation stays as a guard for
+  an older or user-managed server, where a stale cache could otherwise override the
+  configured Codex identity. On handled termination signals,
   the launcher stops the full POSIX process group or Windows process tree before
   removing the isolated directory.
 - `npx` needs the npm registry at first launch (cached afterwards). For offline / air-gapped
@@ -156,12 +158,13 @@ Consequences for skill content:
   from whatever `openl-mcp` version is configured — the pin in `.mcp.json` for Claude
   Code and in `scripts/start-openl-mcp-codex.mjs` for Codex, or a user-managed version
   in the desktop/Cowork config. `trace-investigation` therefore checks which trace
-  tools exist and follows one of two paths: the tree-trace tools of the pinned
-  `openl-mcp@1.1.0` (`openl_start_trace` → `openl_get_trace_nodes` →
-  `openl_get_trace_node_details`), or the interactive debugger of a newer server
-  (`openl_step_trace`, `openl_watch_trace_cells`, `openl_inspect_trace_frame`, …).
-  When the pin moves to a release that carries the debugger, that path becomes the
-  primary one and the tree-trace path can be dropped.
+  tools exist and follows one of two paths: the interactive debugger of the pinned
+  `openl-mcp@1.2.0` (`openl_step_trace`, `openl_watch_trace_cells`,
+  `openl_inspect_trace_frame`, …), or the tree-trace tools of `openl-mcp@1.1.0`
+  (`openl_start_trace` → `openl_get_trace_nodes` → `openl_get_trace_node_details`),
+  which `1.2.0` removed. The debugger is the primary path now; the tree path stays
+  only for a desktop/Cowork config still held on `1.1.0`, and can be dropped once no
+  supported configuration can land there.
 
 ## Authentication design
 
@@ -174,11 +177,12 @@ as absent rather than as an empty credential. The supported plugin modes are:
 1. **Explicit token** — the `studio_token` setting for multi-user Studio.
 2. **Anonymous** — no token for single-user Studio, where no sign-in exists.
 
-`openl-mcp@1.1.0` retains a legacy fallback to a PAT cached by a past direct CLI
-sign-in when no explicit token is set. The plugin never creates or manages that
-cache, so this is not a supported plugin authentication mode. Until the bundled pin
-moves to a server version without that fallback, complete sign-out means revoking in
-Studio both the configured PAT and any older PATs created for Claude or OpenL MCP.
+`openl-mcp@1.2.0` dropped the legacy fallback to a PAT cached by a past direct CLI
+sign-in, so the bundled pin now takes only the two modes above. `1.1.0` still had that
+fallback, and the plugin never created or managed the cache in either case. On a
+machine that used direct CLI sign-in in the past — or whose desktop/Cowork config is
+still on `1.1.0` — complete sign-out therefore means revoking in Studio both the
+configured PAT and any older PATs created for Claude or OpenL MCP.
 
 The user creates the PAT in Studio's own UI (**User → Personal Access Tokens**), where they have
 already authenticated through whatever sign-in their organization uses, and pastes it into the

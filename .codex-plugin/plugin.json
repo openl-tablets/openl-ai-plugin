@@ -1,6 +1,6 @@
 {
   "name": "openl",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Work with OpenL Studio from Codex or Claude Code — manage rules, projects, tables and tests over the OpenL MCP server.",
   "author": {
     "name": "OpenL Tablets"

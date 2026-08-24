@@ -2,7 +2,7 @@
   "tools": {
     "type": "stdio",
     "command": "npx",
-    "args": ["-y", "-p", "openl-mcp@1.1.0", "openl-mcp"],
+    "args": ["-y", "-p", "openl-mcp@1.2.0", "openl-mcp"],
     "env": {
       "OPENL_BASE_URL": "${user_config.studio_base_url}",
       "OPENL_PERSONAL_ACCESS_TOKEN": "${user_config.studio_token}"

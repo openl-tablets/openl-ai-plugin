@@ -80,8 +80,8 @@ without a Studio address and you have to add it afterwards with
 > delete `~/.claude/skills/openl-trace-investigation` (macOS/Linux) or
 > `%USERPROFILE%\.claude\skills\openl-trace-investigation` (Windows), then start a new
 > Claude session. The plugin cannot remove that user-owned copy, and keeping it leaves
-> the obsolete debugger-only workflow alongside `/openl:trace-investigation`. See
-> [Troubleshooting](troubleshooting.md#claude-offers-two-trace-skills-or-asks-for-unavailable-debugger-tools).
+> the obsolete standalone workflow alongside `/openl:trace-investigation`. See
+> [Troubleshooting](troubleshooting.md#claude-offers-two-trace-skills).
 
 When Claude Code asks for the plugin settings, fill in the **OpenL Studio address**.
 You can leave the **Personal Access Token** empty for now — [Step 2](#step-2--connect-to-openl-studio)
