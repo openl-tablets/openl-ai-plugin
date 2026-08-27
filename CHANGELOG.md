@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - Unreleased
+
+### Added
+
+- **Cursor support.** Cursor now installs the same plugin — the same `skills/` directory
+  and the same pinned `openl-mcp` server — through its own manifest,
+  `.cursor-plugin/plugin.json`, alongside a `.cursor-plugin/marketplace.json` that
+  mirrors the Claude marketplace entry. Cursor's own plugin loader prefers
+  `.cursor-plugin/plugin.json` over `.claude-plugin/plugin.json`, so a Cursor install
+  now takes the Cursor path deliberately instead of falling through to the Claude
+  manifest.
+- `.mcp.cursor.json` — the Cursor MCP descriptor. Cursor discovers `.mcp.json` before
+  `mcp.json`, so without an override it reused Claude Code's descriptor and inherited its
+  `${user_config.*}` placeholders, which Cursor does not substitute: the server received
+  `OPENL_BASE_URL=${user_config.studio_base_url}` verbatim and exited immediately
+  (`MCP error -32000: Connection closed`) — the one part of the plugin that was actually
+  broken in Cursor. The Cursor manifest's `mcpServers` field
+  overrides discovery and points at this descriptor, which uses Cursor's own plugin
+  variables — `${OPENL_STUDIO_URL}` and `${OPENL_STUDIO_TOKEN:-}` — declared in the
+  manifest's `variables` schema. Cursor prompts for both at install time and keeps them
+  editable under **Customize → Plugins → openl → Configure**, so a Cursor user never
+  edits a JSON file. The token's `:-` default matters: an unconfigured variable with no
+  default survives substitution as the literal `${OPENL_STUDIO_TOKEN}` and would reach
+  Studio as a bogus credential, while the empty-string default is what
+  `openl-mcp` >= 1.1.0 already treats as "no token" for single-user Studio.
+- [docs/cursor-setup.md](docs/cursor-setup.md) — setup guide for Cursor: how the plugin
+  reaches Cursor (team marketplace import, or the official marketplace once reviewed),
+  where the connection values are configured, how updates reach an installed plugin
+  (**Auto Refresh** on the marketplace, or a manual **Refresh**), and the two Cursor
+  admin settings that can block delivery outright.
+- The `connect` skill gained a **Cursor setup** branch, and its client-selection step now
+  distinguishes Cursor from Claude Code, Codex, and Claude desktop/Cowork.
+
+### Changed
+
+- `.mcp.json`, the Claude Code descriptor, is deliberately untouched: Cursor support adds
+  files rather than changing the path Claude Code already uses.
+- Plugin descriptions across the manifests, the README, `docs/architecture.md`,
+  `docs/admin-setup.md`, and `docs/troubleshooting.md` now cover Cursor as a supported
+  client. `docs/architecture.md` records what was verified on a live Cursor install
+  versus what was read out of Cursor's plugin loader, including the security consequence
+  the variables mechanism carries: unlike the Claude Code and Codex paths, which keep the
+  token on the user's machine, Cursor stores a marketplace plugin's configured variables
+  in the user's Cursor account.
+
 ## [0.5.0] - Unreleased
 
 ### Added

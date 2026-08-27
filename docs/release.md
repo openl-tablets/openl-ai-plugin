@@ -167,8 +167,9 @@ Codex cleanup.
 ## 3. Versioning model
 
 - The plugin version is the matching **`version` field in
-  `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json`, and `package.json`**
-  (semver, e.g. `"0.2.0"`). Always set and bump all three together.
+  `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json`,
+  `.cursor-plugin/plugin.json`, and `package.json`** (semver, e.g. `"0.2.0"`). Always
+  set and bump all four together.
 - Version resolution order: `plugin.json` `version` → marketplace entry version → git commit SHA → `"unknown"`.
 - **Update behaviour:**
   - With an explicit `version`: users only receive an update when you **bump it**. Pushing commits without a bump
@@ -187,13 +188,14 @@ Codex cleanup.
 2. Confirm it's resolvable: `npm view openl-mcp@X.Y.Z version`.
 
 **B. This repo: cut a plugin release**
-1. If adopting a new server: bump the pin in **both** places that carry it —
-   `.mcp.json` → `tools.args` (Claude Code) **and** `OPENL_MCP_VERSION` in
-   `scripts/start-openl-mcp-codex.mjs` (Codex). They must stay equal;
+1. If adopting a new server: bump the pin in **all three** places that carry it —
+   `.mcp.json` → `tools.args` (Claude Code), `OPENL_MCP_VERSION` in
+   `scripts/start-openl-mcp-codex.mjs` (Codex), and `.mcp.cursor.json` →
+   `mcpServers.tools.args` (Cursor). They must stay equal;
    `tests/plugin-manifests.test.mjs` fails the build if they drift.
 2. Update skills / agents / docs as needed.
-3. Bump `version` in both plugin manifests and `package.json` (and the entry in
-   `marketplace.json` if it carries one).
+3. Bump `version` in all three plugin manifests and `package.json` (and the entry in
+   either `marketplace.json` if it carries one).
 4. Update `CHANGELOG.md` (replace `Unreleased` with the release date on the version being cut).
 5. Run `npm test` and `claude plugin validate .`, then smoke-install through an
    isolated Codex test profile and inspect only this plugin with
@@ -223,6 +225,12 @@ Codex cleanup.
 - Codex: `codex plugin marketplace upgrade openl-ai-plugin`, then remove and add
   `openl@openl-ai-plugin` again. The Codex connection config stays outside the
   plugin cache; start a new task after reinstalling.
+- Cursor: nothing a user can do — the plugin updates when its marketplace is
+  re-indexed, which is an administrator action (**Auto Refresh** on pushes to the
+  tracked branch, needing the Cursor GitHub App, or a manual **Refresh** in the Cursor
+  dashboard). Configured variables survive the update. Announce releases to whoever owns
+  that marketplace, not only to users; see
+  [admin-setup.md](admin-setup.md#rolling-out-to-cursor-users).
 - Claude desktop app, **Chat/Cowork** installations: the release is invisible to them
   until they refresh the `openl-ai-plugin` marketplace in **Customize → Plugins**; the
   plugin's **Update** button stays inactive until their account's copy of the

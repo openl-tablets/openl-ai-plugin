@@ -1,7 +1,7 @@
 # Architecture — `openl` plugin
 
-How the plugin is put together and why: naming, the packaging model, Claude Code and Codex
-integration notes, and the authentication design. This document is for developers of the plugin. For
+How the plugin is put together and why: naming, the packaging model, Claude Code, Codex and
+Cursor integration notes, and the authentication design. This document is for developers of the plugin. For
 versioning/release/distribution see [release.md](release.md); for operational setup
 (versions, IdP configuration, rollout) see [admin-setup.md](admin-setup.md).
 
@@ -13,6 +13,7 @@ versioning/release/distribution see [release.md](release.md); for operational se
 | Plugin (`plugin.json` → `name`) | `openl` | `/openl:<skill>`, `/plugin install openl@openl-ai-plugin` |
 | Claude Code MCP server key (top-level key in `.mcp.json`) | `tools` | `mcp__plugin_openl_tools__<tool>` |
 | Codex MCP server key (`.mcp.codex.json`) | `openl-ai` | Codex MCP configuration and approvals |
+| Cursor MCP server key (`.mcp.cursor.json`) | `tools` | Cursor registers it as `plugin-openl-tools` |
 | What it is | lives in the `description` fields, not the name | marketplace / `/plugin` UI |
 
 Rationale: the **plugin** is named `openl` — it is the user-visible namespace (`/openl:…`
@@ -32,8 +33,12 @@ openl-ai-plugin/
 │   └── marketplace.json     # this repo is its own marketplace
 ├── .codex-plugin/
 │   └── plugin.json          # Codex manifest: skills, interface, MCP descriptor path
+├── .cursor-plugin/
+│   ├── plugin.json          # Cursor manifest: variables, MCP descriptor path
+│   └── marketplace.json     # Cursor's own copy of the marketplace entry
 ├── .mcp.json                # Claude Code MCP server (kept as a separate root file — see below)
 ├── .mcp.codex.json          # Codex MCP server (openl-ai) → bundled launcher
+├── .mcp.cursor.json         # Cursor MCP server (tools) → npx + Cursor plugin variables
 ├── scripts/                 # Codex-only Node helpers (Claude Code needs none of these)
 │   ├── start-openl-mcp-codex.mjs   # launcher: reads saved config, spawns openl-mcp
 │   ├── configure-codex.mjs         # interactive, no-echo PAT/address setup
@@ -90,6 +95,19 @@ server via `npx -y -p openl-mcp@X.Y.Z openl-mcp`.
   configured Codex identity. On handled termination signals,
   the launcher stops the full POSIX process group or Windows process tree before
   removing the isolated directory.
+- **Cursor plugin:** Cursor substitutes no `${user_config.*}` values either, but it has
+  its own per-user plugin **variables**: names declared in `.cursor-plugin/plugin.json`
+  under `variables` (a restricted JSON Schema), values entered by the user, and
+  `${NAME}` / `${NAME:-default}` placeholders expanded in the MCP descriptor. So Cursor
+  needs no launcher and no configurator — `.mcp.cursor.json` runs the same pinned
+  `npx -y -p openl-mcp@X.Y.Z openl-mcp` directly, with
+  `OPENL_BASE_URL=${OPENL_STUDIO_URL}` and
+  `OPENL_PERSONAL_ACCESS_TOKEN=${OPENL_STUDIO_TOKEN:-}`. The `:-` default is load-bearing:
+  an unconfigured variable **without** a default survives substitution as the literal
+  `${…}` string, so a single-user Studio user who left the token blank would send
+  `Authorization: Token ${OPENL_STUDIO_TOKEN}` and get 401; the empty-string default is
+  what `openl-mcp` >= 1.1.0 already treats as "no token". The pin is carried a third
+  time here and kept equal to the other two by `tests/plugin-manifests.test.mjs`.
 - `npx` needs the npm registry at first launch (cached afterwards). For offline / air-gapped
   installs the documented escape hatch is a vendored single-file bundle under
   `${CLAUDE_PLUGIN_ROOT}/dist/` with `command` pointed at `node`; it is a variant, not the default.
@@ -135,7 +153,91 @@ server via `npx -y -p openl-mcp@X.Y.Z openl-mcp`.
 - `${CLAUDE_PLUGIN_ROOT}` is **ephemeral** (changes on update) — never cache credentials or state
   there.
 
-## Skills: one directory, both clients
+## Cursor integration notes
+
+Cursor takes the same repository through its own manifest. Two things about this section
+matter for future edits: what was **observed on a live install**, and what was **read out
+of Cursor's plugin loader** (`Cursor.app/Contents/Resources/app/extensions/cursor-agent-exec/dist/main.js`,
+Cursor 3.17.21). They are marked separately, because only the first kind is evidence.
+
+**Observed on a live install (Cursor 3.17.21, macOS, 2026-08-27):**
+
+- The repository installs as a Cursor plugin through a **team marketplace** created from
+  the GitHub repo. Cursor's backend indexes the repo (marketplace id
+  `openl-tablets-openl-ai-plugin-<n>`, plugin `openl` at git path `.`) and the client
+  caches the commit under `~/.cursor/plugins/cache/<marketplace-slug>/openl/<sha>/`.
+  Cursor has **no user-added marketplaces**: a user cannot point Cursor at this repo the
+  way `/plugin marketplace add` does in Claude Code.
+- With only the Claude manifests present, Cursor read the bare-root `.mcp.json`,
+  registered the server as `plugin-openl-tools`, started it — and it died immediately:
+  `MCP error -32000: Connection closed`. Reproduced outside Cursor: `openl-mcp` exits
+  with `Error: Invalid OpenL base URL: ${user_config.studio_base_url}`, because Cursor
+  does not substitute `${user_config.*}`. That single failure was the whole gap; skills
+  were unaffected.
+- The **agent side** (`layout: unifiedAgent`, i.e. the Agent Window) loaded the plugin
+  from that cache — `[pluginsSubsystem] Adding enabled plugin: openl` — and reported
+  `CursorPluginsAgentSkillsService load completed` with a skill count. What the logs do
+  **not** contain is the list of skill names, so "our five skills are available to the
+  Cursor agent" is *not* established by them; the only trace of our files is one UI log
+  line naming `…/openl/<sha>/skills/connect/SKILL.md`. Confirming the skills is a
+  look at **Customize → Skills** (or asking a Cursor chat to run one) — see *Not verified
+  yet* below. Nothing observed suggests `skills/` needs Cursor-specific work; it is
+  simply unconfirmed.
+- Two **admin settings** blocked delivery paths on that machine, and both are worth
+  knowing before debugging anything else: importing a Claude-format marketplace was
+  refused with `Third-party plugin imports are disabled by team admin settings`, and
+  plugin loading reported `userLocal=false` — *Allow Local Plugin Imports* is off, so
+  `~/.cursor/plugins/local` (Cursor's documented local-development path) was unavailable.
+- The Cursor **CLI** is a separate surface: the `cursor-agent` build on that machine
+  (`2026.01.23`) has no plugin commands at all. Nothing here is verified for the CLI.
+
+**Read out of the loader (mechanics this repo relies on, not independently re-verified
+after the change):**
+
+- Manifest precedence is `.cursor-plugin/plugin.json` → `.claude-plugin/plugin.json` →
+  root `plugin.json`. Adding the Cursor manifest therefore takes over from the Claude
+  one in Cursor while changing nothing for Claude Code. Marketplace manifests resolve the
+  same way: `.cursor-plugin/marketplace.json` before `.claude-plugin/marketplace.json`,
+  which is why both exist here and a test keeps them equivalent.
+- MCP descriptors are discovered as `[".mcp.json", "mcp.json"]`, first file wins per
+  server key — so `mcp.json` alone could not have replaced Claude Code's descriptor. A
+  manifest `mcpServers` field **overrides** discovery, which is what makes
+  `.mcp.cursor.json` work while `.mcp.json` stays exactly as Claude Code needs it. Keep
+  the server key equal (`tools`) so the override replaces rather than adds.
+- The descriptor's bare-root form (server key at top level, no `mcpServers` wrapper) is
+  accepted as a fallback, consistent with what `.mcp.json` did.
+- Placeholders expand in `command`, `args`, `env` values and `cwd`, as `${NAME}` or
+  `${NAME:-default}`. The lookup order is **process environment → the user's configured
+  variables → the `:-` default → left in place verbatim**. Two consequences the descriptor
+  depends on: the optional token needs `:-` (see the packaging-model note above), and the
+  variable names are deliberately plugin-scoped (`OPENL_STUDIO_URL`, `OPENL_STUDIO_TOKEN`)
+  rather than the names the server itself reads — an `OPENL_BASE_URL` exported in a
+  developer's shell would otherwise silently outrank what they typed into Cursor.
+- `${CURSOR_PLUGIN_ROOT}` and `${CLAUDE_PLUGIN_ROOT}` are substituted with the plugin
+  install path, so a bundled launcher would be possible here too. It is not used: plain
+  `npx` is the one spawn path already observed working in Cursor, and Cursor's variables
+  remove the reason the Codex launcher exists.
+- A variable is masked when its name contains a word like `TOKEN`, `SECRET`, `KEY`, or
+  `PASSWORD`. `OPENL_STUDIO_TOKEN` is named for that heuristic; renaming it would
+  unmask it.
+- The Cursor manifest format also carries `rules/`, `agents/`, `commands/`, and
+  `hooks/hooks.json`, discovered from those directories. This plugin ships none of them —
+  it is skills plus one MCP server — so "the same tools, skills and agents as Claude
+  Code" is satisfied by the shared `skills/` directory today. If agents are ever added,
+  Cursor can carry them without a new mechanism; a manifest field for a component
+  *replaces* its default directory scan, so keep those fields unset.
+
+**Not verified yet.** Two things, both needing eyes on a Cursor window:
+
+1. An end-to-end install of *this* commit — variables prompt at install, server
+   connected, tools answering — which needs the marketplace re-indexed by an
+   administrator (verifying locally instead requires an admin to allow local plugin
+   imports).
+2. That the five `skills/` entries appear to the Cursor agent under **Customize →
+   Skills** and can be invoked. The plugin's skill loading was observed; the per-skill
+   result was not.
+
+## Skills: one directory, every client
 
 `skills/` is the single source for every client — no per-client copy, and nothing to
 register per skill:
@@ -146,18 +248,21 @@ register per skill:
   frontmatter `name` equal to the directory name.
 - **Codex** reads the directory from its own manifest (`.codex-plugin/plugin.json` →
   `"skills": "./skills/"`), so a new sub-directory ships with no manifest change.
+- **Cursor** discovers `skills/*/SKILL.md` the same way Claude Code does, so its
+  manifest carries no `skills` field either — setting one would *replace* discovery
+  rather than add to it.
 - **Claude desktop Chat/Cowork** loads the same plugin skills; only the plugin's
   settings dialog is missing there (see [cowork-setup.md](cowork-setup.md)).
 
 Consequences for skill content:
 
 - **Never assume a client.** `connect` branches per client explicitly, because setup
-  differs (`/plugin configure` vs the Codex configurator vs
-  `claude_desktop_config.json`).
+  differs (`/plugin configure` vs the Codex configurator vs Cursor's **Configure**
+  dialog vs `claude_desktop_config.json`).
 - **Never assume a tool surface.** A skill ships with the plugin, but the tools come
   from whatever `openl-mcp` version is configured — the pin in `.mcp.json` for Claude
-  Code and in `scripts/start-openl-mcp-codex.mjs` for Codex, or a user-managed version
-  in the desktop/Cowork config. `trace-investigation` therefore checks which trace
+  Code, in `scripts/start-openl-mcp-codex.mjs` for Codex and in `.mcp.cursor.json` for
+  Cursor, or a user-managed version in the desktop/Cowork config. `trace-investigation` therefore checks which trace
   tools exist and follows one of two paths: the interactive debugger of the pinned
   `openl-mcp@1.2.0` (`openl_step_trace`, `openl_watch_trace_cells`,
   `openl_inspect_trace_frame`, …), or the tree-trace tools of `openl-mcp@1.1.0`
@@ -196,7 +301,16 @@ browser flow and no subprocess.
   including remote/VM setups where a `127.0.0.1` callback is unreachable.
 - **Secrets stay out of the model's context:** the `studio_token` field is `sensitive` (masked,
   stored in the OS keychain or a protected credentials file — see integration notes); the model
-  is instructed never to read it or echo a pasted token.
+  is instructed never to read it or echo a pasted token. Cursor masks its
+  `OPENL_STUDIO_TOKEN` variable on the same basis (its name contains `TOKEN`).
+- **Where the PAT rests differs per client, and Cursor is the exception.** Claude Code
+  keeps it in the OS keychain or a protected credentials file; Codex in an owner-only
+  file outside the plugin cache; the desktop/Cowork config in plaintext in the user's own
+  config file. All of those stay on the user's machine. Cursor keeps a marketplace
+  plugin's configured variables in the **user's Cursor account** and supplies them when it
+  starts the local server, so choosing the Cursor path accepts that the PAT leaves the
+  machine. What does not change: the PAT is created in Studio, scoped to one user, named,
+  and individually revocable there, and revocation in Studio is what cuts access.
 - **Revocation** is a normal Studio PAT operation: named, time-limited, individually revocable in
   the user's Studio token list. Revoking every applicable PAT in Studio is the
   supported sign-out operation; no CLI operation is involved.

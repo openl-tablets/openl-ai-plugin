@@ -10,7 +10,10 @@ access token**.
 > desktop app (Cowork)** via the settings file, use the troubleshooting table in
 > [cowork-setup.md](cowork-setup.md#if-something-doesnt-work) instead — the fixes
 > differ (settings file and app restart instead of `/plugin` commands). For Codex,
-> use the table in [codex-setup.md](codex-setup.md#if-something-doesnt-work).
+> use the table in [codex-setup.md](codex-setup.md#if-something-doesnt-work); for
+> **Cursor**, the one in [cursor-setup.md](cursor-setup.md#if-something-doesnt-work) —
+> there the connection details live in Cursor's own **Configure** dialog, and the plugin
+> reaches you through a marketplace your administrator manages.
 
 > **The `/plugin …` commands below need a terminal.** They work only in an
 > interactive Claude Code session started from a terminal — not in the desktop app's
@@ -145,6 +148,16 @@ Two caveats:
   can edit. If your organization declared it in managed settings, that scope owns the
   flag and only an administrator can change it (see
   [admin-setup.md](admin-setup.md#installing-for-the-organization)).
+
+### Cursor
+
+Cursor updates the plugin when its marketplace is re-indexed, and that is an
+administrator action, not a user one: either **Auto Refresh** is enabled on the
+marketplace (it needs the Cursor GitHub App on the repository and re-indexes at most
+once every 10 minutes on pushes to the tracked branch), or someone clicks **Refresh** on
+it in the Cursor dashboard. There is no per-user update command. If **Customize** still
+shows the old version after a release, ask your administrator to refresh the marketplace;
+restart Cursor afterwards so the OpenL server restarts on the new pinned version.
 
 ### Before you go hunting for a bug
 
