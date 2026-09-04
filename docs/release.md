@@ -180,6 +180,13 @@ Codex cleanup.
   currently document an unattended-update guarantee for direct GitHub installs.
 - The plugin's effective "contents" = the manifest/skills/agents in the tagged commit **plus** the pinned
   `openl-mcp@X.Y.Z`. Bumping the server pin is a plugin-version-worthy change.
+- **Landing on `main` *is* the release.** This repository is its own marketplace, so every
+  client resolves the plugin from `main` — there is no separate publish step that could
+  hold a merged version back, and nothing to "stage". Consequences: date the `CHANGELOG.md`
+  section as part of the release commit rather than later, treat a version that reached
+  `main` as shipped even if it was never tagged or announced, and fix a released version
+  forward with the next patch instead of trying to unship it. Tags mark those releases and
+  give a rollback point; they do not gate them.
 
 ---
 
