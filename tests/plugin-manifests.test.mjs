@@ -152,12 +152,11 @@ async function skillDirectories() {
   return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
 }
 
-// All three clients take the whole skills/ directory — Claude Code and Cursor by
+// All three packages take the whole skills/ directory — Claude Code and Cursor by
 // auto-discovery, Codex through its manifest — and Claude Code derives the invocation
-// name (/openl:<dir>) from the directory while the frontmatter carries its own name. A
-// mismatch, or a missing description, ships a skill that cannot be invoked or never
-// triggers.
-test("every skill is discoverable by every client", async () => {
+// name (/openl:<dir>) from the directory while the frontmatter carries its own name.
+// This validates packaging, not runtime discovery in any client.
+test("every skill is packaged for every client", async () => {
   const claude = await readJson(".claude-plugin/plugin.json");
   assert.equal(claude.skills, undefined, "Claude Code auto-discovers skills/; keep the field unset");
   const cursor = await readJson(".cursor-plugin/plugin.json");

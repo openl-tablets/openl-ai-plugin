@@ -170,12 +170,14 @@ Codex cleanup.
   `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json`,
   `.cursor-plugin/plugin.json`, and `package.json`** (semver, e.g. `"0.2.0"`). Always
   set and bump all four together.
-- Version resolution order: `plugin.json` `version` → marketplace entry version → git commit SHA → `"unknown"`.
-- **Update behaviour:**
-  - With an explicit `version`: users only receive an update when you **bump it**. Pushing commits without a bump
-    does nothing — good for controlled releases. ← our model.
-  - Without a `version`: every commit is treated as a new version — handy for fast internal iteration, but
-    avoid for a published plugin.
+- Claude Code and Codex releases use the explicit manifest version as their published
+  update identity. A push without a version bump is not a release for those clients.
+- Cursor's **team marketplace** follows an indexed repository revision: **Auto
+  Refresh** or a manual **Refresh** can index a new commit even before the manifest
+  version changes. Still bump all four versions for every release so the UI, changelog,
+  rollback point and other clients describe the same artifact. Public Cursor
+  Marketplace updates go through Cursor's review/publish process; Cursor does not
+  currently document an unattended-update guarantee for direct GitHub installs.
 - The plugin's effective "contents" = the manifest/skills/agents in the tagged commit **plus** the pinned
   `openl-mcp@X.Y.Z`. Bumping the server pin is a plugin-version-worthy change.
 
@@ -207,8 +209,17 @@ Codex cleanup.
    read-only listing uses the normal read path, a harmless write requests approval,
    the launcher remains the configured process, and no PAT appears in prompts,
    process arguments, stdout, stderr, or captured MCP traffic.
-6. Commit, tag `vA.B.C`, push.
-7. (Optional) create a GitHub Release with notes pulled from `CHANGELOG.md`.
+6. Treat the automated Cursor tests as a **packaging contract**, not an application
+   smoke test. Publish the candidate to a disposable/team marketplace branch, or use
+   local import when an administrator has enabled it. In a clean project and
+   user-scoped install, enter a test Studio URL/PAT only through **Configure**, confirm
+   the expected plugin version and all five skills, confirm the `tools` server connects,
+   run a real *List projects* request, and invoke at least one skill. The project must
+   not gain `.cursor/mcp.json` or any other hand-written config. Exercise the chosen
+   update route once from the previous release as well, recording whether the settings
+   remain configured; never put the PAT in logs or test artifacts.
+7. Commit, tag `vA.B.C`, push.
+8. (Optional) create a GitHub Release with notes pulled from `CHANGELOG.md`.
 
 **C. Users update**
 - Existing Claude Code 0.1.x users: refresh the marketplace; Claude Code 2.1.193+
@@ -225,11 +236,13 @@ Codex cleanup.
 - Codex: `codex plugin marketplace upgrade openl-ai-plugin`, then remove and add
   `openl@openl-ai-plugin` again. The Codex connection config stays outside the
   plugin cache; start a new task after reinstalling.
-- Cursor: nothing a user can do — the plugin updates when its marketplace is
-  re-indexed, which is an administrator action (**Auto Refresh** on pushes to the
-  tracked branch, needing the Cursor GitHub App, or a manual **Refresh** in the Cursor
-  dashboard). Configured variables survive the update. Announce releases to whoever owns
-  that marketplace, not only to users; see
+- Cursor depends on its install route. A team-marketplace owner uses **Auto Refresh**
+  (with the Cursor GitHub App) or manual **Refresh**; a public-Marketplace build becomes
+  available only after Cursor publishes the reviewed update. Cursor does not document
+  a supported update path for **From GitHub Repository** installs, so treat that route
+  as non-updating until it is tested and documented; move users to the public or team
+  marketplace for managed updates. Announce the release to the marketplace owner as
+  well as users; see
   [admin-setup.md](admin-setup.md#rolling-out-to-cursor-users).
 - Claude desktop app, **Chat/Cowork** installations: the release is invisible to them
   until they refresh the `openl-ai-plugin` marketplace in **Customize → Plugins**; the

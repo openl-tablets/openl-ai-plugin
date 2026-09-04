@@ -17,9 +17,9 @@ Use exactly one branch:
   available. Follow **Codex setup**. Codex does not substitute `${user_config.*}`
   values and does not use `/plugin configure` or `claude_desktop_config.json`.
 - **Cursor:** the host is Cursor (its chat, or a Cursor agent session). Follow
-  **Cursor setup**. Cursor substitutes no `${user_config.*}` values either, has no
-  `/plugin configure`, and keeps its own connection settings in the plugin's
-  **Configure** dialog — not in a file the user or the agent edits.
+  **Cursor setup**. Cursor substitutes no `${user_config.*}` values either. Use
+  Cursor's own plugin **Configure** dialog rather than Claude Code's
+  `/plugin configure`; do not edit a configuration file.
 - **Claude Code terminal, IDE, or desktop Code tab:** `/plugin` settings are
   available. Follow **Claude Code setup**.
 - **Claude desktop Chat or Cowork:** `/plugin` settings are unavailable and the
@@ -109,19 +109,20 @@ Cursor's configuration.
      Studio; left **empty** for single-user Studio. The field is masked.
    Never ask for the token in chat, and do not offer to type it anywhere on the
    user's behalf.
-4. Tell the user that Cursor stores these values in their Cursor account rather than
-   on their computer, and that revoking the PAT in Studio is what cuts access. State
-   this plainly, once; do not speculate further about how Cursor holds it.
+4. Explain that the current Cursor path submits these values as part of the user's
+   plugin configuration. This plugin itself does not write them into project or global
+   MCP JSON. Explain that revoking the PAT in Studio is what cuts access; do not
+   speculate further about how Cursor may also cache the configuration.
 5. Have the user start a new Cursor chat and ask: *List the OpenL projects I can
    access.*
 
-If the **openl** plugin is not listed in **Customize** at all, explain that Cursor has
-no user-added marketplaces: an administrator has to make the plugin available to the
-account (a team marketplace imported from the plugin repository), and point to
-`docs/cursor-setup.md`. If Cursor reports that third-party plugin imports are disabled
-by team admin settings, that is the same answer — an administrator decision, not
-something the user can configure. Do not inspect Cursor caches, `mcp.json`, or any
-other configuration file to work around it.
+If the **openl** plugin is not listed in **Customize**, check the supported delivery
+routes described in `docs/cursor-setup.md`: the reviewed public Marketplace, an
+organization's team marketplace, or **+ Add → From GitHub Repository** when policy
+allows direct imports. If Cursor reports that community or third-party plugin imports
+are disabled, explain that the organization controls that path and recommend the
+approved public or team marketplace instead. Do not inspect Cursor caches or ask the
+user to hand-edit `mcp.json` as a workaround.
 
 For an `http://` address, warn once that a PAT travels unencrypted; loopback addresses
 for local Studio copies are fine as they are. Do not declare the address invalid.

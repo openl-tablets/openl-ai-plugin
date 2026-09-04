@@ -155,44 +155,57 @@ server via `npx -y -p openl-mcp@X.Y.Z openl-mcp`.
 
 ## Cursor integration notes
 
-Cursor takes the same repository through its own manifest. Two things about this section
-matter for future edits: what was **observed on a live install**, and what was **read out
-of Cursor's plugin loader** (`Cursor.app/Contents/Resources/app/extensions/cursor-agent-exec/dist/main.js`,
-Cursor 3.17.21). They are marked separately, because only the first kind is evidence.
+Cursor takes the same repository through its own native manifest. Keep three evidence
+levels separate when changing this integration: Cursor's documented public contract,
+observations from the running application, and implementation details read from one
+specific app build.
 
-**Observed on a live install (Cursor 3.17.21, macOS, 2026-08-27):**
+**Documented public contract:**
 
-- The repository installs as a Cursor plugin through a **team marketplace** created from
-  the GitHub repo. Cursor's backend indexes the repo (marketplace id
-  `openl-tablets-openl-ai-plugin-<n>`, plugin `openl` at git path `.`) and the client
-  caches the commit under `~/.cursor/plugins/cache/<marketplace-slug>/openl/<sha>/`.
-  Cursor has **no user-added marketplaces**: a user cannot point Cursor at this repo the
-  way `/plugin marketplace add` does in Claude Code.
-- With only the Claude manifests present, Cursor read the bare-root `.mcp.json`,
-  registered the server as `plugin-openl-tools`, started it — and it died immediately:
-  `MCP error -32000: Connection closed`. Reproduced outside Cursor: `openl-mcp` exits
-  with `Error: Invalid OpenL base URL: ${user_config.studio_base_url}`, because Cursor
-  does not substitute `${user_config.*}`. That single failure was the whole gap; skills
-  were unaffected.
-- The **agent side** (`layout: unifiedAgent`, i.e. the Agent Window) loaded the plugin
-  from that cache — `[pluginsSubsystem] Adding enabled plugin: openl` — and reported
-  `CursorPluginsAgentSkillsService load completed` with a skill count. What the logs do
-  **not** contain is the list of skill names, so "our five skills are available to the
-  Cursor agent" is *not* established by them; the only trace of our files is one UI log
-  line naming `…/openl/<sha>/skills/connect/SKILL.md`. Confirming the skills is a
-  look at **Customize → Skills** (or asking a Cursor chat to run one) — see *Not verified
-  yet* below. Nothing observed suggests `skills/` needs Cursor-specific work; it is
-  simply unconfirmed.
-- Two **admin settings** blocked delivery paths on that machine, and both are worth
-  knowing before debugging anything else: importing a Claude-format marketplace was
-  refused with `Third-party plugin imports are disabled by team admin settings`, and
-  plugin loading reported `userLocal=false` — *Allow Local Plugin Imports* is off, so
-  `~/.cursor/plugins/local` (Cursor's documented local-development path) was unavailable.
-- The Cursor **CLI** is a separate surface: the `cursor-agent` build on that machine
-  (`2026.01.23`) has no plugin commands at all. Nothing here is verified for the CLI.
+- [Cursor's plugin reference](https://cursor.com/docs/reference/plugins) defines
+  `.cursor-plugin/plugin.json` as the native manifest. Its `mcpServers` field may point
+  at an MCP descriptor, and `variables` declares values collected by Cursor instead of
+  requiring a user to edit JSON.
+- Without a plugin, [Cursor's MCP documentation](https://cursor.com/docs/mcp) uses
+  project-local `.cursor/mcp.json` and user-global `~/.cursor/mcp.json`, both using an
+  `mcpServers` wrapper. This plugin intentionally does not write either file: the native
+  manifest plus **Configure** dialog is the no-manual-JSON delivery path required by
+  this task.
+- Cursor documents native [skills](https://cursor.com/docs/skills) and
+  [subagents](https://cursor.com/docs/subagents), and discovers their plugin files from
+  `skills/*/SKILL.md` and `agents/*.md`. This repository currently ships five shared
+  skills and **no agents** for either Claude Code or Cursor,
+  so agent parity is zero-to-zero. If agents are added later, smoke-test their
+  frontmatter and behaviour in both clients instead of assuming every Claude-specific
+  field maps unchanged.
+- Current [Cursor CLI commands](https://cursor.com/docs/cli/reference/slash-commands)
+  include plugins, MCP and skills, including `/plugin`. Older CLI builds may not expose
+  that surface.
 
-**Read out of the loader (mechanics this repo relies on, not independently re-verified
-after the change):**
+**Observed on live installs (macOS):**
+
+- On Cursor 3.17.21 (2026-08-27), the repository installed through a **team
+  marketplace** created from the GitHub repository. Cursor cached the indexed commit
+  under `~/.cursor/plugins/cache/<marketplace-slug>/openl/<sha>/`.
+- Re-checked on Cursor 3.19.7 (2026-09-04), the installed public-branch plugin was still
+  `openl` 0.5.0, which only had the Claude descriptor. Cursor registered
+  `plugin-openl-tools`, passed `${user_config.studio_base_url}` literally and failed
+  with `MCP error -32000: Connection closed` / `Invalid OpenL base URL`. This reproduces
+  the ticket's original failure independently of the proposed fix.
+- The same Cursor 3.19.7 UI listed all five shared skills by name under the installed
+  plugin: `branching`, `connect`, `testing`, `trace-investigation`, and `versioning`.
+  A Cursor-specific rules file such as `.cursorrules` is therefore not needed for these
+  skills.
+- **Customize → Plugins → + Add** offered **From Marketplace** and **From GitHub
+  Repository**. Direct repository import remains subject to organization policy; a
+  team marketplace is still the controlled route for an internal rollout.
+- Local loading reported `userLocal=false`, so `~/.cursor/plugins/local` could not be
+  used on this account without an administrator enabling **Allow Local Plugin
+  Imports**. The installed `cursor-agent` build (`2026.01.23`) also had no plugin
+  commands; treat that as a legacy-build warning, not the current Cursor CLI contract.
+
+**Read from the Cursor 3.19.7 loader (implementation details this descriptor relies
+on, not a stable public API):**
 
 - Manifest precedence is `.cursor-plugin/plugin.json` → `.claude-plugin/plugin.json` →
   root `plugin.json`. Adding the Cursor manifest therefore takes over from the Claude
@@ -220,22 +233,29 @@ after the change):**
 - A variable is masked when its name contains a word like `TOKEN`, `SECRET`, `KEY`, or
   `PASSWORD`. `OPENL_STUDIO_TOKEN` is named for that heuristic; renaming it would
   unmask it.
-- The Cursor manifest format also carries `rules/`, `agents/`, `commands/`, and
-  `hooks/hooks.json`, discovered from those directories. This plugin ships none of them —
-  it is skills plus one MCP server — so "the same tools, skills and agents as Claude
-  Code" is satisfied by the shared `skills/` directory today. If agents are ever added,
-  Cursor can carry them without a new mechanism; a manifest field for a component
-  *replaces* its default directory scan, so keep those fields unset.
+- User-scoped installs and updates submit their configured `variables` as part of the
+  plugin installation. This plugin does not mirror them into `.cursor/mcp.json` or
+  `~/.cursor/mcp.json`.
 
-**Not verified yet.** Two things, both needing eyes on a Cursor window:
+**Verification status and delivery decision:**
 
-1. An end-to-end install of *this* commit — variables prompt at install, server
-   connected, tools answering — which needs the marketplace re-indexed by an
-   administrator (verifying locally instead requires an admin to allow local plugin
-   imports).
-2. That the five `skills/` entries appear to the Cursor agent under **Customize →
-   Skills** and can be invoked. The plugin's skill loading was observed; the per-skill
-   result was not.
+- `tests/cursor-clean-project.test.mjs` is a regression model of the observed loader
+  precedence and substitution rules. It proves that the packaged files resolve to the
+  expected command, environment and five skill directories in an otherwise empty
+  project; it is **not** a Cursor executable or GUI end-to-end test.
+- No installer-script extension is needed: Cursor's native manifest installs the MCP
+  descriptor and shared skills, while **Configure** supplies the two per-user values.
+  The separate Codex configurator remains Codex-only.
+- Version 0.6.0 from this branch has not yet been installed in Cursor. The feature branch
+  is not published or indexed, while local imports are disabled on the available
+  account. Before release, expose this commit through a disposable/team marketplace or
+  enable local imports, then verify a clean user-scoped install, the two **Configure**
+  fields, a connected `tools` server, a real `List projects` call, one skill invocation,
+  and an update from the previous version without creating project JSON.
+- **Proceed now; do not pause for priority clarification.** Cursor has the required
+  native plugin, MCP, skills and agent primitives, and EPBDS-16497 is already the active
+  follow-up. The remaining gate is the live 0.6.0 smoke test above, not an unresolved
+  product-priority decision.
 
 ## Skills: one directory, every client
 
@@ -306,11 +326,12 @@ browser flow and no subprocess.
 - **Where the PAT rests differs per client, and Cursor is the exception.** Claude Code
   keeps it in the OS keychain or a protected credentials file; Codex in an owner-only
   file outside the plugin cache; the desktop/Cowork config in plaintext in the user's own
-  config file. All of those stay on the user's machine. Cursor keeps a marketplace
-  plugin's configured variables in the **user's Cursor account** and supplies them when it
-  starts the local server, so choosing the Cursor path accepts that the PAT leaves the
-  machine. What does not change: the PAT is created in Studio, scoped to one user, named,
-  and individually revocable there, and revocation in Studio is what cuts access.
+  config file. All of those stay on the user's machine. The current Cursor implementation
+  submits user-scoped plugin variables as part of the user's plugin configuration and
+  supplies them when it starts the local server, so choosing the Cursor path is not a
+  local-only settings-file flow. What does not change: the PAT is created in Studio,
+  scoped to one user, named, and individually revocable there, and revocation in Studio
+  is what cuts access.
 - **Revocation** is a normal Studio PAT operation: named, time-limited, individually revocable in
   the user's Studio token list. Revoking every applicable PAT in Studio is the
   supported sign-out operation; no CLI operation is involved.

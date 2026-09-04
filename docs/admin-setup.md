@@ -19,8 +19,9 @@ marketplace rename map. Older and centrally managed installations need the
 > (PAT). Codex uses its bundled configurator because it has no Claude-style
 > `userConfig` substitution; see [codex-setup.md](codex-setup.md). Cursor substitutes
 > no `userConfig` values either, but has its own per-user plugin **variables**, which
-> the plugin declares and Cursor prompts for — with the caveat that Cursor keeps those
-> values in the user's Cursor account rather than on their machine; see
+> the plugin declares and Cursor prompts for. The current implementation submits those
+> values as part of the user-scoped plugin configuration, so this is not a local-only
+> settings-file flow; see
 > [Rolling out to Cursor users](#rolling-out-to-cursor-users). The Claude **desktop app**
 > (including Cowork sessions) does not support plugin settings, so the plugin cannot
 > deliver the PAT there — on that surface the OpenL server is added through the
@@ -36,7 +37,7 @@ marketplace rename map. Older and centrally managed installations need the
 |---|---|---|
 | **Claude Code** | **2.1.119 or later; 2.1.193+ recommended for a 0.1.x upgrade** | The plugin's settings dialog uses `manifest.userConfig`, introduced in Claude Code 2.1.83; 2.1.119 fixed optional blank settings, and 2.1.193 added automatic plugin rename migration. |
 | **Codex** | A desktop/CLI build with `codex plugin marketplace` and `codex plugin add` (verified with `codex-cli 0.145.0-alpha.30` and `0.146.0-alpha.3.1`) | Codex installs the same marketplace but reads its own native `.codex-plugin` manifest and bundled launcher; older preview builds without `plugin add` are not supported. |
-| **Cursor** | A build whose **Customize** page manages plugins (verified on Cursor **3.17.21**) | Cursor reads its own `.cursor-plugin` manifest and prompts for the plugin's declared variables. Delivery also depends on two Cursor admin settings — see [Rolling out to Cursor users](#rolling-out-to-cursor-users). |
+| **Cursor** | A build whose **Customize** page manages plugins (re-verified on Cursor **3.19.7**) | Cursor reads its own `.cursor-plugin` manifest and prompts for the plugin's declared variables. Direct repository and local-development imports also depend on organization policy — see [Rolling out to Cursor users](#rolling-out-to-cursor-users). |
 | **Node.js** | **24 or later, on every user's machine** | The plugin's backend is the [`openl-mcp`](https://www.npmjs.com/package/openl-mcp) npm package (`engines: node >= 24`), launched locally via `npx` for Claude Code, Codex, Cursor, or Cowork. This applies **even when the organization pre-installs the plugin** — there is no server-side variant. First launch downloads the package from the npm registry (cached afterwards). |
 | **OpenL Studio** | A deployment reachable from user machines | See [Studio address](#studio-address) below. |
 
@@ -131,10 +132,12 @@ Windows relies on the user profile ACLs. The PAT is plaintext in that file.
 
 ### Rolling out to Cursor users
 
-Cursor does not let a user add an arbitrary marketplace, so **this rollout is
-administrator-only**: until the plugin is available to the account, a Cursor user has
-no supported way to install it. Team marketplaces require a Teams plan (one
-marketplace) or Enterprise (unlimited); on Enterprise, only admins can add them.
+Use a **team marketplace** for the controlled internal rollout. Individual users can
+also install a reviewed public-Marketplace release, and Cursor 3.19.7 exposes
+**Customize → Plugins → + Add → From GitHub Repository** when organization policy
+permits direct imports. Those personal routes do not replace an administered rollout
+for a private or not-yet-published release. Team marketplaces require a Teams plan
+(one marketplace) or Enterprise (unlimited); on Enterprise, only admins can add them.
 
 1. Open the Cursor **Dashboard → Plugins**.
 2. Under **Team Marketplaces**, choose **Add Marketplace → Import from Repo** and
@@ -149,25 +152,25 @@ marketplace) or Enterprise (unlimited); on Enterprise, only admins can add them.
    branch), or refresh the marketplace manually after each plugin release. An import
    created with *Import from Repo* re-reads the whole manifest on refresh.
 
-Two Cursor admin settings under **Dashboard → Settings → Security & Identity →
-Marketplace and Plugins** decide what else is possible. Both were observed switched
-**off** on a live install, and the first of them blocks a delivery path outright:
+Cursor admin settings under **Dashboard → Settings → Security & Identity →
+Marketplace and Plugins** decide what else is possible. The labels vary slightly by
+build; both controls below were observed switched **off** on a live install:
 
-- **Third-party plugin imports** — when disabled, Cursor refuses to register marketplaces
-  imported from outside its own review process, and logs
-  `Third-party plugin imports are disabled by team admin settings`. A team marketplace
-  you own is the supported route in that case.
+- **Community/third-party plugin imports** — when disabled, Cursor refuses direct
+  repository imports and may log
+  `Third-party plugin imports are disabled by team admin settings`. Use a reviewed
+  public plugin or an approved team marketplace in that case.
 - **Allow Local Plugin Imports** (off by default on Enterprise) — when disabled, a
   plugin dropped into `~/.cursor/plugins/local` is ignored. This only affects local
   development of the plugin itself, not the rollout.
 
 Do not distribute a shared PAT. Each analyst fills in their own under **Customize →
 Plugins → openl → Configure**; the plugin declares the two variable names and never
-carries a value. Note the difference from the other clients before you choose this
-route: Cursor stores a marketplace plugin's configured variables in the **user's Cursor
-account** and hands them to the local server at start-up, so the PAT leaves the user's
-machine. The Studio-side controls are unchanged — the token is named, individually
-revocable, and scoped to that one user.
+carries a value. The current Cursor implementation submits user-scoped plugin
+variables as part of the user's plugin configuration and hands them to the local
+server at start-up; unlike the Claude Code and Codex paths, this is not a local-only
+settings-file flow. The Studio-side controls are unchanged — the token is named,
+individually revocable, and scoped to that one user.
 
 ### Plugin settings reference
 

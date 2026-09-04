@@ -27,9 +27,10 @@ panel inside your IDE, it's Claude Code. If you use the **Claude app** with a si
 of conversations, it's the desktop app — and the tab you're in (Code, or Chat/Cowork)
 decides which of the first two guides to follow.
 
-**Cursor users:** the plugin has to be made available to your Cursor account by an
-administrator before you can install it — Cursor has no user-added marketplaces. The
-[Cursor guide](docs/cursor-setup.md) explains what to ask for.
+**Cursor users:** install `openl` from Cursor's public Marketplace once it is
+published, from a team marketplace, or with **Customize → Plugins → + Add → From
+GitHub Repository** when your organization's policy permits repository imports. The
+[Cursor guide](docs/cursor-setup.md) explains each route.
 
 **Claude in the browser** (claude.ai, including cloud sessions) can't be connected:
 the OpenL connection runs on your own computer, and a browser session has no way to
@@ -114,8 +115,9 @@ administrator: [docs/troubleshooting.md](docs/troubleshooting.md).
 
 Still on an old plugin version after a release? By default, updates from this marketplace
 are manual. Claude Code users can enable auto-update for a marketplace they control, and
-an administrator may manage it centrally; desktop Chat/Cowork updates remain manual, and
-in Cursor refreshing the marketplace is an administrator action. See
+an administrator may manage it centrally; desktop Chat/Cowork updates remain manual. In
+Cursor, update behaviour depends on whether the plugin came from the public Marketplace,
+a team marketplace, or a direct repository import. See
 [The plugin stays on an old version](docs/troubleshooting.md#the-plugin-stays-on-an-old-version).
 
 ## Documentation

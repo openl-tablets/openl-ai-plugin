@@ -31,12 +31,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Studio as a bogus credential, while the empty-string default is what
   `openl-mcp` >= 1.1.0 already treats as "no token" for single-user Studio.
 - [docs/cursor-setup.md](docs/cursor-setup.md) — setup guide for Cursor: how the plugin
-  reaches Cursor (team marketplace import, or the official marketplace once reviewed),
-  where the connection values are configured, how updates reach an installed plugin
-  (**Auto Refresh** on the marketplace, or a manual **Refresh**), and the two Cursor
-  admin settings that can block delivery outright.
+  reaches Cursor (public Marketplace, team marketplace, or direct GitHub import when
+  policy permits it), where the connection values are configured, and how update
+  behaviour differs between those delivery routes.
 - The `connect` skill gained a **Cursor setup** branch, and its client-selection step now
   distinguishes Cursor from Claude Code, Codex, and Claude desktop/Cowork.
+- `tests/cursor-clean-project.test.mjs` models Cursor's observed manifest precedence
+  and variable substitution against an otherwise empty project. It guards the packaged
+  no-manual-JSON contract while the release checklist separately requires a real Cursor
+  application smoke test.
 
 ### Changed
 
@@ -44,11 +47,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   files rather than changing the path Claude Code already uses.
 - Plugin descriptions across the manifests, the README, `docs/architecture.md`,
   `docs/admin-setup.md`, and `docs/troubleshooting.md` now cover Cursor as a supported
-  client. `docs/architecture.md` records what was verified on a live Cursor install
-  versus what was read out of Cursor's plugin loader, including the security consequence
-  the variables mechanism carries: unlike the Claude Code and Codex paths, which keep the
-  token on the user's machine, Cursor stores a marketplace plugin's configured variables
-  in the user's Cursor account.
+  client. `docs/architecture.md` separates the official contract, live Cursor 3.19.7
+  evidence, loader implementation details and the still-required 0.6.0 end-to-end
+  release smoke. The live UI confirms that all five shared skills already load without
+  `.cursorrules`; it also reproduces the old Claude-placeholder MCP failure that this
+  release fixes.
 
 ## [0.5.0] - Unreleased
 

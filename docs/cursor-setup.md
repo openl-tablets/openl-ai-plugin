@@ -13,24 +13,25 @@ JSON file to edit and no configurator to run in a terminal.
 ## What you need
 
 - **Cursor** with plugin support — the **Customize** page in the sidebar lists
-  *Plugins*. Verified on Cursor **3.17.21**.
+  *Plugins*. Re-verified on Cursor **3.19.7**.
 - **Node.js 24 or newer** on your own computer (the OpenL connection runs locally).
   Check in a terminal: `node --version` — you want `v24` or higher.
 - The **OpenL Studio address** — the web address you open in your browser, e.g.
   `https://studio.example.com`.
 - Your usual OpenL Studio account, and your office network or VPN if Studio is
   internal.
-- **The plugin has to be available to your Cursor account.** Unlike Claude Code, you
-  cannot add an arbitrary marketplace yourself: Cursor lists plugins from its own
-  reviewed marketplace and from **team marketplaces** your administrator sets up. If
-  you don't see `openl` in **Customize**, that is the missing piece — ask your
-  administrator to import this repository as a team marketplace (the steps are in
-  [admin-setup.md](admin-setup.md#rolling-out-to-cursor-users)).
+- **The plugin has to be available to your Cursor account.** It may come from Cursor's
+  reviewed public Marketplace, a **team marketplace** set up by your administrator, or
+  a direct GitHub repository import when your organization's policy allows it. For a
+  controlled internal rollout, use the team-marketplace steps in
+  [admin-setup.md](admin-setup.md#rolling-out-to-cursor-users).
 
 ## Step 1 — Install the plugin
 
-1. Open **Customize** in the Cursor sidebar.
-2. Find the **openl** plugin (search by name, or look under your team marketplace).
+1. Open **Customize → Plugins** in the Cursor sidebar.
+2. Find **openl** in the public or team marketplace. If it is not listed and your
+   organization permits repository imports, select **+ Add → From GitHub Repository**
+   and enter `https://github.com/openl-tablets/openl-ai-plugin`.
 3. Select **Install**, and choose the **user** scope unless you only want it in one
    project.
 
@@ -65,12 +66,18 @@ Prefer **HTTPS**, which encrypts the token in transit. A local Studio copy on
 `localhost` may use plain `http://`; for any other HTTP address, the token travels
 unencrypted across that network — use the HTTPS address if there is one.
 
-> **Where these values are stored.** Cursor keeps a marketplace plugin's configured
-> values in **your Cursor account**, not in a file on your computer, and supplies them
-> to the plugin when it starts the server. That is different from the Claude Code and
-> Codex setups, where the token never leaves your machine. Treat the token as you
-> would any credential you type into a hosted tool: give it only the access you need,
-> and revoke it in Studio (**User → Personal Access Tokens**) when you're done with it.
+> **Where these values are stored.** Cursor keeps a plugin's configured
+> values as part of **your Cursor plugin configuration** and supplies them when it
+> starts the local server; this plugin does not write them to project or global MCP
+> JSON. The current Cursor implementation submits user-scoped plugin variables to the
+> Cursor service, unlike the Claude Code and Codex setups where the token remains in a
+> local settings file. Give the token only the access you need and revoke it in Studio
+> (**User → Personal Access Tokens**) when you're done with it.
+
+Cursor also supports MCP configuration without a plugin: `.cursor/mcp.json` inside a
+project, or `~/.cursor/mcp.json` for the current user, both with an `mcpServers`
+wrapper. OpenL deliberately uses the plugin manifest and **Configure** dialog instead,
+so users do not have to create or edit either JSON file.
 
 ## Step 4 — Verify
 
@@ -96,19 +103,20 @@ Why does this policy come out with a premium of 0? Input: { … }
 
 ## Keeping OpenL up to date
 
-Cursor updates a plugin when its marketplace is re-indexed, and how that happens is
-your administrator's choice:
+Update behaviour depends on how the plugin was installed:
 
-- **Auto Refresh** on the marketplace re-reads the repository whenever changes are
-  pushed to the branch it tracks. It needs the Cursor GitHub App installed on the
-  repository, and Cursor re-indexes at most once every 10 minutes.
-- **Manual**: your administrator clicks **Refresh** on the marketplace in the Cursor
-  dashboard.
+- A **team marketplace** can use **Auto Refresh** to re-read its repository whenever
+  changes are pushed to the branch it tracks. It needs the Cursor GitHub App on the
+  repository, and Cursor re-indexes at most once every 10 minutes. Otherwise its owner
+  clicks **Refresh** in the Cursor dashboard.
+- A **public Marketplace** update becomes available after Cursor reviews and publishes
+  the new release; a repository push alone is not a public release.
+- Cursor's current documentation does not provide a supported update procedure for a
+  personal **From GitHub Repository** install. Treat that route as evaluation-only;
+  use the public or team marketplace when a defined update path is required.
 
-Either way, the plugin's pinned OpenL MCP server version moves with the plugin
-release. Restart Cursor (or start a new chat) after an update so the server restarts
-with the new version. There is nothing for you to update by hand, and no per-user
-update command.
+After an update is actually installed, restart Cursor (or start a new chat) so the
+server restarts with the release's pinned OpenL MCP version.
 
 ## Signing out and rotating the token
 
@@ -122,8 +130,8 @@ update command.
 
 | What you see | What to do |
 |---|---|
-| `openl` isn't listed in **Customize** | The plugin is not available to your account yet. Ask your administrator to import this repository as a team marketplace — see [admin-setup.md](admin-setup.md#rolling-out-to-cursor-users). |
-| "Third-party plugin imports are disabled by team admin settings" | Your organization blocks importing plugins from outside Cursor's own marketplace. A team marketplace is the supported route; only an administrator can change this. |
+| `openl` isn't listed in **Customize** | Search the public and team marketplaces. If policy permits it, try **+ Add → From GitHub Repository**. Otherwise ask your administrator to use the team-marketplace rollout in [admin-setup.md](admin-setup.md#rolling-out-to-cursor-users). |
+| "Community/third-party plugin imports are disabled" | Your organization blocks direct repository imports. Use a reviewed public plugin or ask an administrator to provide it through the approved team marketplace. |
 | The OpenL tools don't appear in chat | Confirm the plugin is installed **and** enabled in **Customize**, then check that both settings are filled in under **Configure**. Start a new chat afterwards. |
 | The server shows an error mentioning `${OPENL_STUDIO_URL}` | The Studio address was never filled in, so Cursor passed the placeholder through unchanged. Set it under **Configure**. |
 | "Node.js 24 or later is required", or the server won't start at all | Install/update Node.js (`node --version` must be `v24`+), then start a new chat. |
@@ -134,10 +142,9 @@ More symptoms and fixes: [troubleshooting.md](troubleshooting.md).
 
 ## Good to know
 
-- **The Cursor CLI (`cursor-agent`) is a separate surface.** This guide covers the
-  Cursor application. Whether an installed plugin's MCP server and skills also reach
-  your `cursor-agent` sessions depends on your CLI version — the build verified for
-  this release (`2026.01.23`) has no plugin commands at all.
+- **Current Cursor CLI releases support plugins, MCP and skills**, including the
+  `/plugin` command. The older `cursor-agent` build observed during this work
+  (`2026.01.23`) predates those commands; update the CLI if `/plugin` is missing.
 - If you also use Claude Code, the Claude desktop app, or Codex, those set up
   separately (see the links at the top) and don't conflict with this. Each client
   holds its own connection details.

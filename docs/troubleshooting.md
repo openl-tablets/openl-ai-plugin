@@ -13,7 +13,8 @@ access token**.
 > use the table in [codex-setup.md](codex-setup.md#if-something-doesnt-work); for
 > **Cursor**, the one in [cursor-setup.md](cursor-setup.md#if-something-doesnt-work) —
 > there the connection details live in Cursor's own **Configure** dialog, and the plugin
-> reaches you through a marketplace your administrator manages.
+> may come from the public Marketplace, a team marketplace, or an allowed repository
+> import.
 
 > **The `/plugin …` commands below need a terminal.** They work only in an
 > interactive Claude Code session started from a terminal — not in the desktop app's
@@ -151,13 +152,15 @@ Two caveats:
 
 ### Cursor
 
-Cursor updates the plugin when its marketplace is re-indexed, and that is an
-administrator action, not a user one: either **Auto Refresh** is enabled on the
-marketplace (it needs the Cursor GitHub App on the repository and re-indexes at most
-once every 10 minutes on pushes to the tracked branch), or someone clicks **Refresh** on
-it in the Cursor dashboard. There is no per-user update command. If **Customize** still
-shows the old version after a release, ask your administrator to refresh the marketplace;
-restart Cursor afterwards so the OpenL server restarts on the new pinned version.
+First identify how `openl` was installed. A **team marketplace** receives a new indexed
+revision through **Auto Refresh** (which needs the Cursor GitHub App and runs at most
+once every 10 minutes after pushes) or when its owner clicks **Refresh** in the Cursor
+dashboard. A **public Marketplace** update appears only after Cursor reviews and
+publishes it. Cursor does not currently document unattended updates for **From GitHub
+Repository** installs or provide a verified update procedure for them. If a direct
+install remains on the old version, move to the reviewed public release or ask the
+team-marketplace owner for the managed route. Restart Cursor after the new version is
+installed so the OpenL server restarts on its new pin.
 
 ### Before you go hunting for a bug
 
