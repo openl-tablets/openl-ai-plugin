@@ -4,19 +4,25 @@ This guide is for OpenL Studio administrators and IT staff who roll the plugin o
 analysts. It covers supported versions, organization-wide installation, how
 authentication works for each Studio deployment type, and the security model. End
 users only need the setup guide for their tool —
-[claude-code-setup.md](claude-code-setup.md), [cowork-setup.md](cowork-setup.md), or
-[codex-setup.md](codex-setup.md), all linked from the [README](../README.md); when
-they hit problems, point them to [troubleshooting.md](troubleshooting.md).
+[claude-code-setup.md](claude-code-setup.md), [cowork-setup.md](cowork-setup.md),
+[codex-setup.md](codex-setup.md), or [cursor-setup.md](cursor-setup.md), all linked from
+the [README](../README.md); when they hit problems, point them to
+[troubleshooting.md](troubleshooting.md).
 
 Version 0.2.0 renames the installed plugin identity from `openl-ai` to `openl`.
 Claude Code 2.1.193+ automatically migrates editable installations through the
 marketplace rename map. Older and centrally managed installations need the
 [migration procedure](migrate-to-0.2.md).
 
-> **Scope.** The repository supports **Claude Code** (terminal / IDE) and **Codex**
-> (desktop / CLI) with native manifests and a Personal Access Token (PAT). Codex uses
-> its bundled configurator because it has no Claude-style `userConfig` substitution;
-> see [codex-setup.md](codex-setup.md). The Claude **desktop app**
+> **Scope.** The repository supports **Claude Code** (terminal / IDE), **Codex**
+> (desktop / CLI), and **Cursor** with native manifests and a Personal Access Token
+> (PAT). Codex uses its bundled configurator because it has no Claude-style
+> `userConfig` substitution; see [codex-setup.md](codex-setup.md). Cursor substitutes
+> no `userConfig` values either, but has its own per-user plugin **variables**, which
+> the plugin declares and Cursor prompts for. The current implementation submits those
+> values as part of the user-scoped plugin configuration, so this is not a local-only
+> settings-file flow; see
+> [Rolling out to Cursor users](#rolling-out-to-cursor-users). The Claude **desktop app**
 > (including Cowork sessions) does not support plugin settings, so the plugin cannot
 > deliver the PAT there — on that surface the OpenL server is added through the
 > desktop app's own config file instead: see [cowork-setup.md](cowork-setup.md)
@@ -31,7 +37,8 @@ marketplace rename map. Older and centrally managed installations need the
 |---|---|---|
 | **Claude Code** | **2.1.119 or later; 2.1.193+ recommended for a 0.1.x upgrade** | The plugin's settings dialog uses `manifest.userConfig`, introduced in Claude Code 2.1.83; 2.1.119 fixed optional blank settings, and 2.1.193 added automatic plugin rename migration. |
 | **Codex** | A desktop/CLI build with `codex plugin marketplace` and `codex plugin add` (verified with `codex-cli 0.145.0-alpha.30` and `0.146.0-alpha.3.1`) | Codex installs the same marketplace but reads its own native `.codex-plugin` manifest and bundled launcher; older preview builds without `plugin add` are not supported. |
-| **Node.js** | **24 or later, on every user's machine** | The plugin's backend is the [`openl-mcp`](https://www.npmjs.com/package/openl-mcp) npm package (`engines: node >= 24`), launched locally via `npx` for Claude Code, Codex, or Cowork. This applies **even when the organization pre-installs the plugin** — there is no server-side variant. First launch downloads the package from the npm registry (cached afterwards). |
+| **Cursor** | A build whose **Customize** page manages plugins (re-verified on Cursor **3.19.7**) | Cursor reads its own `.cursor-plugin` manifest and prompts for the plugin's declared variables. Direct repository and local-development imports also depend on organization policy — see [Rolling out to Cursor users](#rolling-out-to-cursor-users). |
+| **Node.js** | **24 or later, on every user's machine** | The plugin's backend is the [`openl-mcp`](https://www.npmjs.com/package/openl-mcp) npm package (`engines: node >= 24`), launched locally via `npx` for Claude Code, Codex, Cursor, or Cowork. This applies **even when the organization pre-installs the plugin** — there is no server-side variant. First launch downloads the package from the npm registry (cached afterwards). |
 | **OpenL Studio** | A deployment reachable from user machines | See [Studio address](#studio-address) below. |
 
 The Claude Code plugin pins `openl-mcp@1.2.0`. A blank token setting has been treated
@@ -123,6 +130,48 @@ outside the plugin cache: `~/.config/openl-ai/codex.json` by default on macOS/Li
 `%APPDATA%\openl-ai\codex.json` on Windows. POSIX uses `0700/0600`;
 Windows relies on the user profile ACLs. The PAT is plaintext in that file.
 
+### Rolling out to Cursor users
+
+Use a **team marketplace** for the controlled internal rollout. Individual users can
+also install a reviewed public-Marketplace release, and Cursor 3.19.7 exposes
+**Customize → Plugins → + Add → From GitHub Repository** when organization policy
+permits direct imports. Those personal routes do not replace an administered rollout
+for a private or not-yet-published release. Team marketplaces require a Teams plan
+(one marketplace) or Enterprise (unlimited); on Enterprise, only admins can add them.
+
+1. Open the Cursor **Dashboard → Plugins**.
+2. Under **Team Marketplaces**, choose **Add Marketplace → Import from Repo** and
+   point it at `openl-tablets/openl-ai-plugin`. Cursor reads
+   `.cursor-plugin/marketplace.json` from the repository root and registers the single
+   `openl` plugin it lists.
+3. Review the plugin under **Add to Marketplace**, then set **Marketplace Access** and
+   the plugin's **installation mode**: *Default Off* (users opt in), *Default On*
+   (installed unless a user opts out), or *Required* (always installed).
+4. Decide how updates arrive: enable **Auto Refresh** (needs the Cursor GitHub App on
+   the repository; re-indexes at most once every 10 minutes on pushes to the tracked
+   branch), or refresh the marketplace manually after each plugin release. An import
+   created with *Import from Repo* re-reads the whole manifest on refresh.
+
+Cursor admin settings under **Dashboard → Settings → Security & Identity →
+Marketplace and Plugins** decide what else is possible. The labels vary slightly by
+build; both controls below were observed switched **off** on a live install:
+
+- **Community/third-party plugin imports** — when disabled, Cursor refuses direct
+  repository imports and may log
+  `Third-party plugin imports are disabled by team admin settings`. Use a reviewed
+  public plugin or an approved team marketplace in that case.
+- **Allow Local Plugin Imports** (off by default on Enterprise) — when disabled, a
+  plugin dropped into `~/.cursor/plugins/local` is ignored. This only affects local
+  development of the plugin itself, not the rollout.
+
+Do not distribute a shared PAT. Each analyst fills in their own under **Customize →
+Plugins → openl → Configure**; the plugin declares the two variable names and never
+carries a value. The current Cursor implementation submits user-scoped plugin
+variables as part of the user's plugin configuration and hands them to the local
+server at start-up; unlike the Claude Code and Codex paths, this is not a local-only
+settings-file flow. The Studio-side controls are unchanged — the token is named,
+individually revocable, and scoped to that one user.
+
 ### Plugin settings reference
 
 Settings are prompted at enable time and editable later with
@@ -138,6 +187,12 @@ receives them directly.
 |---|---|---|---|
 | `studio_base_url` | yes | `OPENL_BASE_URL` | The OpenL Studio address, e.g. `https://studio.example.com`. |
 | `studio_token` | no | `OPENL_PERSONAL_ACCESS_TOKEN` | The user's Personal Access Token (PAT), created in Studio. Required for multi-user Studio; left blank for single-user Studio. Marked `sensitive` — masked and stored in secure storage. |
+
+The table above is Claude Code's settings dialog. Cursor asks for the same two values
+under its own names — `OPENL_STUDIO_URL` (required) and `OPENL_STUDIO_TOKEN` (optional,
+masked because the name ends in `TOKEN`) — and injects them into the same
+`OPENL_BASE_URL` / `OPENL_PERSONAL_ACCESS_TOKEN` environment variables. Codex takes both
+through its configurator instead.
 
 ## Studio address
 

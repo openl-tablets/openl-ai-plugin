@@ -10,8 +10,5 @@
       "source": "./",
       "description": "Work with OpenL Studio from Cursor, Codex, or Claude Code — manage rules, projects, tables and tests over the OpenL MCP server."
     }
-  ],
-  "renames": {
-    "openl-ai": "openl"
-  }
+  ]
 }

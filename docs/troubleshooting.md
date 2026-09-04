@@ -10,7 +10,11 @@ access token**.
 > desktop app (Cowork)** via the settings file, use the troubleshooting table in
 > [cowork-setup.md](cowork-setup.md#if-something-doesnt-work) instead — the fixes
 > differ (settings file and app restart instead of `/plugin` commands). For Codex,
-> use the table in [codex-setup.md](codex-setup.md#if-something-doesnt-work).
+> use the table in [codex-setup.md](codex-setup.md#if-something-doesnt-work); for
+> **Cursor**, the one in [cursor-setup.md](cursor-setup.md#if-something-doesnt-work) —
+> there the connection details live in Cursor's own **Configure** dialog, and the plugin
+> may come from the public Marketplace, a team marketplace, or an allowed repository
+> import.
 
 > **The `/plugin …` commands below need a terminal.** They work only in an
 > interactive Claude Code session started from a terminal — not in the desktop app's
@@ -145,6 +149,18 @@ Two caveats:
   can edit. If your organization declared it in managed settings, that scope owns the
   flag and only an administrator can change it (see
   [admin-setup.md](admin-setup.md#installing-for-the-organization)).
+
+### Cursor
+
+First identify how `openl` was installed. A **team marketplace** receives a new indexed
+revision through **Auto Refresh** (which needs the Cursor GitHub App and runs at most
+once every 10 minutes after pushes) or when its owner clicks **Refresh** in the Cursor
+dashboard. A **public Marketplace** update appears only after Cursor reviews and
+publishes it. Cursor does not currently document unattended updates for **From GitHub
+Repository** installs or provide a verified update procedure for them. If a direct
+install remains on the old version, move to the reviewed public release or ask the
+team-marketplace owner for the managed route. Restart Cursor after the new version is
+installed so the OpenL server restarts on its new pin.
 
 ### Before you go hunting for a bug
 

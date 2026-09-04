@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "tools": {
+      "command": "npx",
+      "args": ["-y", "-p", "openl-mcp@1.2.0", "openl-mcp"],
+      "env": {
+        "OPENL_BASE_URL": "${OPENL_STUDIO_URL}",
+        "OPENL_PERSONAL_ACCESS_TOKEN": "${OPENL_STUDIO_TOKEN:-}"
+      }
+    }
+  }
+}

@@ -1,9 +1,9 @@
-# OpenL AI plugin for Claude and Codex
+# OpenL AI plugin for Claude, Cursor and Codex
 
 Work with **OpenL Studio** by simply asking your AI assistant in plain language. This
-plugin connects **Claude Code**, the **Claude desktop app**, or **Codex** to OpenL
-Studio; once connected, the assistant can look things up in Studio for you and act on
-your behalf — no need to click through Studio screens or know where things live:
+plugin connects **Claude Code**, the **Claude desktop app**, **Cursor**, or **Codex** to
+OpenL Studio; once connected, the assistant can look things up in Studio for you and act
+on your behalf — no need to click through Studio screens or know where things live:
 
 - **Explore** — "Which projects do I have? Show me the tables in the Rating project."
 - **Understand** — "Explain what the LossRatio table calculates, in business terms."
@@ -19,12 +19,18 @@ ten minutes.
 |---|---|
 | **Claude Code** — terminal, IDE extension, or the Claude desktop app's **Code** tab | [docs/claude-code-setup.md](docs/claude-code-setup.md) |
 | **Claude desktop app** — the **Chat** or **Cowork** tabs | [docs/cowork-setup.md](docs/cowork-setup.md) |
+| **Cursor** | [docs/cursor-setup.md](docs/cursor-setup.md) |
 | **Codex** — desktop app or CLI | [docs/codex-setup.md](docs/codex-setup.md) |
 
 Not sure which you have? If you type your requests into a **terminal window** or a
 panel inside your IDE, it's Claude Code. If you use the **Claude app** with a sidebar
 of conversations, it's the desktop app — and the tab you're in (Code, or Chat/Cowork)
 decides which of the first two guides to follow.
+
+**Cursor users:** install `openl` from Cursor's public Marketplace once it is
+published, from a team marketplace, or with **Customize → Plugins → + Add → From
+GitHub Repository** when your organization's policy permits repository imports. The
+[Cursor guide](docs/cursor-setup.md) explains each route.
 
 **Claude in the browser** (claude.ai, including cloud sessions) can't be connected:
 the OpenL connection runs on your own computer, and a browser session has no way to
@@ -50,7 +56,7 @@ an administrator can hand out for you.
 
 ## What to ask
 
-Some examples of everyday analyst tasks — they work the same in Claude and in Codex:
+Some examples of everyday analyst tasks — they work the same in Claude, Cursor and Codex:
 
 - "List the OpenL projects I can access."
 - "Open the Rating project and show me its tables."
@@ -85,10 +91,13 @@ To start one explicitly:
 - **Codex:** type `$` and select `$openl:connect`, `$openl:branching`,
   `$openl:trace-investigation`, `$openl:testing`, or `$openl:versioning`;
   `/skills` opens the skills picker too.
+- **Cursor:** the skills are listed under **Customize → Skills** (in the *Agent
+  Decides* section) and can be picked from the `/` menu in chat.
 
 The trace workflow behaves the same across clients: it needs a connected Studio and
 uses whichever trace tools the configured OpenL MCP server exposes. The `connect`
-workflow instead adapts its setup steps to Claude Code, Codex, or Claude desktop/Cowork.
+workflow instead adapts its setup steps to Claude Code, Cursor, Codex, or Claude
+desktop/Cowork.
 
 > **Upgrading the old manually installed trace skill?** After installing plugin 0.3.0,
 > delete `~/.claude/skills/openl-trace-investigation` (macOS/Linux) or
@@ -106,14 +115,17 @@ administrator: [docs/troubleshooting.md](docs/troubleshooting.md).
 
 Still on an old plugin version after a release? By default, updates from this marketplace
 are manual. Claude Code users can enable auto-update for a marketplace they control, and
-an administrator may manage it centrally; desktop Chat/Cowork updates remain manual. See
+an administrator may manage it centrally; desktop Chat/Cowork updates remain manual. In
+Cursor, update behaviour depends on whether the plugin came from the public Marketplace,
+a team marketplace, or a direct repository import. See
 [The plugin stays on an old version](docs/troubleshooting.md#the-plugin-stays-on-an-old-version).
 
 ## Documentation
 
 - Setup guides, one per tool (the table above): [Claude
   Code](docs/claude-code-setup.md), [Claude desktop app /
-  Cowork](docs/cowork-setup.md), [Codex](docs/codex-setup.md).
+  Cowork](docs/cowork-setup.md), [Cursor](docs/cursor-setup.md),
+  [Codex](docs/codex-setup.md).
 - [docs/migrate-to-0.2.md](docs/migrate-to-0.2.md) — one-time migration from
   the `openl-ai` 0.1.x plugin identity to `openl` 0.2.0.
 - [docs/troubleshooting.md](docs/troubleshooting.md) — symptom → fix, for everyone.

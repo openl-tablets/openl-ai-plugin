@@ -5,6 +5,62 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - Unreleased
+
+### Added
+
+- **Cursor support.** Cursor now installs the same plugin — the same `skills/` directory
+  and the same pinned `openl-mcp` server — through its own manifest,
+  `.cursor-plugin/plugin.json`, alongside a `.cursor-plugin/marketplace.json` that
+  mirrors the Claude marketplace entry. Cursor's own plugin loader prefers
+  `.cursor-plugin/plugin.json` over `.claude-plugin/plugin.json`, so a Cursor install
+  now takes the Cursor path deliberately instead of falling through to the Claude
+  manifest.
+- `.mcp.cursor.json` — the Cursor MCP descriptor. Cursor discovers `.mcp.json` before
+  `mcp.json`, so without an override it reused Claude Code's descriptor and inherited its
+  `${user_config.*}` placeholders, which Cursor does not substitute: the server received
+  `OPENL_BASE_URL=${user_config.studio_base_url}` verbatim and exited immediately
+  (`MCP error -32000: Connection closed`) — the one part of the plugin that was actually
+  broken in Cursor. The Cursor manifest's `mcpServers` field
+  overrides discovery and points at this descriptor, which uses Cursor's own plugin
+  variables — `${OPENL_STUDIO_URL}` and `${OPENL_STUDIO_TOKEN:-}` — declared in the
+  manifest's `variables` schema. Cursor prompts for both at install time and keeps them
+  editable under **Customize → Plugins → openl → Configure**, so a Cursor user never
+  edits a JSON file. The token's `:-` default matters: an unconfigured variable with no
+  default survives substitution as the literal `${OPENL_STUDIO_TOKEN}` and would reach
+  Studio as a bogus credential, while the empty-string default is what
+  `openl-mcp` >= 1.1.0 already treats as "no token" for single-user Studio.
+- [docs/cursor-setup.md](docs/cursor-setup.md) — setup guide for Cursor: how the plugin
+  reaches Cursor (public Marketplace, team marketplace, or direct GitHub import when
+  policy permits it), where the connection values are configured, and how update
+  behaviour differs between those delivery routes.
+- The `connect` skill gained a **Cursor setup** branch, and its client-selection step now
+  distinguishes Cursor from Claude Code, Codex, and Claude desktop/Cowork.
+- `tests/cursor-clean-project.test.mjs` models Cursor's observed manifest precedence
+  and variable substitution against an otherwise empty project. It guards the packaged
+  no-manual-JSON contract while the release checklist separately requires a real Cursor
+  application smoke test. It also pins the process-environment precedence: a same-name
+  variable exported in the shell that launched Cursor outranks the value entered under
+  **Configure**, which is why the descriptor uses plugin-scoped variable names instead of
+  the ones the server itself reads.
+- `docs/architecture.md` records that transport enforcement differs per client: only the
+  Codex configurator can refuse a PAT over non-loopback HTTP (with an `--allow-insecure`
+  opt-in), while Claude Code and Cursor warn without blocking, because on those paths the
+  address goes from the client's own dialog straight to the server. Closing that gap is a
+  cross-client change, not part of Cursor delivery.
+
+### Changed
+
+- `.mcp.json`, the Claude Code descriptor, is deliberately untouched: Cursor support adds
+  files rather than changing the path Claude Code already uses.
+- Plugin descriptions across the manifests, the README, `docs/architecture.md`,
+  `docs/admin-setup.md`, and `docs/troubleshooting.md` now cover Cursor as a supported
+  client. `docs/architecture.md` separates the official contract, live Cursor 3.19.7
+  evidence, loader implementation details and the still-required 0.6.0 end-to-end
+  release smoke. The live UI confirms that all five shared skills already load without
+  `.cursorrules`; it also reproduces the old Claude-placeholder MCP failure that this
+  release fixes.
+
 ## [0.5.0] - Unreleased
 
 ### Added

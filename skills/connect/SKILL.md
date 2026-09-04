@@ -1,6 +1,6 @@
 ---
 name: connect
-description: This skill should be used when the user asks to connect, sign in, log in, sign out, rotate credentials, or authenticate Codex, Claude Code, or Claude desktop/Cowork to OpenL Studio, or when OpenL tools fail with 401 Unauthorized.
+description: This skill should be used when the user asks to connect, sign in, log in, sign out, rotate credentials, or authenticate Codex, Claude Code, Cursor, or Claude desktop/Cowork to OpenL Studio, or when OpenL tools fail with 401 Unauthorized.
 ---
 
 # Connect to OpenL Studio
@@ -16,12 +16,16 @@ Use exactly one branch:
 - **Codex desktop or CLI:** Codex task context or the `codex plugin` command is
   available. Follow **Codex setup**. Codex does not substitute `${user_config.*}`
   values and does not use `/plugin configure` or `claude_desktop_config.json`.
+- **Cursor:** the host is Cursor (its chat, or a Cursor agent session). Follow
+  **Cursor setup**. Cursor substitutes no `${user_config.*}` values either. Use
+  Cursor's own plugin **Configure** dialog rather than Claude Code's
+  `/plugin configure`; do not edit a configuration file.
 - **Claude Code terminal, IDE, or desktop Code tab:** `/plugin` settings are
   available. Follow **Claude Code setup**.
 - **Claude desktop Chat or Cowork:** `/plugin` settings are unavailable and the
   session may use sandbox paths such as `/sessions/...`. Follow **Cowork setup**.
 
-If the client cannot be determined from the host context, ask which of these three
+If the client cannot be determined from the host context, ask which of these four
 the user is using before giving configuration instructions.
 
 Authentication is always created in OpenL Studio under **User → Personal Access
@@ -84,6 +88,52 @@ read it.
   start a new Codex task. Studio-side revocation is what invalidates the token.
 - **Rotate:** create a replacement PAT, rerun the configurator, start a new task and
   verify the connection, then revoke the old PAT in Studio.
+
+## Cursor setup
+
+Cursor asks for the plugin's two settings itself, so there is nothing to run and no
+file to edit. Everything below is instructions for the user; never attempt to write
+Cursor's configuration.
+
+1. Apply the same address validation and unauthenticated `/rest/settings` probe
+   described in **Claude Code setup** to tell single-user from multi-user Studio.
+2. For a multi-user Studio, tell the user to create a PAT first: sign in to Studio,
+   open **User → Personal Access Tokens**, create a token (for example, named
+   "Cursor"), and copy it when Studio shows it.
+3. Tell the user to open **Customize** in the Cursor sidebar, find the **openl**
+   plugin, and use **Configure** (the same dialog Cursor offers at install time), then
+   fill in:
+   - **OpenL Studio address** (`OPENL_STUDIO_URL`) — required, the exact address with
+     its scheme.
+   - **Personal Access Token** (`OPENL_STUDIO_TOKEN`) — the PAT for a multi-user
+     Studio; left **empty** for single-user Studio. The field is masked.
+   Never ask for the token in chat, and do not offer to type it anywhere on the
+   user's behalf.
+4. Explain that the current Cursor path submits these values as part of the user's
+   plugin configuration. This plugin itself does not write them into project or global
+   MCP JSON. Explain that revoking the PAT in Studio is what cuts access; do not
+   speculate further about how Cursor may also cache the configuration.
+5. Have the user start a new Cursor chat and ask: *List the OpenL projects I can
+   access.*
+
+If the **openl** plugin is not listed in **Customize**, check the supported delivery
+routes described in `docs/cursor-setup.md`: the reviewed public Marketplace, an
+organization's team marketplace, or **+ Add → From GitHub Repository** when policy
+allows direct imports. If Cursor reports that community or third-party plugin imports
+are disabled, explain that the organization controls that path and recommend the
+approved public or team marketplace instead. Do not inspect Cursor caches or ask the
+user to hand-edit `mcp.json` as a workaround.
+
+For an `http://` address, warn once that a PAT travels unencrypted; loopback addresses
+for local Studio copies are fine as they are. Do not declare the address invalid.
+
+### Cursor sign-out and rotation
+
+- **Sign out:** revoke the PAT in Studio first, then have the user clear the
+  **Personal Access Token** field in **Customize → Plugins → openl → Configure** and
+  start a new chat. Studio-side revocation is what invalidates the token.
+- **Rotate:** create a replacement PAT, put it into the same field, start a new chat
+  and verify the connection, then revoke the old PAT in Studio.
 
 ## Claude Code setup
 
@@ -194,7 +244,8 @@ revoking the old PAT.
 - Never pass a PAT through command arguments, an ad hoc shell environment, a pipe,
   or an agent-run interactive command. The supported Cowork `env` object belongs in
   `claude_desktop_config.json`; leave its real PAT value for the user to enter in a
-  plain-text editor, never through an agent tool.
+  plain-text editor, never through an agent tool. In Cursor the PAT belongs only in the
+  plugin's masked **Configure** field, entered by the user.
 - Never use CLI authentication commands. PAT creation and Studio-side revocation are
   the supported authentication operations.
 - Always finish with the appropriate restart/new-task step and the verification
