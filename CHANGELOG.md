@@ -39,7 +39,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `tests/cursor-clean-project.test.mjs` models Cursor's observed manifest precedence
   and variable substitution against an otherwise empty project. It guards the packaged
   no-manual-JSON contract while the release checklist separately requires a real Cursor
-  application smoke test.
+  application smoke test. It also pins the process-environment precedence: a same-name
+  variable exported in the shell that launched Cursor outranks the value entered under
+  **Configure**, which is why the descriptor uses plugin-scoped variable names instead of
+  the ones the server itself reads.
+- `docs/architecture.md` records that transport enforcement differs per client: only the
+  Codex configurator can refuse a PAT over non-loopback HTTP (with an `--allow-insecure`
+  opt-in), while Claude Code and Cursor warn without blocking, because on those paths the
+  address goes from the client's own dialog straight to the server. Closing that gap is a
+  cross-client change, not part of Cursor delivery.
 
 ### Changed
 

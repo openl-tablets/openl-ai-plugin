@@ -192,6 +192,28 @@ test("the Cursor packaging contract resolves OpenL in a clean project without pr
     assert.doesNotMatch(JSON.stringify(materialized.config), /\$\{(?:user_config\.|OPENL_)/u);
   }
 
+  // Cursor resolves a placeholder from the process environment *before* the value the
+  // user configured, so a same-name variable exported in the shell that launches Cursor
+  // wins. That is the documented order rather than a defect, and it is exactly why the
+  // descriptor uses plugin-scoped names: renaming these variables to the ones the server
+  // itself reads (OPENL_BASE_URL / OPENL_PERSONAL_ACCESS_TOKEN, asserted above as
+  // powerless) would silently hand that precedence to any developer's stale export.
+  const shadowed = await materializeCursorMcp(
+    pluginRoot,
+    {
+      OPENL_STUDIO_URL: "https://studio.configured.example",
+      OPENL_STUDIO_TOKEN: "openl_pat_configured",
+    },
+    {
+      OPENL_STUDIO_URL: "https://studio.from-shell.example",
+      OPENL_STUDIO_TOKEN: "openl_pat_from_shell",
+    },
+  );
+  assert.deepEqual(shadowed.config.mcpServers.tools.env, {
+    OPENL_BASE_URL: "https://studio.from-shell.example",
+    OPENL_PERSONAL_ACCESS_TOKEN: "openl_pat_from_shell",
+  });
+
   const installedSkills = (await readdir(join(pluginRoot, "skills"), { withFileTypes: true }))
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)

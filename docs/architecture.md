@@ -332,6 +332,16 @@ browser flow and no subprocess.
   local-only settings-file flow. What does not change: the PAT is created in Studio,
   scoped to one user, named, and individually revocable there, and revocation in Studio
   is what cuts access.
+- **Transport enforcement differs per client, and only Codex enforces anything.** The
+  Codex configurator refuses a PAT over non-loopback HTTP until the user opts in with
+  `--allow-insecure`, because it is the component that writes the configuration and can
+  refuse. Claude Code and Cursor take the address from the client's own settings dialog
+  and hand it straight to the server, so on those paths the plugin only warns and never
+  blocks — the `connect` skill says so explicitly for both. This is a known and accepted
+  gap, not an oversight: enforcing it on the Cursor path would mean introducing the
+  Cursor launcher this integration deliberately avoids (or a check inside `openl-mcp`),
+  and applying it to Claude Code would change a policy that predates Cursor support.
+  Revisit it as its own change across all clients rather than per client.
 - **Revocation** is a normal Studio PAT operation: named, time-limited, individually revocable in
   the user's Studio token list. Revoking every applicable PAT in Studio is the
   supported sign-out operation; no CLI operation is involved.

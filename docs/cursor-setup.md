@@ -132,7 +132,7 @@ server restarts with the release's pinned OpenL MCP version.
 |---|---|
 | `openl` isn't listed in **Customize** | Search the public and team marketplaces. If policy permits it, try **+ Add → From GitHub Repository**. Otherwise ask your administrator to use the team-marketplace rollout in [admin-setup.md](admin-setup.md#rolling-out-to-cursor-users). |
 | "Community/third-party plugin imports are disabled" | Your organization blocks direct repository imports. Use a reviewed public plugin or ask an administrator to provide it through the approved team marketplace. |
-| The OpenL tools don't appear in chat | Confirm the plugin is installed **and** enabled in **Customize**, then check that both settings are filled in under **Configure**. Start a new chat afterwards. |
+| The OpenL tools don't appear in chat | Confirm the plugin is installed **and** enabled in **Customize**, then open **Configure**: the **OpenL Studio address** is always required. Add the **Personal Access Token** as well, unless your Studio has no sign-in — for a single-user Studio that field must stay **empty**, and a placeholder value there causes 401 instead of fixing anything. Start a new chat afterwards. |
 | The server shows an error mentioning `${OPENL_STUDIO_URL}` | The Studio address was never filled in, so Cursor passed the placeholder through unchanged. Set it under **Configure**. |
 | "Node.js 24 or later is required", or the server won't start at all | Install/update Node.js (`node --version` must be `v24`+), then start a new chat. |
 | "Unauthorized" / 401 | The token is missing, expired, or revoked. Create a fresh one in Studio and paste it under **Configure**. |
