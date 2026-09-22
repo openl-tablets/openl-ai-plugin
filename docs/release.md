@@ -1,4 +1,4 @@
-# Release & Distribution — `openl` plugin
+# Release & Distribution — OpenL Plugin
 
 _How this plugin is versioned, released, and delivered to users. This document is for plugin
 maintainers. The marketplace `source` forms, install commands, and `renames`

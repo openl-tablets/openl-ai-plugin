@@ -220,7 +220,7 @@ const isMain = process.argv[1]
   && realpathSync(resolve(process.argv[1])) === realpathSync(fileURLToPath(import.meta.url));
 if (isMain) {
   main().catch((error) => {
-    console.error(`OpenL AI MCP startup failed: ${error?.message ?? String(error)}`);
+    console.error(`OpenL Plugin MCP startup failed: ${error?.message ?? String(error)}`);
     process.exitCode = 1;
   });
 }

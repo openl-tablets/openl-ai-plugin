@@ -19,7 +19,7 @@ import {
 } from "./codex-config.mjs";
 
 function usage() {
-  return `Configure OpenL AI for Codex without putting a Personal Access Token in chat.
+  return `Configure the OpenL Plugin for Codex without putting a Personal Access Token in chat.
 
 Usage:
   node scripts/configure-codex.mjs [--base-url <url>] [--allow-insecure]
@@ -320,7 +320,7 @@ async function configure(baseUrlArgument, { allowInsecure = false } = {}) {
     ...(personalAccessToken ? { personalAccessToken } : {}),
   });
 
-  console.log(`\nOpenL AI is configured for ${deployment.baseUrl}.`);
+  console.log(`\nThe OpenL Plugin is configured for ${deployment.baseUrl}.`);
   console.log(deployment.multiUser
     ? (process.platform === "win32"
       ? "The token was saved outside Codex; access relies on your Windows user-profile ACLs."

@@ -158,7 +158,7 @@ test("launcher runs through a symlink", { skip: process.platform === "win32" }, 
     env: { ...process.env, OPENL_AI_CONFIG_DIR: root },
   });
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /OpenL AI MCP startup failed:/);
+  assert.match(result.stderr, /OpenL Plugin MCP startup failed:/);
 });
 
 test("launcher keeps secrets out of output and uses a fresh cache", async (t) => {

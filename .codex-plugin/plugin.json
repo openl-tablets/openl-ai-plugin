@@ -1,6 +1,6 @@
 {
   "name": "openl",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Work with OpenL Studio from Cursor, Codex, or Claude Code — manage rules, projects, tables and tests over the OpenL MCP server.",
   "author": {
     "name": "OpenL Tablets"
@@ -11,7 +11,7 @@
   "skills": "./skills/",
   "mcpServers": "./.mcp.codex.json",
   "interface": {
-    "displayName": "OpenL Studio",
+    "displayName": "OpenL Plugin",
     "shortDescription": "Work with rules, projects, tables, and tests",
     "longDescription": "Connect Codex to OpenL Studio to explore and update projects, understand rule tables, run tests, trace decisions, and manage deployments through the OpenL MCP server.",
     "developerName": "OpenL Tablets",

@@ -1,4 +1,4 @@
-# OpenL AI plugin for Claude, Cursor and Codex
+# OpenL Plugin for Claude, Cursor and Codex
 
 Work with **OpenL Studio** by simply asking your AI assistant in plain language. This
 plugin connects **Claude Code**, the **Claude desktop app**, **Cursor**, or **Codex** to
