@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-09-22
+
+### Changed
+
+- The product is written **OpenL Plugin** everywhere it is named for a human: the
+  `README.md` and `docs/troubleshooting.md` titles no longer call it "OpenL AI plugin",
+  the `admin-setup.md`, `architecture.md` and `release.md` titles use the product name
+  instead of the `openl` manifest id, and the Cowork setup and migration guides
+  capitalise it consistently. The Codex manifest's `interface.displayName` is
+  **OpenL Plugin** rather than "OpenL Studio", which is the server it connects to.
+- The Codex configurator and launcher say "OpenL Plugin" in their `--help` text, their
+  success message, and their startup-failure line.
+- Identifiers are untouched: the `openl-ai-plugin` repository and marketplace, the
+  `openl` plugin name, the legacy `openl-ai` name kept for the rename map and the Codex
+  MCP server key, the `OPENL_*` environment variables, and the literal **Openl ai** label
+  the desktop app renders for a 0.1.x installation all keep their existing spelling.
+
 ## [0.6.0] - 2026-09-04
 
 ### Added

@@ -102,7 +102,7 @@ installed `openl-ai` against your account's copy of the marketplace, and 0.2.0 n
 longer contains a plugin under that name, so the button stays inactive however often
 you refresh. Replace the plugin instead:
 
-1. Open **Customize → Plugins** and select the OpenL plugin (**Openl ai**, 0.1.x).
+1. Open **Customize → Plugins** and select the OpenL Plugin (**Openl ai**, 0.1.x).
 2. Open its marketplace — the `openl-ai-plugin` link next to **Source** — and use its
    refresh (sync) action, so your account's copy contains 0.2.0. If your version of
    the app doesn't offer one, remove the marketplace and add

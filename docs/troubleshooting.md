@@ -1,4 +1,4 @@
-# Troubleshooting — OpenL AI plugin
+# Troubleshooting — OpenL Plugin
 
 Each section below is: what you see → what to try → when to hand it to your OpenL
 administrator. When you do contact the administrator, send the info listed in

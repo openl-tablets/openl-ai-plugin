@@ -29,7 +29,7 @@ runs in Claude Code.
 - Your usual OpenL Studio account, and your office network or VPN if Studio is
   internal.
 
-## Step 1 — Add the OpenL plugin
+## Step 1 — Add the OpenL Plugin
 
 The plugin gives Claude the OpenL **skills** — ready-made helpers you call by typing
 `/` in the chat: `/openl:connect` (this setup) and `/openl:trace-investigation` (find
@@ -199,7 +199,7 @@ can tell, nothing newer exists.
 
 So refresh the marketplace first:
 
-1. Open **Customize → Plugins** and select the OpenL plugin.
+1. Open **Customize → Plugins** and select the OpenL Plugin.
 2. Open its marketplace — the `openl-ai-plugin` link next to **Source**.
 3. Use the marketplace's refresh (sync) action. If your version of the app doesn't
    offer one, remove the marketplace and add `openl-tablets/openl-ai-plugin` again —

@@ -1,4 +1,4 @@
-# Architecture — `openl` plugin
+# Architecture — OpenL Plugin
 
 How the plugin is put together and why: naming, the packaging model, Claude Code, Codex and
 Cursor integration notes, and the authentication design. This document is for developers of the plugin. For

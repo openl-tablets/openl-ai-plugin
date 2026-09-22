@@ -1,4 +1,4 @@
-# Administrator Setup — `openl` Plugin
+# Administrator Setup — OpenL Plugin
 
 This guide is for OpenL Studio administrators and IT staff who roll the plugin out to
 analysts. It covers supported versions, organization-wide installation, how
