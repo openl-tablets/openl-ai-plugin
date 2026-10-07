@@ -28,18 +28,41 @@ Worked example for a discount-eligibility rule change (the rule change
 and its save already happened, following this project's branch/save
 process):
 
-1. Close the project.
-2. Reopen it on the same branch at its latest revision.
-3. Check the project's compilation status. If any error-severity messages
-   are present, stop and fix them before running tests.
+1. Read the project status: branch `fix-discount-tier`, opened revision
+   `a1b2c3d`, no pending changes.
+2. Read the branch history: the latest revision is `e4f5a6b`, saved
+   20 minutes later by the user with the comment "manual fix of tier
+   labels". The opened copy is stale.
+3. Nothing is pending, so reopen on `e4f5a6b`. Report the newer revision;
+   it touched `DiscountTiers`, which this task changed, so re-read that
+   table and confirm the task's rows are still present alongside the
+   user's edit.
+4. Check the project's compilation status and wait until it is terminal
+   (`ok` / `warnings` / `errors`); an `idle` status right after a save has
+   no messages yet and is not a clean result. If any error-severity
+   messages are present — including in test tables — stop and fix them
+   before running tests.
+
+Had the opened revision already been the latest with nothing pending, step
+3 would be skipped. Had there been pending changes this task did not make,
+the sequence would stop at step 1 and ask the user, without closing.
 
 ## Running the Full Suite and Reading Per-Row Detail
 
 1. Trigger the project's full test run.
-2. Read the detailed, per-table test results — not just the aggregate
-   pass/fail summary.
+2. Read the aggregate summary, then the detailed per-row results for each
+   table that has rows added in this task or reports failures.
 3. Confirm every table shows 0 failures, including any table containing a
    row added this session.
+4. For each new row, confirm the number of checked fields matches the
+   expected columns written. Fewer checks means Studio skipped a column it
+   could not bind — a compile error in the test table, not a pass.
+
+Counter-example: a new scoped test expects `resetValue` through a generic
+helper whose result has no such field. Studio reports a compile error on
+that table, skips the column, and the row passes with one check fewer.
+Reporting "232 passed, 0 errors" from the suite alone hides an unverified
+reset rule.
 
 ## A Row Failed — Drill In, Fix, Save, Re-Run
 
@@ -66,7 +89,7 @@ Two optional columns identify and label individual test cases:
   row number — it is far more useful to the user.
 
 A label row directly under the header row (before the first data row)
-holds human-readable column labels (e.g. "Test Case", "Monthly Premium")
+holds human-readable column labels (e.g. "Test Case", "Total Amount")
 instead of test data. Recognize it by position, not content, and skip it
 when reading actual input/expected values.
 

@@ -78,18 +78,22 @@ by itself.
 | Skill | What it does |
 |---|---|
 | `openl:connect` | Sets up (or repairs) the connection to OpenL Studio — it is part of the setup guide for your tool (the table above). |
+| `openl:planning` | The entry point for building, changing, or fixing anything in an OpenL project: works out which projects and tables a request touches, shows one plan for a single approval, then carries it out item by item and verifies the result. |
 | `openl:branching` | Manages isolated branches for any rule or config change — opens the right revision, syncs with base/development, resolves conflicts, and handles the hotfix two-branch rule and post-merge cleanup. |
 | `openl:trace-investigation` | Finds out why a rule returned an unexpected result: traces the run, names the root cause, and proposes the minimal fix. Give it the input payload and what you expected. |
+| `openl:change-log-and-reapply` | Keeps a log of every change a feature applied and, after a merge conflict, a project refresh, or a backport, reapplies only the changes that are missing — stopping on conflicting changes in the target. |
 | `openl:testing` | Adds test rows and runs the full suite after any rule change, reading per-row results before reporting anything as tested. |
 | `openl:versioning` | Adds a new effective-dated or dimension-scoped version of a table — without touching the existing version — with matching test coverage. |
 
 To start one explicitly:
 
 - **Claude Code or the Claude desktop app's Chat/Cowork tabs:** type
-  `/openl:connect`, `/openl:branching`, `/openl:trace-investigation`,
+  `/openl:connect`, `/openl:planning`, `/openl:branching`,
+  `/openl:change-log-and-reapply`, `/openl:trace-investigation`,
   `/openl:testing`, or `/openl:versioning`.
-- **Codex:** type `$` and select `$openl:connect`, `$openl:branching`,
-  `$openl:trace-investigation`, `$openl:testing`, or `$openl:versioning`;
+- **Codex:** type `$` and select `$openl:connect`, `$openl:planning`, `$openl:branching`,
+  `$openl:change-log-and-reapply`, `$openl:trace-investigation`, `$openl:testing`, or
+  `$openl:versioning`;
   `/skills` opens the skills picker too.
 - **Cursor:** the skills are listed under **Customize → Skills** (in the *Agent
   Decides* section) and can be picked from the `/` menu in chat.

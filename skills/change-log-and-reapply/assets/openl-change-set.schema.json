@@ -1,0 +1,784 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openl-studio.local/schemas/openl-change-set.schema.json",
+  "title": "OpenL Replayable Change Set",
+  "description": "A declarative, conflict-checked OpenL change log that the OpenL Plugin change-log-and-reapply skill can rediscover and reapply in a new session. Version 1.6.0 adds purpose, dependencies, per-operation status/evidence, and an execution record; 1.5.0 documents remain valid.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "metadata",
+    "project",
+    "operations"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "enum": [
+        "1.5.0",
+        "1.6.0"
+      ]
+    },
+    "kind": {
+      "const": "OpenLChangeSet"
+    },
+    "metadata": {
+      "$ref": "#/$defs/metadata"
+    },
+    "project": {
+      "$ref": "#/$defs/project"
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/operation"
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "execution": {
+      "$ref": "#/$defs/execution"
+    }
+  },
+  "$defs": {
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "changeSetId",
+        "title",
+        "createdAt"
+      ],
+      "properties": {
+        "changeSetId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ticket": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Tracker key of the feature, e.g. PROJ-1234."
+        },
+        "phase": {
+          "enum": [
+            "structure",
+            "data"
+          ],
+          "description": "Phase of this file: structure (column operations) or data (row operations). A file never mixes phases."
+        },
+        "pairedFile": {
+          "type": "string",
+          "minLength": 1,
+          "description": "File name of the other phase file of the same change, when both exist."
+        }
+      }
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "repository",
+        "path"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
+      }
+    },
+    "tableSelector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workbook",
+        "sheetName",
+        "tableName"
+      ],
+      "properties": {
+        "workbook": {
+          "type": "string"
+        },
+        "module": {
+          "type": "string"
+        },
+        "sheetName": {
+          "type": "string",
+          "description": "Excel worksheet containing the OpenL table. Use with workbook and tableName for replay discovery."
+        },
+        "tableName": {
+          "type": "string"
+        },
+        "tableKind": {
+          "type": "string"
+        }
+      }
+    },
+    "semanticValue": {
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ],
+      "description": "A scalar value exactly as exposed by an OpenL table cell. Arrays, objects, and MCP transport wrappers are not allowed."
+    },
+    "keyFields": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Unique names of persisted semantic fields whose values are derived from the complete row state to locate the row. Values are never duplicated here; array order is serialization-only."
+    },
+    "fieldValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value"
+      ],
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/semanticValue"
+        },
+        "type": {
+          "enum": [
+            "string",
+            "boolean",
+            "integer",
+            "decimal",
+            "null"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "string"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "integer"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "decimal"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "boolean"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "null"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "column": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expr",
+        "label"
+      ],
+      "properties": {
+        "expr": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        }
+      }
+    },
+    "dimension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "value"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Dimension header name exactly as exposed by the OpenL table."
+        },
+        "value": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ],
+          "description": "Normalized dimension-header value. The empty string represents a confirmed blank OpenL wildcard. Null is not allowed, and registered dimensions must not be omitted from a tuple."
+        }
+      }
+    },
+    "dimensionValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dimensions",
+        "fields"
+      ],
+      "properties": {
+        "dimensions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/dimension"
+          },
+          "description": "Ordered semantic dimension tuple. Preserve the table's dimension-header order."
+        },
+        "fields": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/fieldValue"
+          },
+          "description": "Values that apply only to this exact dimension tuple."
+        }
+      },
+      "description": "One logical value combination from a dimensioned table. Replay must match the semantic tuple, never a physical Excel column."
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "order",
+        "action",
+        "elementType",
+        "targets"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Execution sequence. Apply operations in ascending order."
+        },
+        "action": {
+          "enum": [
+            "add",
+            "edit",
+            "remove"
+          ],
+          "description": "Add creates an element, remove deletes an element, and edit replaces a row only after strict comparison with its complete before snapshot."
+        },
+        "elementType": {
+          "enum": [
+            "row",
+            "column"
+          ],
+          "description": "Identifies whether the operation applies to table rows or table columns."
+        },
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/tableSelector"
+          }
+        },
+        "records": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/rowStateRecord"
+              },
+              {
+                "$ref": "#/$defs/rowEditRecord"
+              }
+            ]
+          }
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/column"
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Business purpose of this change in one sentence. Required by the 1.6.0 logging contract."
+        },
+        "dependsOn": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Operation ids, in this or the paired phase file, that must be applied first."
+        },
+        "status": {
+          "enum": [
+            "applied",
+            "verified",
+            "reapplied",
+            "failed"
+          ],
+          "description": "Execution status. A log holds only applied changes; planned-but-unapplied changes live in the plan snapshot, not here."
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "elementType": {
+                "const": "row"
+              }
+            },
+            "required": [
+              "elementType"
+            ]
+          },
+          "then": {
+            "required": [
+              "records"
+            ],
+            "not": {
+              "required": [
+                "columns"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "elementType": {
+                "const": "column"
+              }
+            },
+            "required": [
+              "elementType"
+            ]
+          },
+          "then": {
+            "required": [
+              "columns"
+            ],
+            "not": {
+              "required": [
+                "records"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "action": {
+                "const": "edit"
+              }
+            },
+            "required": [
+              "action"
+            ]
+          },
+          "then": {
+            "properties": {
+              "elementType": {
+                "const": "row"
+              },
+              "records": {
+                "items": {
+                  "$ref": "#/$defs/rowEditRecord"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "action": {
+                "enum": [
+                  "add",
+                  "remove"
+                ]
+              },
+              "elementType": {
+                "const": "row"
+              }
+            },
+            "required": [
+              "action",
+              "elementType"
+            ]
+          },
+          "then": {
+            "properties": {
+              "records": {
+                "items": {
+                  "$ref": "#/$defs/rowStateRecord"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "rowStateRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "keyFields",
+        "fields"
+      ],
+      "properties": {
+        "keyFields": {
+          "$ref": "#/$defs/keyFields"
+        },
+        "fields": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/fieldValue"
+          }
+        },
+        "dimensionValues": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/dimensionValue"
+          },
+          "description": "Ordered logical value combinations for dimensioned table fields. Omit for non-dimensioned rows."
+        }
+      },
+      "description": "Complete row state used by add and remove operations. Selector values are derived from fields using keyFields."
+    },
+    "rowEditRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "keyFields",
+        "before",
+        "after"
+      ],
+      "properties": {
+        "keyFields": {
+          "$ref": "#/$defs/keyFields"
+        },
+        "before": {
+          "$ref": "#/$defs/rowSnapshot",
+          "description": "Complete previous row snapshot. Before writing, the apply skill must require exact semantic equality with the complete live row, including ordinary fields and dimension values when present."
+        },
+        "after": {
+          "$ref": "#/$defs/rowSnapshot",
+          "description": "Complete desired row snapshot. After writing, the apply skill must re-read the row and require exact semantic equality with this state, including ordinary fields and dimension values when present."
+        }
+      },
+      "description": "Strict compare-before-write row edit. Selector values are derived from before.fields using keyFields and must be unchanged in after.fields."
+    },
+    "rowSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fields"
+      ],
+      "properties": {
+        "fields": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/fieldValue"
+          },
+          "description": "Complete ordinary row fields."
+        },
+        "dimensionValues": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/dimensionValue"
+          },
+          "description": "Complete ordered semantic dimension tuples for a dimensioned row. Omit for a non-dimensioned row."
+        }
+      },
+      "description": "Complete semantic row state used as an edit before or after snapshot."
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Verification evidence for one applied operation.",
+      "properties": {
+        "readback": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "NOT_RUN"
+          ]
+        },
+        "compile": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "NOT_RUN"
+          ]
+        },
+        "tests": {
+          "type": "string",
+          "description": "Focused test counts for this operation, only if focused tests ran, e.g. \"12 passed, 0 failed (per-row detail)\"."
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "What happened to this log as a whole.",
+      "properties": {
+        "status": {
+          "enum": [
+            "in-progress",
+            "complete",
+            "reapplied",
+            "failed"
+          ]
+        },
+        "saveRevision": {
+          "type": "string",
+          "description": "OpenL revision reported after the final save."
+        },
+        "tests": {
+          "type": "string",
+          "description": "Final full-suite result on the saved revision, read from per-row detail: total/passed/failed and the revision tested."
+        },
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "at",
+              "event"
+            ],
+            "properties": {
+              "at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "event": {
+                "enum": [
+                  "logged",
+                  "preflight-conflict",
+                  "reapplied",
+                  "failed"
+                ]
+              },
+              "detail": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schemaVersion": {
+            "const": "1.6.0"
+          }
+        },
+        "required": [
+          "schemaVersion"
+        ]
+      },
+      "then": {
+        "properties": {
+          "operations": {
+            "items": {
+              "required": [
+                "purpose",
+                "status",
+                "evidence"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "phase": {
+                "const": "structure"
+              }
+            },
+            "required": [
+              "phase"
+            ]
+          }
+        },
+        "required": [
+          "metadata"
+        ]
+      },
+      "then": {
+        "properties": {
+          "operations": {
+            "items": {
+              "properties": {
+                "elementType": {
+                  "const": "column"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "phase": {
+                "const": "data"
+              }
+            },
+            "required": [
+              "phase"
+            ]
+          }
+        },
+        "required": [
+          "metadata"
+        ]
+      },
+      "then": {
+        "properties": {
+          "operations": {
+            "items": {
+              "properties": {
+                "elementType": {
+                  "const": "row"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

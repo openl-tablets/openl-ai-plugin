@@ -167,7 +167,15 @@ test("every skill is packaged for every client", async () => {
   const skills = await skillDirectories();
   assert.deepEqual(
     [...skills].sort(),
-    ["branching", "connect", "testing", "trace-investigation", "versioning"],
+    [
+      "branching",
+      "change-log-and-reapply",
+      "connect",
+      "planning",
+      "testing",
+      "trace-investigation",
+      "versioning",
+    ],
   );
   for (const skill of skills) {
     // Normalize line endings: a Windows checkout delivers CRLF, which the

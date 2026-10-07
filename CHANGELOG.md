@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-10-07
+
+### Added
+
+- `openl:planning` skill — the entry point for building, changing, or fixing anything in
+  an OpenL project of any domain. It decides which projects to open, runs research or
+  diagnosis first when needed, chooses the deployment path (a remote task branch with an
+  optional merge, or a local WebStudio without branches), embeds the ordered change plan
+  of an installed domain catalog skill — or plans from the project itself when none is
+  installed — and asks for a single approval. It then tracks execution item by item,
+  delegates branches, tests, versions, and root cause to `branching`, `testing`,
+  `versioning`, and `trace-investigation`, and closes with a verified summary.
+- `openl:change-log-and-reapply` skill — keeps a schema-validated log of every change a
+  feature applied (`assets/openl-change-set.schema.json`) and, after a merge conflict, a
+  project refresh, replaced local state, or a backport, reapplies only the missing
+  changes through a read-only preflight. It blocks on conflicting or similar changes in
+  the target instead of replaying row positions. `planning` starts the log only on its
+  documented triggers.
+
+### Changed
+
+- `openl:branching`, `openl:testing`, and `openl:versioning` are updated to the current
+  OpenL skill set: under an approved plan they defer approval, change tracking, and the
+  test run to `planning`; `branching` takes an explicit operation (`start`, `sync`,
+  `merge`, `hotfix`, `delete`) and does not apply to a local WebStudio; `testing` runs the suite on the saved revision
+  and classifies failures; `versioning` covers module versions and shared, unversioned
+  modules.
+- The plugin now ships seven shared skills; the README, `docs/architecture.md`,
+  `docs/cursor-setup.md`, and the release checklist list them.
+
 ## [0.6.1] - 2026-09-22
 
 ### Changed

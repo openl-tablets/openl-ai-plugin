@@ -1,16 +1,12 @@
 ---
 name: versioning
 description: >
-  OpenL Tablets table versioning — adding version properties to tables
-  (effectiveDate, startRequestDate, lob, state, currency, etc.), creating new
-  table versions, configuring runtime context, file naming conventions, and
-  writing tests for versioned tables. Use proactively whenever a user asks to
-  make a rule effective from a certain date; a new rate, factor, or
-  configuration should apply starting on a specific date; a user mentions
-  "effective date", "version", "new version of the table", "applicable
-  from", "starting from", or "replace rates as of"; tables need to be
-  segmented by LOB, state, country, or currency using versioning
-  properties; or a user asks how to test different date scenarios.
+  OpenL Tablets table versioning — version properties (effectiveDate,
+  startRequestDate, lob, state, currency), new table or module versions,
+  runtime context, file naming, and tests for versioned tables. Use
+  proactively when a rule, rate, or configuration must apply from a date or
+  per LOB/state/country/currency, or on "effective date", "new version of the
+  table", "applicable from", "starting from", "replace rates as of".
 ---
 
 # OpenL Table Versioning Skill
@@ -25,86 +21,105 @@ naming conventions (when the project uses them), and test coverage across
 both the old and new ranges. Full property tables, schemas, and worked
 examples live in [references/reference.md](references/reference.md).
 
-## When to Use
+## When to use
 
-- A user asks to make a rule effective from a certain date.
-- A new rate, factor, or configuration should apply starting on a specific
-  date.
-- A user mentions "effective date", "version", "new version of the table",
-  "applicable from", "starting from", or "replace rates as of".
-- Tables need to be segmented by LOB, state, country, or currency
-  using versioning properties.
-- A user asks how to test different date scenarios against a versioned
-  table.
+- A rule, rate, or configuration must apply from a date, or per LOB, state,
+  country, or currency.
+- Adding a new table or module version, setting runtime context, or testing
+  date scenarios.
 
-## Key Concepts
+## Key concepts
 
-- **Versioning properties can be declared at three levels**: table (a
-  `properties` section after the header row — first cell `properties`,
-  **one `<propertyName> | <value>` pair per row**, additional properties
-  as additional rows underneath, dates as `MM/DD/YYYY`), category, or
-  module. Check for an inherited category-/module-level property before
-  concluding a table with no `properties` row is unversioned. A module's
-  properties can also be *set* via its file or folder name instead of a
-  module-level Properties table, but never both — see File Naming below.
-  Full hierarchy and examples: [references/reference.md](references/reference.md).
-- **When levels conflict, the more specific one wins**: table > category >
-  module. File/folder name extraction is not a fourth level above or below
-  module — it's an alternate way to *declare* module-level properties, and
-  OpenL prohibits declaring the same property both there and in the
-  module's own Properties table. Confirm edge cases against the references
-  if it matters for the task.
-- **Resolution is most-specific-match, not first-match.** OpenL picks the
-  version whose properties most closely match the runtime context.
-- The common versioning properties (`effectiveDate`, `state`, `lob`,
-  `currency`, etc.) and the exact context variable each one matches are
-  listed in [references/reference.md](references/reference.md) — the most
-  frequent combination is `effectiveDate` alone, or `effectiveDate` +
-  `startRequestDate`.
-- **Default to binding context on the Datatype model**, not the REST API
-  attribute. A Datatype field suffixed `: context.<contextVar>`
-  auto-populates from runtime context. Reach for this before the raw
-  `runtimeContext` REST attribute below. See
-  [references/reference.md](references/reference.md) for a worked example.
-- **Confirm runtime context is enabled per project** (Rules Deploy
-  Configuration → **Provide runtime context**) before relying on either
-  the Datatype-binding pattern or versioned-table property matching. Only
-  fall back to passing `runtimeContext` explicitly as a REST API attribute
-  when no Datatype binding covers the value you need — see the full schema
-  in [references/reference.md](references/reference.md).
-- **If the tooling can't complete an operation, say so** — flag the gap
-  and point to the manual OpenL Studio step; never fake success or skip it.
+Details and examples for each point: [references/reference.md](references/reference.md).
 
-## Conventions and Patterns
+- **Three levels:** table (a `properties` section after the header — one
+  `<propertyName> | <value>` pair per row, dates `MM/DD/YYYY`), category,
+  module. A module's properties may be declared by its file/folder name
+  instead of a module Properties table, never both. Check inherited
+  properties before calling a table unversioned.
+- **More specific wins:** table > category > module. Resolution is
+  most-specific-match, not first-match.
+- **Common properties:** `effectiveDate` alone, or with `startRequestDate`;
+  the full list and their context variables are in the reference.
+- **Bind context on the Datatype** (`: context.<contextVar>` field suffix)
+  before passing `runtimeContext` through the REST API.
+- **Runtime context must be enabled** for the project (Rules Deploy
+  Configuration → Provide runtime context).
+- **If the tooling can't complete an operation, say so** and name the
+  manual OpenL Studio step; never fake success.
 
-### Choosing a Versioning Level (Default: Table)
+## Conventions and patterns
 
-Default to a **table-level** `properties` row without asking, but only
+### Choosing a Versioning Level
+
+**Follow the level the project already uses.** If `rules.xml` declares a
+filename pattern (for example `.*-%state%-%effectiveDate%-%startRequestDate%`),
+the project versions whole modules: a new version is a new module, created
+as described in [Creating a New Version of a Module](#creating-a-new-version-of-a-module).
+Do not add table-level version properties inside such a module and do not
+create "New Business Dimension Version" table copies there — versioning the
+same property at module and table level at the same time adds nothing and
+hides which version wins.
+
+Only when the project does not version by module, default to a
+**table-level** `properties` row without asking, but only
 once the task is confirmed to be scoped to that one named table — that is
 the narrow, low-impact default, not an excuse to skip confirming scope
 altogether.
 
 Category- or module-level Properties apply to **every table** in that
 category/module — a much larger blast radius. **Get the user's explicit
-confirmation before applying a change at category or module level**, even
-on a project that already uses that convention for other properties.
+confirmation before applying a change at category or module level** — as a
+question in the plan when `planning` is in use — even on a project that
+already uses that convention for other properties.
 Checking for an inherited category-/module-level property (see Key
 Concepts) is still fine to do silently — that's read-only; it's *writing*
 a new or changed property at that broader scope that needs confirmation.
+
+### Creating a New Version of a Module
+
+Use this when the project versions by module filename.
+
+1. Find the latest existing file of that module family (each family —
+   for example Settings and Configuration — has its own dates; never derive
+   one family's name from another's).
+2. Copy the **whole module file** to the new name (for example
+   `Defaults-CW-20270101-20261201.xlsx`). Do not rebuild the module
+   by copying tables one by one: a table copy makes a table version and
+   requires table-level version properties.
+3. Make the period's changes in the new module only. The old module stays
+   unchanged.
+4. Compile: both modules now define the same tables with the same
+   signatures; OpenL selects between them by the filename properties.
+
+### Shared (unversioned) modules and files
+
+Modules excluded from the filename pattern (typically `.*Model`, `.*Tests`,
+`.*API`) and files that are not modules (`i18n/*.properties`, `AGENTS.md`,
+descriptors) are shared by **every** version. A change there applies to all
+periods, not only the new one:
+
+- a new vocabulary value is known before its effective date — for example a
+  domain-validation message starts listing it in the old period too;
+- a new datatype field must compile against every version of every module
+  that constructs that datatype;
+- a new message key is visible to all periods.
+
+List each shared change in the plan as a risk with its effect on the old
+period, and prove the old period with tests. If a change must not reach the
+old period, it belongs in the versioned module instead.
 
 ### Creating a New Version of a Table
 
 When rates or rules change on a future date, create a **new copy** of the
 table. Never edit the existing one in place.
 
-1. In OpenL Studio, open the module containing the table to version.
-2. Click the **Copy Table** icon, then **Copy as → New Business Dimension
-   Version**.
-3. Set the new `effectiveDate` (and any other properties) in the dialog,
-   confirm the target workbook/worksheet, and click **Copy**.
-4. Edit the new copy's data rows with the updated values.
-5. Do not change the table name or signature — they must match the
-   original exactly.
+1. Copy the table as a **New Business Dimension Version** through the
+   OpenL tooling (the Studio UI fallback: Copy Table → Copy as → New
+   Business Dimension Version), into the intended workbook and worksheet.
+2. Set the new `effectiveDate` and any other properties on the copy.
+3. Edit the new copy's data rows with the updated values.
+4. Keep the table name and signature identical to the original.
 
 The two tables (old and new version) coexist; OpenL selects between them at
 runtime based on context.
@@ -123,61 +138,56 @@ table-, category-, or module-level property never by itself implies a
 filename pattern change. Full pattern syntax and correct/wrong examples:
 [references/reference.md](references/reference.md).
 
-### Testing Versioned Tables
+### Testing Versioned Tables and Modules
 
-Add a context column to the test table — prefix `_context_.` + the context
-variable name (e.g. `_context_.currentDate`) — so each test row exercises
-its own date/dimension scenario independently. See
+**Every test row can carry its own date.** Add a context column to the test
+table — prefix `_context_.` + the context variable name (e.g.
+`_context_.currentDate`, `_context_.requestDate`) — or set the request field
+that is bound to the context (for example `effectiveDate : context.currentDate`),
+so each row exercises its own date scenario. Cover the old and the new period
+in the same test table with per-row dates rather than separate helper tables.
+Before relying on existing test helpers, check that they do not hard-code a
+date: a helper that always passes a fixed date only ever reaches one version. See
 [references/reference.md](references/reference.md) for the full list of
 context test column names and a worked test table.
 
 ### Checklist: Adding a New Version of an Existing Table
 
-1. ⬜ Create an isolated task branch, following this project's branch
-   discipline.
-2. ⬜ Confirm the versioning level: default to table-level for a
-   single-table task; get the user's explicit confirmation first if this
-   would apply a category- or module-level change (see "Choosing a
-   Versioning Level" above).
-3. ⬜ Open the module containing the current table version.
-4. ⬜ Copy the table as **New Business Dimension Version**.
-5. ⬜ Set `effectiveDate` (and any other properties) on the new copy.
-6. ⬜ Update the data rows in the new copy — leave the old copy unchanged.
-7. ⬜ Verify the table name and signature are identical between versions.
-8. ⬜ Add or update test rows covering both the old date range and the new
-   one, following this project's test-management process.
-9. ⬜ Run tests — confirm each date range returns the expected values.
-10. ⬜ Save → confirm the revision incremented on the branch.
+Branch, saves, and the test run follow `planning`, `branching`, and
+`testing`; this checklist covers only the versioning items.
 
-## Anti-Patterns
+1. ⬜ Confirm the versioning level: the project's existing level first
+   (module filename → follow "Creating a New Version of a Module" instead of
+   this checklist); otherwise table-level for a single-table task; get the
+   user's explicit confirmation first if this would apply a category- or
+   module-level change (see "Choosing a Versioning Level" above).
+2. ⬜ Copy the table as **New Business Dimension Version**.
+3. ⬜ Set `effectiveDate` (and any other properties) on the new copy.
+4. ⬜ Update the data rows in the new copy — leave the old copy unchanged.
+5. ⬜ Verify the table name and signature are identical between versions,
+   then save.
+6. ⬜ After all changes: test rows covering both the old and the new date
+   range, with a `_context_.` column per scenario.
 
-- ❌ Editing an existing table version in place instead of copying a new
-  version.
-- ❌ Changing the table name or signature between the old and new version —
-  they must match exactly.
-- ❌ Prepending the property name as a literal label in a filename or
-  filename pattern (e.g. `-Country-US-` instead of `-US-`).
-- ❌ Adding a new dimension value to the filename pattern just because a new
-  table-, category-, or module-level property was added.
-- ❌ Concluding a table is unversioned just because it has no `properties`
-  row of its own — check for an inherited category- or module-level
-  property before drawing that conclusion.
-- ❌ Adding a new version without adding/updating test rows for **both** the
-  old date range and the new one.
-- ❌ Assuming `runtimeContext` is available on the REST API without first
-  confirming **Provide runtime context** is checked in the project's Rules
-  Deploy Configuration.
-- ❌ Reaching for the raw `runtimeContext` REST attribute as the first
-  option instead of a Datatype context-binding field.
-- ❌ Asking the user which property level (table/category/module) to use
-  for a routine single-table version bump instead of defaulting to
-  table-level and checking the existing project convention first.
-- ❌ Applying a category- or module-level property change — which affects
-  every table in that category/module — without first getting the user's
-  explicit confirmation, even on a project that already uses that
-  convention elsewhere.
-- ❌ Silently skipping or reporting complete an operation the tooling can't
-  perform, instead of flagging it with the manual OpenL Studio step.
+## Code examples
+
+In [references/reference.md](references/reference.md): a versioned table
+with a `properties` row, context-bound Datatype fields, the runtime context
+REST schema, file-naming patterns, and context test columns.
+
+## Anti-patterns
+
+- ❌ Versioning the same property at module level (filename) and table level
+  at the same time, or adding table-level version properties inside a module
+  that is already versioned by filename.
+- ❌ Assuming a change to a shared module (Model, Tests, i18n) affects only
+  the new period.
+
+- ❌ Editing an existing table version in place, or changing the table name
+  or signature between versions.
+- ❌ Writing the property name into a filename (`-Country-US-` instead of
+  `-US-`), or changing the filename pattern only because a new table-,
+  category-, or module-level property was added.
 
 ## References
 
