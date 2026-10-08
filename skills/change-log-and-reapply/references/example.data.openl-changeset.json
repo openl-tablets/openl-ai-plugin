@@ -1,0 +1,189 @@
+{
+  "$schema": "../assets/openl-change-set.schema.json",
+  "schemaVersion": "1.6.0",
+  "kind": "OpenLChangeSet",
+  "metadata": {
+    "changeSetId": "example-review-days",
+    "title": "Example: review-period fields (data phase)",
+    "createdAt": "2026-09-01T00:00:00+02:00",
+    "ticket": "EXAMPLE-1",
+    "phase": "data"
+  },
+  "project": {
+    "name": "Sample Rules",
+    "repository": "local",
+    "path": "sample-rules"
+  },
+  "operations": [
+    {
+      "id": "register-review-field-codes",
+      "order": 1,
+      "action": "add",
+      "elementType": "row",
+      "targets": [
+        {
+          "workbook": "rules/Vocabulary.xlsx",
+          "module": "Vocabulary",
+          "sheetName": "Field Codes",
+          "tableName": "FieldCode",
+          "tableKind": "Datatype"
+        }
+      ],
+      "records": [
+        {
+          "keyFields": [
+            "code"
+          ],
+          "fields": {
+            "code": {
+              "value": "isReviewRequired",
+              "type": "string"
+            }
+          }
+        },
+        {
+          "keyFields": [
+            "code"
+          ],
+          "fields": {
+            "code": {
+              "value": "reviewDays",
+              "type": "string"
+            }
+          }
+        }
+      ],
+      "purpose": "Register the review-period field codes so the rules can use them.",
+      "status": "verified",
+      "evidence": {
+        "readback": "PASS",
+        "compile": "PASS",
+        "tests": "not run for vocabulary rows"
+      }
+    },
+    {
+      "id": "add-review-days-defaults",
+      "order": 2,
+      "action": "add",
+      "elementType": "row",
+      "targets": [
+        {
+          "workbook": "rules/Defaults-CW-20230101-20211010.xlsx",
+          "module": "Defaults-CW-20230101-20211010",
+          "sheetName": "FieldDefaults",
+          "tableName": "FieldDefaultValues",
+          "tableKind": "Rules"
+        }
+      ],
+      "records": [
+        {
+          "keyFields": [
+            "Operation",
+            "Field Name",
+            "Condition Field",
+            "Condition Value"
+          ],
+          "fields": {
+            "Operation": {
+              "value": "Default apply",
+              "type": "string"
+            },
+            "Field Name": {
+              "value": "Review Days",
+              "type": "string"
+            },
+            "Condition Field": {
+              "value": "Review Required?",
+              "type": "string"
+            },
+            "Condition Value": {
+              "value": true,
+              "type": "boolean"
+            }
+          },
+          "dimensionValues": [
+            {
+              "dimensions": [
+                {
+                  "name": "Segment",
+                  "value": ""
+                },
+                {
+                  "name": "Tier",
+                  "value": "Basic"
+                },
+                {
+                  "name": "Product",
+                  "value": "ProdA"
+                },
+                {
+                  "name": "Region",
+                  "value": "NY"
+                }
+              ],
+              "fields": {
+                "Default Value": {
+                  "value": 0,
+                  "type": "integer"
+                }
+              }
+            },
+            {
+              "dimensions": [
+                {
+                  "name": "Segment",
+                  "value": ""
+                },
+                {
+                  "name": "Tier",
+                  "value": "Basic"
+                },
+                {
+                  "name": "Product",
+                  "value": "ProdA"
+                },
+                {
+                  "name": "Region",
+                  "value": "CA, TX, WA"
+                }
+              ],
+              "fields": {
+                "Default Value": {
+                  "value": 0,
+                  "type": "integer"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "purpose": "Default Review Days to 0 for the Basic tier when a review is required.",
+      "dependsOn": [
+        "register-review-field-codes"
+      ],
+      "status": "verified",
+      "evidence": {
+        "readback": "PASS",
+        "compile": "PASS",
+        "tests": "Default-value tests: 12 passed, 0 failed"
+      }
+    }
+  ],
+  "execution": {
+    "status": "complete",
+    "saveRevision": "r-example",
+    "tests": "214 passed, 0 failed",
+    "history": [
+      {
+        "at": "2026-09-01T10:00:00+02:00",
+        "event": "logged",
+        "detail": "2 operations logged after verification"
+      }
+    ]
+  },
+  "notes": [
+    "Phase: data. No structure file is needed for this example.",
+    "Non-authoritative example. Intermediate operations of a real log are omitted for brevity, so dependsOn may skip orders.",
+    "Never reuse project names, selectors, keys, dimensions, or values from this example."
+  ]
+}

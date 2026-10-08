@@ -1,206 +1,156 @@
 ---
 name: branching
 description: >
-  OpenL Tablets branch management — isolated branches, opening on the
-  correct revision, syncing with base/development (send/receive, conflict
-  resolution), dependent-project impact checks, hotfix two-branch rule,
-  and post-merge cleanup. Use proactively for any rule/config change,
-  new task/ticket, opening/reopening a project, a sync/merge/conflict, a
-  bug in a released version, or phrases like "create a branch", "switch
-  branches", "sync changes". Every rule edit must happen on an isolated
-  branch — applies to all OpenL project types.
+  OpenL Tablets branch management — task branches, latest revision, sync with
+  base (receive/send, conflicts), merge to base with dependent checks, the
+  hotfix two-branch rule, and cleanup. Use for "create a branch", "switch
+  branches", "sync changes", "merge to development", a sync conflict, a bug in
+  a released version, or deleting a branch; `planning` calls it for branch
+  items. Not for local WebStudio without branches.
 ---
 
-# OpenL Branching Skill
+# OpenL Branching
 
 ## Purpose
 
-Teach the agent branch discipline for any OpenL Tablets project: isolated
-task branches, correct revision handling, deliberate base/development
-syncing with dependents tested before finalizing, the hotfix two-branch
-rule, and post-merge cleanup.
+Branch discipline for any OpenL Tablets project: isolated task branches,
+correct revisions, deliberate syncing with dependents tested before a merge,
+the hotfix two-branch rule, and cleanup on request.
 
-## When to Use
+## Inputs
 
-- A user asks to make any rule/config change, starts a new task/ticket,
-  asks which branch to work on, or needs the project opened/reopened.
-- Any phrase like "start working on", "create a branch", "switch
-  branches", "latest revision", or "sync changes".
-- A branch needs to sync, a sync reports a conflict, or a bug is found in
-  a released version ("hotfix", "bug in production").
+| Name | Type | Required | Description |
+|---|---|---|---|
+| `project` | string | yes | Exact OpenL project name |
+| `task_key` | string | no | Ticket or task identifier used in the branch name |
+| `operation` | string | yes | `start`, `sync`, `merge`, `hotfix`, or `delete` |
 
-## Key Concepts
+## When to use
 
-- **Never edit rules directly on main.** Always work on an isolated branch.
-- **Always open a branch on its latest revision**, never a cached one —
-  it can go stale between sessions.
-- **Resolve any unsaved working copy at session start immediately** —
-  never ignore it; it may belong to a different task.
-- Branch creation/saves are writes — same scrutiny as a table edit.
-- **Only sync a task branch with base/development (receive/send/merge)
-  when the user explicitly asks** — never on your own initiative because
-  a task seems ready. At most, recommend a sync and let the user decide.
-- **A hotfix follows a two-branch rule — never a merge between them.**
-  Branch off the *released* version to fix it, then separately reproduce
-  the fix on development. See "Bug Fix / Hotfix Workflow" below before
-  touching a released branch.
-- **Never delete a branch without an explicit user request to delete it**
-  — a confirmed merge and passing target tests are conditions to verify
-  once asked, not permission to delete on your own.
-- **Before finalizing a merge, discover and test dependent projects too** —
-  this project's own passing tests aren't sufficient. See
-  "Dependent-Project Impact Check" below.
-- **If the tooling can't complete an operation, say so** — flag the gap
-  and point to the manual OpenL Studio step; never fake success or skip it.
+- Starting, opening, or switching a task branch; syncing with the base; a
+  sync or merge conflict; merging to the base; a bug in a released version;
+  deleting a branch.
+- Not for a local WebStudio repository without branches.
 
-## Conventions and Patterns
+## Key concepts
 
-### Before Starting Any Change
+- **Task branch** — an isolated branch for one task.
+- **Base branch** — the branch a task branch is created from and merged
+  into (usually development).
+- **Receive / send** — bringing base changes into the task branch / sending
+  task changes to the base.
+- **Dependent project** — a project that uses this one.
 
-1. **Check for an existing branch first** — search by ticket/task
-   identifier (e.g. `PROJ-1234`); open it rather than duplicating.
-2. **If none exists, create one** — follow a repository-configured naming
-   pattern if present, otherwise the fallback convention below, including
-   the ticket/task identifier.
-3. **Open on that branch's latest revision and confirm it after opening.**
-   If already open on a different branch/revision, close and reopen on the
-   correct one — never rely on whatever happens to be loaded.
+## Conventions and patterns
 
-### Unsaved Working Copy at Session Start
 
-If "unsaved working copy from the previous session" appears, resolve it
-immediately — never stall or silently discard it:
+- **Never edit rules on main.** Work on an isolated task branch.
+- **Local WebStudio without branches** is exempt: skip branch creation,
+  sync, merge, and cleanup, and say so.
+- **Open on the latest revision** and confirm branch and revision before
+  touching any table; never trust whatever is loaded.
+- **Under an approved plan, `planning` rules.** Branch creation is a plan
+  item done after approval; before approval only look up and open existing
+  branches. An unsaved working copy found at startup is handled by
+  `planning`, not saved here.
+- **Save after each verified change item** (or at the end of a save group the plan declared), then confirm the save landed on
+  the task branch and the revision moved on. When tests run belongs to
+  `planning` and `testing`.
+- **Sync, merge, and delete only on an explicit user request.** At most,
+  recommend a sync.
+- **If the tooling cannot do an operation, say so** and name the manual
+  OpenL Studio step; never report it as done.
 
-1. Check which branch it belongs to (shown in project status).
-2. Correct branch for this task → save it immediately and continue.
-3. Different/unknown branch → **do not save it on your own initiative.**
-   Tell the user what it contains and which branch it belongs to, and get
-   explicit confirmation before committing it. Once confirmed, save it to
-   *that* branch, then close and reopen on the correct branch at the
-   latest revision. If the user instead says to discard it, discard it —
-   don't save it either.
+## Start a task branch
 
-### During Editing
+1. Look for an existing branch by the task identifier; open it instead of
+   creating a duplicate.
+2. If none exists, create one (after approval when a plan is in use),
+   following the repository's naming pattern, or the fallback below.
+3. Open the project on that branch's latest revision and confirm it.
 
-- Confirm branch and revision before touching any table; close and reopen
-  on the latest revision. If on main, stop, branch, and move changes there
-  before saving.
-- **Save after every individual change** rather than accumulating unsaved
-  edits.
+## Unsaved working copy (no plan in use)
 
-### After Saving Changes
+1. Read which branch it belongs to.
+2. This task's branch → save it and continue.
+3. Another or unknown branch → tell the user what it holds and where it
+   belongs; save it there or discard it only on their answer. Then reopen on
+   the correct branch at its latest revision.
 
-Verify every time: the save applied to the correct branch (not main), and
-the revision counter incremented (not just held in memory — retry if not).
+## Sync with base/development
 
-Tests should run after any rule change, following whatever pre-test
-sequence this project's testing process defines — typically close →
-reopen on latest revision → check compilation → run.
+- A plain "sync" is **receive-only**: bring base changes into the task
+  branch. **Send** only on an explicit finalize, merge, or send request.
+- **On a conflict, compare first**, reading Yours/Theirs/Base only as
+  evidence, and recommend a resolution. The user resolves it in OpenL
+  Studio (use yours / use theirs / upload a merged file), or the pending
+  merge is cancelled and the change log is reapplied (`planning` →
+  Reapplication). Never pick a side yourself.
+- After a receive or a resolved conflict: save the result, then re-run the
+  full suite on the saved revision.
 
-### Syncing with the Base/Development Branch
+## Before finalizing a merge
 
-**Sync only when the user explicitly asks — never receive, send, or
-merge on your own initiative.** If a merge is coming up and the branch
-hasn't been synced in a while, say so and let the user decide; do not
-sync unprompted just because it seems due.
+Discover the projects that depend on this one and run their suites too. A
+dependent failure blocks the merge. "No dependents" must be a checked
+result, not an assumption.
 
-**A plain request to "sync" is receive-only by default**: bring the base
-branch's newer changes into the task branch and re-test — do not also
-send the task branch's own changes back unless the user's request was
-explicit about that too. **Send** the task branch's committed, tested
-changes back to the base/development branch only on an explicit finalize,
-merge, or "send" request. **Re-test after every receive and after any
-conflict resolution.**
+## Merge (send to base)
 
-**On a sync conflict**: compare the versions first — never resolve blind.
-Download **Yours**/**Theirs**/**Base** if the diff alone isn't enough.
-**Use yours**/**Use theirs** only when one side is confirmed superseded;
-**Upload merged file** when both changes are needed. Ask the user rather
-than pick a side if the right resolution isn't clear.
+Only on the user's explicit "yes" (under a plan: its Finish item).
 
-Full worked example: [references/reference.md](references/reference.md).
+1. Check the preconditions of `planning` step 11 and Before finalizing a
+   merge.
+2. Find the target among the repository's branches (the plan's base
+   branch); ask if it is ambiguous.
+3. Preview receiving from the target (no write). If the target moved on:
+   receive, save, re-run the full suite through `testing`; a failure stops
+   the merge.
+4. Preview sending (no write), then:
+   - mergeable → send;
+   - up to date → report "nothing to merge", write nothing;
+   - locked or protected → report the blocker and stop;
+   - protected-branch bypass offered → explain; bypass only on the user's
+     explicit request.
+5. Conflict → handle it as in Sync; report the files and what differs.
+6. After the send, confirm the target's new revision and report it. Offer
+   branch deletion; delete only on request.
 
-### Dependent-Project Impact Check (Before Finalizing a Merge)
+## Hotfix: two branches, never a merge
 
-Before finalizing a merge, automatically discover which other projects
-depend on the one being changed — don't skip this or defer it to the
-user. If dependents exist, **run their test suites too**. Treat a
-dependent test failure as blocking; report it rather than proceeding.
-"No dependents" must be a confirmed result of the check, not an
-assumption.
+A bug in a released version is fixed twice, as two separate changes:
 
-### Bug Fix / Hotfix Workflow (Two-Branch Rule)
+1. Branch off the **released** revision, fix, verify, save, test, release.
+2. Separately redo the fix on a fresh branch off **development**.
 
-A bug in a released version needs the fix applied **twice, as two
-separate changes**, never as a merge between the branches involved:
-branch off the released version (not development) to fix, test, and
-release; then, separately, reproduce the same fix on a fresh development
-branch (cherry-picked or redone), not by merging the hotfix branch in.
+Never merge the hotfix branch into development, nor development into a
+released branch; if development has moved on, redo the fix's intent there.
 
-**Critical invariant — never merge in either direction**: never merge the
-released/hotfix branch *into* development, and never merge development
-*into* a released branch. If development has since diverged, resolve the
-reproduction as its own edit, not a conflict.
+## Delete a branch
 
-### Post-Merge Branch Cleanup
+Only on an explicit request. First verify that its changes reached the
+target and the target's tests pass after the merge; never delete a branch
+with unsaved edits or an unresolved conflict. Same rule for hotfix branches.
 
-**Delete a branch only when the user explicitly asks for it** — never on
-your own initiative, even once a merge looks complete. When asked, verify
-**both** are true before deleting: its changes were sent/merged into the
-target, *and* the target's own tests pass after absorbing that merge. If
-either isn't true, tell the user and don't delete. Uniform rule, hotfix
-branches included, no special retention. Never delete a branch with
-unsaved edits, an unresolved conflict, or an unconfirmed merge, even if
-asked — flag the issue first.
+## Code examples
 
-### Branch Naming Convention
-
-**Check for a repository-configured branch naming pattern first** and
-follow it if present — use this fallback only when none is configured:
+Branch names — use the repository's configured pattern when it has one,
+otherwise:
 
 | Context | Format | Example |
 |---|---|---|
 | Ticket | `PROJ-NNN-description` | `PROJ-1234-add-discount-tier` |
 | Ad-hoc fix | `fix-description-YYYYMMDD` | `fix-rate-rounding-20260728` |
 
-Keep descriptions short, lowercase, no spaces/special characters.
+Short, lowercase, no spaces or special characters. Worked walkthroughs
+(start, foreign working copy, confirming a save, sync conflict, hotfix):
+[references/reference.md](references/reference.md).
 
-## Anti-Patterns
+## Anti-patterns
 
-- ❌ Editing tables, or treating a stale branch/revision as current, without
-  confirming branch and revision first. Creating a duplicate branch for a
-  task that has one, or committing directly to main instead of branching.
-- ❌ Bundling a prior session's unknown pending edits into the current
-  save instead of their own branch, or saving/discarding an unsaved
-  working copy from a different/unknown branch without first getting the
-  user's explicit confirmation. Accumulating unsaved edits instead of
-  saving after each change, or reporting a save complete without
-  confirming the revision incremented.
-- ❌ Applying the generic naming convention when the repository already
-  has its own configured pattern.
-- ❌ Receiving, sending, or merging a branch on your own initiative because
-  a task seems ready or a merge is coming up — sync only when the user
-  explicitly asks. Also: sending the task branch's changes back on a
-  plain "sync" request instead of treating it as receive-only until the
-  user explicitly asks to finalize, merge, or send.
-- ❌ Resolving a sync conflict with **Use yours**/**Use theirs** without
-  comparing first, skipping re-testing after a receive/conflict, or
-  reporting "ready to merge" with an unresolved conflict.
-- ❌ Merging a released/hotfix branch into development (or vice versa)
-  instead of reproducing the fix separately, or considering a hotfix done
-  without that reproduction.
-- ❌ Deleting a branch without an explicit user request to delete it, even
-  if it looks fully merged and tested. Also: deleting once asked without
-  confirming both the merge and the target's re-tested state, or keeping
-  a hotfix branch alive under an assumed exception instead of the uniform
-  cleanup rule.
-- ❌ Finalizing a merge on this project's own green tests alone, without
-  discovering and testing dependents, or assuming "none" without checking.
-- ❌ Silently skipping or reporting complete an operation the tooling can't
-  perform, instead of flagging it with the manual OpenL Studio step.
+- ❌ Bundling a prior session's pending edits into this task's save.
+- ❌ Reporting "ready to merge" while a conflict is open.
 
 ## References
 
-- [references/reference.md](references/reference.md) — full worked
-  examples: branch creation, an unsaved working copy, confirming a save, a
-  sync conflict, and the hotfix walkthrough.
+- [references/reference.md](references/reference.md) — worked walkthroughs.

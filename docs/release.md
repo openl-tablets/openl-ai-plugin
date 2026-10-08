@@ -220,7 +220,7 @@ Codex cleanup.
    smoke test. Publish the candidate to a disposable/team marketplace branch, or use
    local import when an administrator has enabled it. In a clean project and
    user-scoped install, enter a test Studio URL/PAT only through **Configure**, confirm
-   the expected plugin version and all five skills, confirm the `tools` server connects,
+   the expected plugin version and all seven skills, confirm the `tools` server connects,
    run a real *List projects* request, and invoke at least one skill. The project must
    not gain `.cursor/mcp.json` or any other hand-written config. Exercise the chosen
    update route once from the previous release as well, recording whether the settings

@@ -1,145 +1,149 @@
 ---
 name: testing
 description: >
-  OpenL Tablets test management — adding test rows, running tests safely, and
-  verifying results for any OpenL project type (offer configuration, rating,
-  commission, census, or other). Use proactively whenever tests need to run or
-  re-run after any rule change; the user asks whether tests pass or a change
-  is safe to save/sync/deploy; a test is failing and needs diagnosis; a new
-  test case needs to be added; or the user asks about editing or removing
-  existing test rows. Trigger on "run tests", "did the tests pass", "check if
-  everything works", "verify my changes", "save and test", "all tests green?",
-  or any test-related phrase in an OpenL project context.
+  OpenL Tablets test management — adding test rows, running the suite on the
+  saved revision, reading per-row results, diagnosing failures. Use when a
+  task's changes are complete, a test fails, a test case must be added or an
+  existing row changed, or on "run tests", "did the tests pass", "verify my
+  changes", "is it safe to sync or deploy".
 ---
 
-# OpenL Testing Skill
+# OpenL Testing
 
 ## Purpose
 
-Teach the agent to manage and trust OpenL Tablets test execution for any
-OpenL project type (offer configuration, rating, commission calculation,
-census, or otherwise) — adding test rows correctly, running the pre-test
-sequence that guards against OpenL Studio's in-memory/saved-state
-divergence, and reporting results only from verified, per-row data.
+Add test rows correctly, run tests against the saved revision rather than
+Studio's in-memory state, and report results only from verified per-row
+data.
 
-## When to Use
+## Inputs
 
-- Whenever tests need to run or re-run after any rule change — this is part
-  of the change itself, not optional cleanup.
-- The user asks whether tests pass, or whether a change is "safe to
-  save/sync/deploy."
-- A test is failing and needs diagnosis.
-- A new test case needs to be added for a rule change.
-- The user asks about editing or removing existing test rows.
-- Trigger phrases: "run tests", "did the tests pass", "check if everything
-  works", "verify my changes", "save and test", "all tests green?", or any
-  test-related phrasing in an OpenL project context.
+| Name | Type | Required | Description |
+|---|---|---|---|
+| `project` | string | yes | Exact OpenL project name |
+| `test_cases` | list | yes for new rows | Confirmed input → expected output pairs (`planning` confirms them) |
+| `scope` | string | no | A narrower test table or range, only when the user names it |
 
-## Key Concepts
+## When to use
 
-- **Don't trust in-memory or previously reported test results.** Always run
-  the latest saved revision on the branch before reporting any result as
-  "tested" (see Pre-Test Sequence below). **Default to the full project
-  test suite**, not just the table you touched; run a narrower, specific
-  subset only when the user explicitly names that scope (e.g. "just run
-  `TT_DiscountEligibility`") — an unscoped request always means the full
-  suite.
-- **Never trust the summary count alone.** A newly added test row's failure
-  can be excluded from it entirely. Always read per-row detail.
-- **If the tooling can't complete an operation, say so** — flag the gap
-  and point to the manual OpenL Studio step; never fake success or skip it.
+- All rule changes of a task are saved and the suite must run (once).
+- A test fails, a test case must be added, or an existing test row would
+  change.
+- The user asks whether tests pass or a change is safe to sync or deploy.
 
-## Conventions and Patterns
+## Key concepts
 
-### Adding Test Rows
+- **Saved revision** — what is committed on the branch (or the reopened
+  local project); Studio's in-memory state is not.
+- **Per-row detail** — the result of each test row, as opposed to the
+  suite's summary count.
+- **Terminal compile state** — `ok`, `warnings` or `errors` for the saved
+  revision. `idle` or `compiling` means not yet compiled: it says nothing
+  about errors.
+- **New vs existing test rows** — new rows prove this task; existing rows
+  belong to the project.
 
-- Add a new test row for every rule change, before saving.
-- Populate test inputs from the project's actual vocabulary and datatype
-  tables — never invented values.
-- **Never modify, delete, or remove an existing test row or test
-  table/case** without explicit, specific user approval naming exactly
-  what changes — e.g. "update test row 5 to expect 60 instead of 30." A
-  general instruction like "fix the failing tests" is **not** approval;
-  it means find and fix the *rule* that produced the wrong output, not
-  the test.
+## Conventions and patterns
 
-### Pre-Test Sequence (session start, and after any external change)
 
-Reset to a known-good state before trusting the first result you report in
-a session — this skill doesn't own saving edits (that's whatever process
-or skill handles branch and save discipline in this project), only making
-sure tests run against the latest saved revision:
+- **Tests run on the latest saved revision**, never on unsaved or
+  previously reported state.
+- **Full suite by default.** Run a narrower scope only when the user names
+  it.
+- **Once per task.** Under a plan, the suite runs once after all changes and
+  their test rows are saved — never between individual edits.
+- **Read per-row detail** for every table with rows added in this task and
+  every table the summary reports as failing; the summary count alone can
+  omit a new row's failure. Other tables need no per-row read.
+- **Existing test rows and tables are never edited or removed** without an
+  approval that names exactly what changes (or a plan item that names the
+  table, row key, and old and new expected value).
+- **A green suite does not prove the project compiles.** Studio skips a
+  test column it cannot bind — for example an expected field the tested
+  method's result does not have — and still passes the row, so that check
+  silently disappears. An error in a test table blocks the task like an
+  error in a rule.
+- **If the tooling cannot do an operation, say so** and name the manual
+  OpenL Studio step.
 
-1. **Close the project, then reopen it on the latest branch revision.**
-   Required once per session, and again after any change made outside this
-   session (a sync/receive, another user's edit) — not before every
-   fix-and-retest cycle within one continuous session.
-2. **Check compilation status before running tests.** If errors are
-   present, fix them, then reopen and recheck before running tests.
+## Add test rows
 
-### Running Tests and Reading Results
+Add the rows for the confirmed cases after all rule changes are written and
+saved, as the last edit items, then save them. Every rule change is covered
+by at least one new row. Take inputs from the project's real vocabularies and
+datatypes, never invented values. Every expected column must name a field
+of the tested method's actual result datatype (read it; a generic helper
+may expose fewer fields than the typed one).
 
-- Run the full project test suite, not just the table you touched.
-- Read the **per-row detail view**, never the summary count alone. Every
-  row must pass, including rows added this session.
-- On any row failure: **classify it before changing anything.** Is the
-  wrong output caused by the rule's logic, by reference/lookup data the
-  rule depends on, by the test's own inputs, or by stale project/setup
-  state (see Pre-Test Sequence above)? Only once the cause is identified
-  as the rule itself, fix the rule configuration and save it, then
-  **re-run the test suite.** No need to close/reopen again within the
-  same continuous session — only at session start or after an external
-  change (see Pre-Test Sequence above).
+## Pre-test sequence
 
-### Reporting
+Run it before the task's test run, and again after any change made outside
+this session: a sync or receive, another user's save, or the user's own edit
+in OpenL Studio. Tests must run on what is really saved on the branch,
+including saves made by someone else, and no unsaved work may be lost.
 
-After confirming zero failures in the per-row detail view, report:
-- Total / passed / failed counts, read from per-row detail — never from
-  the summary alone.
-- The revision hash that was actually tested.
-- Any compilation warnings, even when all tests passed.
+1. **Read the state.** From the project status, take the opened branch, the
+   opened revision, and the pending (unsaved) changes. From the branch's
+   revision history, take its latest revision.
+2. **Pending changes must all be this task's.** If a pending file is one
+   this task did not write since its last save (for example, the user
+   edited the same project in Studio), stop and ask. Never save, close, or
+   discard it on your own: closing a project discards its unsaved changes.
+3. **Opened revision is the latest and nothing is pending:** no reopen is
+   needed. Go to step 5.
+4. **The branch has a newer revision:** someone saved after this session
+   opened the project.
+   - Nothing pending: reopen on the latest revision.
+   - Something pending: stop and ask; saving now could overwrite or
+     conflict with that revision.
 
-If tests fail, report:
-- Which rows failed and what the mismatch was (expected vs. actual).
-- The classified cause (rule logic, reference/lookup data, test inputs, or
-  stale project/setup state) and the corrective action for *that* cause —
-  a rule fix only when the rule itself is the cause. Otherwise say what
-  actually needs to change: e.g. the missing/incorrect reference or lookup
-  data, or a reopen-and-retest when the cause was stale state. If the
-  cause is the test's own input, don't correct it yourself — report the
-  mismatch and ask for the explicit, named approval the "Adding Test Rows"
-  rule above requires before any test row changes.
-- Never suggest updating test expectations to match incorrect rule output.
+   Report each newer revision (author, time, comment). If it touches a table
+   this task changed or tests, re-read that table before going on. A manual
+   edit is kept, never overwritten.
+5. **Check compilation of the saved revision.** Wait for a terminal
+   compile state and count error-severity messages, including those in
+   test tables. With errors, fix, save and recheck before running. If no
+   terminal state can be obtained, the compile state is unverified: say so
+   and do not infer it from the test results.
 
-## Code Examples
+In a local WebStudio without branches there is no revision history: close
+and reopen the local project instead of steps 1–4.
 
-Worked examples described by outcome, not tied to a specific tool/API/
-client — use whichever capability is available. Full worked examples
-(pre-test sequence, reading per-row detail, drilling into a row failure)
-are in [references/reference.md](references/reference.md).
+Between a fix and its re-run in one continuous session, repeat steps 1–4
+only if someone else may have changed the project meanwhile; step 5 always
+runs.
 
-## Anti-Patterns
+## On a failure
 
-- ❌ Reporting "all tests passed" from a summary count without opening
-  per-row detail.
-- ❌ Running the first test of a session, or testing after an external
-  change (sync/receive), without first closing and reopening the project
-  on the latest revision.
-- ❌ Running tests while compilation errors are present.
-- ❌ Changing rule configuration on a row failure before classifying
-  whether the cause is rule logic, reference data, test inputs, or stale
-  setup state.
-- ❌ Modifying, deleting, or removing an existing test row or test
-  table/case without exact, named approval — including treating
-  "fix the failing tests" as approval.
-- ❌ Testing a rule fix before saving it.
-- ❌ Inventing test input values instead of pulling them from the project's
-  real vocabulary/datatype tables.
-- ❌ Silently skipping or reporting complete an operation the tooling can't
-  perform, instead of flagging it with the manual OpenL Studio step.
+Classify the cause before changing anything: rule logic, the reference or
+lookup data the rule uses, the test's own inputs, or stale project state.
+
+- Rule logic → fix the rule, save, re-run the suite.
+- Reference data → report what data is missing or wrong.
+- Stale state → run the pre-test sequence and re-run.
+- Test inputs → report the mismatch and ask for the named approval above.
+
+## Report
+
+- Total / passed / failed, confirmed by per-row detail where required.
+- The tested revision (or "local workspace").
+- Compile errors and warnings as measured in step 5 after the final save
+  (counts, or "unverified"), even when everything passed.
+- For failures: the rows, expected vs. actual, the classified cause, and the
+  action for that cause.
+
+## Code examples
+
+Worked examples — the pre-test sequence, reading per-row detail, drilling
+into a row failure: [references/reference.md](references/reference.md).
+
+## Anti-patterns
+
+- ❌ Treating "fix the failing tests" as "change the tests"; fix the cause.
+- ❌ Suggesting a new expected value to match wrong rule output.
+- ❌ Reporting "0 errors" or "compiles" from an `idle`/empty compile status
+  or from a passing suite.
 
 ## References
 
-- [references/reference.md](references/reference.md) — full worked
-  examples: pre-test sequence, reading per-row detail, and drilling into
-  a row failure.
+- [references/reference.md](references/reference.md) — worked examples.

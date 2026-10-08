@@ -92,7 +92,8 @@ If Cursor lists your projects — you're done.
 ### The skills you now have
 
 The plugin ships the same skills to every client: `connect` (this setup, and repairing
-it later), `branching`, `trace-investigation`, `testing`, and `versioning`. In Cursor
+it later), `planning`, `branching`, `change-log-and-reapply`, `trace-investigation`,
+`testing`, and `versioning`. In Cursor
 they are listed under **Customize → Skills** in the *Agent Decides* section — the agent
 starts the matching one by itself, or you can pick one from the `/` menu in chat. Or
 just describe the problem:
