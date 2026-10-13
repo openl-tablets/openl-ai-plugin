@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openl-studio.local/schemas/openl-change-set.schema.json",
+  "$id": "https://eisgroup.example/schemas/openl-change-set/1.6.0.schema.json",
   "title": "OpenL Replayable Change Set",
   "description": "A declarative, conflict-checked OpenL change log that the OpenL Plugin change-log-and-reapply skill can rediscover and reapply in a new session. Version 1.6.0 adds purpose, dependencies, per-operation status/evidence, and an execution record; 1.5.0 documents remain valid.",
   "type": "object",
