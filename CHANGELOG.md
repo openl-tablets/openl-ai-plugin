@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2026-10-13
+
+### Changed
+
+- `openl:trace-investigation` is split into a lean `SKILL.md` and two references, with no
+  guidance removed. Server-version-specific trace steps — the `openl-mcp@1.1.0` tree trace
+  (Path A), the `1.2.0` interactive debugger (Path B), and "When a trace won't start" — move
+  to `references/trace-tools.md`; the per-issue analysis (error, null, wrong calculation,
+  input that doesn't match the UI, wrong rule match), the cross-project dependency pattern,
+  and the upstream-mapping fix move to `references/root-cause-catalog.md`. `SKILL.md` keeps
+  the output order, audience rules, root-cause taxonomy, workflow phases, save rules, and
+  the "never" list, and links each reference at the phase that needs it (386 → 217 lines).
+  Its description is now a folded block with the same trigger phrases, and the 401 hint
+  names the `connect` skill instead of linking into its folder.
+- The change-log schema's `$id` is
+  `https://openl-tablets.example/schemas/openl-change-set/1.6.0.schema.json` instead of the
+  `openl-studio.local` placeholder, and carries the schema version so a 1.6.0 document is
+  never confused with a 1.5.0 one. Validation is unchanged — the skill always validates against the bundled
+  file.
+
 ## [0.7.0] - 2026-10-07
 
 ### Added
@@ -113,8 +133,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `openl:branching`, `openl:testing`, and `openl:versioning` skills,
-  adapted from the equivalent OpenL skills already shipping in the SDLC project's skill
-  set (dropping the `eis-dev-` prefix to match this plugin's bare-verb naming, alongside
+  adapted from existing OpenL skills and renamed to match this plugin's bare-verb naming (alongside
   `connect` and `trace-investigation`). `branching` teaches isolated task branches,
   correct revision handling, deliberate base/development syncing with dependents tested
   before finalizing, the hotfix two-branch rule, and post-merge cleanup. `testing`
