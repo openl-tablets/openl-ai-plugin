@@ -20,9 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Its description is now a folded block with the same trigger phrases, and the 401 hint
   names the `connect` skill instead of linking into its folder.
 - The change-log schema's `$id` is
-  `https://eisgroup.example/schemas/openl-change-set/1.6.0.schema.json` instead of the
-  `openl-studio.local` placeholder; versioned so it doesn't collide with the earlier
-  1.5.0 schema. Validation is unchanged — the skill always validates against the bundled
+  `https://openl-tablets.example/schemas/openl-change-set/1.6.0.schema.json` instead of the
+  `openl-studio.local` placeholder, and carries the schema version so a 1.6.0 document is
+  never confused with a 1.5.0 one. Validation is unchanged — the skill always validates against the bundled
   file.
 
 ## [0.7.0] - 2026-10-07
@@ -133,8 +133,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `openl:branching`, `openl:testing`, and `openl:versioning` skills,
-  adapted from the equivalent OpenL skills already shipping in the SDLC project's skill
-  set (dropping the `eis-dev-` prefix to match this plugin's bare-verb naming, alongside
+  adapted from existing OpenL skills and renamed to match this plugin's bare-verb naming (alongside
   `connect` and `trace-investigation`). `branching` teaches isolated task branches,
   correct revision handling, deliberate base/development syncing with dependents tested
   before finalizing, the hotfix two-branch rule, and post-merge cleanup. `testing`
