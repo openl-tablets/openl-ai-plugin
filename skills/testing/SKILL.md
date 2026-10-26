@@ -52,6 +52,9 @@ data.
   it.
 - **Once per task.** Under a plan, the suite runs once after all changes and
   their test rows are saved — never between individual edits.
+- **The final run comes after the last save.** Anything saved after it — a
+  fix, a test row, a project-guidance file — needs another full run; the
+  report uses only the last run on the last saved revision.
 - **Read per-row detail** for every table with rows added in this task and
   every table the summary reports as failing; the summary count alone can
   omit a new row's failure. Other tables need no per-row read.
@@ -74,6 +77,36 @@ by at least one new row. Take inputs from the project's real vocabularies and
 datatypes, never invented values. Every expected column must name a field
 of the tested method's actual result datatype (read it; a generic helper
 may expose fewer fields than the typed one).
+
+Choose the table in this order:
+
+1. **An existing test table for the same rule** — the table that already
+   tests the rule (or rule type, as the project's guidance or domain catalog
+   groups them). Append the rows there. If a case needs an input or an
+   expected field the table lacks, add that column; existing rows keep
+   their values.
+2. **The rule is versioned by date** (a new effective date, period, or
+   version of an existing table): still the same test table. Give each row
+   its own dates through the runtime-context columns
+   (`_context_.currentDate`, `_context_.requestDate`) or the request field
+   bound to the context, adding those columns if the table lacks them (the
+   `versioning` skill lists the context column names).
+   Cover the new period and the unchanged old period side by side. Never
+   split periods into separate tables or helper tables. If the tested
+   method or a helper pins a fixed date, only one version is reachable:
+   report the other as "not testable — <why>" instead of creating a
+   workaround.
+3. **No suitable table exists** — create a new test table for the rule, in
+   the module the project keeps its tests in, and say why in the plan.
+
+Then:
+
+- **Test cases the user gave** — in the request, the ticket, or an
+  attachment — are added with their inputs and expected values exactly as
+  given. If one fails, report it as a problem and a question for the
+  requirement's owner; never change its expected value to make it pass.
+- **A case the test table cannot express** is reported as "not testable —
+  <why>", not dropped.
 
 ## Pre-test sequence
 
@@ -107,7 +140,10 @@ including saves made by someone else, and no unsaved work may be lost.
    and do not infer it from the test results.
 
 In a local WebStudio without branches there is no revision history: close
-and reopen the local project instead of steps 1–4.
+and reopen the local project instead of steps 1–4. There, the pending list
+can also show generated files (`target/`, deployment archives) that this
+task did not write; they are not someone else's edit. Any other file this
+task did not write still means stop and ask before closing.
 
 Between a fix and its re-run in one continuous session, repeat steps 1–4
 only if someone else may have changed the project meanwhile; step 5 always
@@ -126,7 +162,8 @@ lookup data the rule uses, the test's own inputs, or stale project state.
 ## Report
 
 - Total / passed / failed, confirmed by per-row detail where required.
-- The tested revision (or "local workspace").
+- The tested revision (or "local workspace") — the last saved one, tested
+  after the last save.
 - Compile errors and warnings as measured in step 5 after the final save
   (counts, or "unverified"), even when everything passed.
 - For failures: the rows, expected vs. actual, the classified cause, and the
@@ -141,6 +178,8 @@ into a row failure: [references/reference.md](references/reference.md).
 
 - ❌ Treating "fix the failing tests" as "change the tests"; fix the cause.
 - ❌ Suggesting a new expected value to match wrong rule output.
+- ❌ Creating a new test table when one already tests that rule.
+- ❌ Reporting a run made before the last save.
 - ❌ Reporting "0 errors" or "compiles" from an `idle`/empty compile status
   or from a passing suite.
 

@@ -22,6 +22,10 @@ Mode: <remote | local WebStudio>   Projects: <names>   Branch: <name | none (loc
 
 Ready: <projects opened at revision … | initialized>   (startup step, already done)
 
+Requirements (from <ticket | spec | request>; one checkable result each)
+- R1 (<source: AC-n | description | comment | attachment>): <requirement>
+- R2 (derived — <where it is inferred from>): <requirement>
+
 Context
 ⬜ 1. <research or diagnosis, if needed>
 ⬜ 2. <dependency impact check>
@@ -38,21 +42,21 @@ External gates
 
 Test (after all changes)
 ⬜ 9. <add test rows for the confirmed cases: C1..Cn>
-⬜ 10. <run the full suite once on the saved revision; per-row detail for new/failing tables>
+⬜ 10. <run the full suite once on the last saved revision, after the last save; per-row detail for new/failing tables>
 
 Finish (only when the task delivers to a base branch)
 ⬜ 11. <check dependent projects' suites, then ask to merge <task branch> → <base>; merge only on your "yes" (branching)>
 
 Test cases (given, or drafted here for you to confirm)
-- C1: <input> → <expected>
+- C1 (R1, <given by you | from the ticket | from <attachment> | drafted>): <input> → <expected>
 
-Open questions (only if any; every catalog "Ask" decision goes here, with its options and the recommended one)
+Open questions (only if any; every catalog "Ask" decision and every unclear requirement goes here, with its options; the recommended option is the most conservative one)
 - <question>
 
 Risks (only if any; what the configuration cannot guarantee on its own)
 - <risk>
 
-Assumptions (only if any; only what no reviewer would decide differently)
+Assumptions (only if any; only what no reviewer would decide differently, never one that conflicts with the request)
 - <assumption>
 
 ⛔ AWAITING APPROVAL — execution has NOT started.
@@ -61,7 +65,7 @@ Reply "proceed" to execute, or tell me what to adjust.
 
 This is the technical view; behavior items also list the exact cells they
 write. The business view
-([audience.md](audience.md)) keeps the same groups and item numbers, renders
+(`references/audience.md`) keeps the same groups and item numbers, renders
 each item as its outcome line, and adds a "Technical questions" group when the
 catalog tags an Ask decision `technical`.
 
@@ -72,29 +76,46 @@ the user keeps the work on the task branch, or nothing in OpenL changes.
 Approving the plan approves only asking; the merge waits for an explicit
 "yes" after the summary.
 
-The approval block is always the last two lines, verbatim. Opening the
-projects happens before the plan (workflow step 2). Do not write, branch,
-start a change log, or save until the user answers the block.
+The approval block is always the last two lines, verbatim. When the client
+offers a question dialog, the plan still ends with the block, and the open
+questions and then the approval are asked in the dialog (workflow steps 7–8).
+Opening the projects happens before the plan (workflow step 2). Do not write,
+branch, start a change log, or save until the approval is answered.
 
 ## Summary template
 
 ```text
 Done — <task name>
 
+Requirements
+| Req | Requirement (source) | Where: module / sheet / table / row key | Tests (passed/total) |
+|---|---|---|---|
+| R1 | <requirement> (<source>) | <module> / <sheet> / <table> / <row key> | <C1, C2 — 2/2> |
+| R2 | <requirement> (derived) | check only — unchanged | <C3 — 1/1> |
+| R3 | <requirement> (<source>) | not done — <why> | <none | not testable — why> |
+
+Changes:
 - <item>: <what changed, one line>
 - ...
 
-Tests: <X/Y passed> on <project>, read from per-row detail.
+Tests: <X/Y passed> on <project>, revision <rev>, final run after the last save, read from per-row detail.
 Verification case: <input> → expected <…> → actual <…> — <match | mismatch>.
-State: <branch and revision | local project saved at revision>.
+State: <branch and revision | local project saved at revision>, nothing unsaved.
 Change log: <path | not used>.
+Changes outside the requirements: <none | what — why>.
 Deviations from the plan: <none | what and why>.
-Open problems: <none | problem — effect — decision needed, one per line>.
+Problems: <none | problem — effect — decision needed, one per line>.
+Assumptions: <none | assumption, one per line>.
+Questions for the BA: <none | question, one per line>.
 Feedback: <none | category — what happened, one per line>.
 
 <plan has the Finish item:> Ready to merge this to <base branch>?
 <feedback items:> Send the feedback to the OpenL team?
 ```
+
+Every requirement gets a row, also those not done or checked only. A
+failing test case the user gave is a problem and a BA question; its
+expected value stays as given.
 
 Business view of the summary:
 
@@ -104,8 +125,10 @@ Done — <task name>
 What the rules do now:
 - <outcome, one line per item that changed behavior>
 
-Acceptance criteria: <AC-1 proven, AC-2 proven, … | AC-n not proven — why>
-Needs a decision: <none | decision>
+Requirements: <R1 proven (C1, C2), R2 proven, … | Rn not proven — why>
+Changes outside the ticket: <none | what>
+Assumptions: <none | assumption>
+Questions for the BA: <none | question>
 Feedback for the OpenL team: <none | one line per item>
 Full technical detail: plan.md and the technical summary (reply "technical view").
 
@@ -131,6 +154,11 @@ Mode: remote   Projects: Sample Rules, Common Library (read-only)   Branch: PROJ
 
 Ready: Sample Rules and Common Library opened on their latest revisions
 
+Requirements (from PROJ-1234)
+- R1 (AC-1): tier Pro, region CA → limitAmount 500
+- R2 (description): tier Pro → reviewDays default 20
+- R3 (derived — the ticket adds a tier and changes no other): existing tiers keep their defaults
+
 Context
 ⬜ 1. Dependency impact check for tier-scoped tables
 ⬜ 2. Check for an existing PROJ-1234 branch, else create PROJ-1234-pro-tier (branching)
@@ -148,9 +176,9 @@ Finish
 ⬜ 8. Check dependents' suites, then ask to merge PROJ-1234-pro-tier → development (branching)
 
 Test cases
-- C1 (from AC): tier Pro, region CA → limitAmount = 500
-- C2 (drafted, please confirm): tier Pro → reviewDays default = 20
-- C3 (drafted, please confirm): existing tier Plus → defaults unchanged
+- C1 (R1, from the ticket): tier Pro, region CA → limitAmount = 500
+- C2 (R2, drafted, please confirm): tier Pro → reviewDays default = 20
+- C3 (R3, drafted, please confirm): existing tier Plus → defaults unchanged
 
 ⛔ AWAITING APPROVAL — execution has NOT started.
 Reply "proceed" to execute, or tell me what to adjust.
@@ -158,6 +186,36 @@ Reply "proceed" to execute, or tell me what to adjust.
 
 The catalog supplied items 4–5, their order, and C2–C3; this skill supplied
 the rest. Neither the catalog nor `testing` asks for approval again.
+
+The closing summary of the same task:
+
+```text
+Done — PROJ-1234 Pro tier
+
+Requirements
+| Req | Requirement (source) | Where: module / sheet / table / row key | Tests (passed/total) |
+|---|---|---|---|
+| R1 | Pro, CA → limitAmount 500 (AC-1) | Sample Rules / Defaults / DefaultLimit / tier = Pro | C1 — 1/1 |
+| R2 | Pro → reviewDays default 20 (description) | Sample Rules / Defaults / DefaultReviewDays / tier = Pro | C2 — 1/1 |
+| R3 | Existing tiers keep their defaults (derived) | check only — unchanged | C3 — 1/1 |
+
+Changes:
+- 4: tier value Pro registered with its eligibility and display message
+- 5: default rows for limitAmount and reviewDays at tier Pro
+
+Tests: 48/48 passed on Sample Rules, revision 7f3e2a1, final run after the last save, read from per-row detail.
+Verification case: tier Pro, region CA → expected limitAmount 500 → actual 500 — match.
+State: branch PROJ-1234-pro-tier, revision 7f3e2a1, nothing unsaved.
+Change log: openl-change-log/proj-1234-pro-tier/.
+Changes outside the requirements: none.
+Deviations from the plan: none.
+Problems: none.
+Assumptions: none.
+Questions for the BA: none.
+Feedback: none.
+
+Ready to merge this to development?
+```
 
 ---
 
@@ -269,6 +327,11 @@ View: business — reply "technical view" for tables, cells, and expressions.
 Plan — PROJ-1234 Pro tier (Sample Rules)
 Changes are made in a separate working copy (PROJ-1234-pro-tier) and published only after you agree.
 
+Requirements
+- R1 (ticket): Pro in California pre-fills Limit with 500
+- R2 (ticket): Pro pre-fills Review Days with 20
+- R3 (derived): other tiers keep their pre-filled values
+
 Preparation
 ⬜ 1. Check what else reuses the tier settings
 ⬜ 2. Create the separate working copy
@@ -286,9 +349,9 @@ Publish
 ⬜ 8. Check what reuses these settings, then ask before publishing to development
 
 Scenarios
-- C1 (from the ticket): Pro, California → Limit pre-filled with 500
-- C2 (drafted, please confirm): Pro → Review Days pre-filled with 20
-- C3 (drafted, please confirm): Plus → pre-filled values unchanged
+- C1 (R1, from the ticket): Pro, California → Limit pre-filled with 500
+- C2 (R2, drafted, please confirm): Pro → Review Days pre-filled with 20
+- C3 (R3, drafted, please confirm): Plus → pre-filled values unchanged
 
 ⛔ AWAITING APPROVAL — execution has NOT started.
 Reply "proceed" to execute, or tell me what to adjust.

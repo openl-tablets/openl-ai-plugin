@@ -1,7 +1,7 @@
 ---
 name: trace-investigation
 description: >
-  OpenL rule result investigation — traces a rule run over OpenL MCP, names
+  OpenL rule result investigation — traces a rule run in OpenL Studio, names
   the root cause, and proposes the minimal fix. Use when the user asks why
   OpenL produced an unexpected result — a wrong premium or amount, a null or
   blank value, a rejected claim, a rule that fired or was skipped incorrectly
@@ -13,12 +13,12 @@ description: >
 
 ## Purpose
 
-Investigate OpenL Tablets rule execution outcomes over the OpenL MCP server that this
-plugin registers. Supports business users, BAs, and developers. Always lead with root
+Investigate OpenL Tablets rule execution outcomes through the connection to OpenL Studio
+that this plugin sets up. Supports business users, BAs, and developers. Always lead with root
 cause and fix — trace detail follows. Adapt depth and language to the audience (infer
 from phrasing, never ask).
 
-The trace tools require a connected Studio: if they fail with 401, run the
+Tracing requires a connected Studio: if it fails with 401, run the
 `connect` skill first.
 
 ## When to use
@@ -81,7 +81,7 @@ Always identify the expected vs actual outcome before tracing. Common issue type
   represent what was entered on the upstream UI (mapping or integration defect)
 
 If the user provides a **ticket number from a tracking system (like Jira)**,
-fetch it first via the issue tracker MCP tool (if connected) to understand full
+fetch it first through the connected issue tracker (if any) to understand full
 context before doing anything else.
 
 If the problem description is unclear, ask **one** clarifying question: what
@@ -117,13 +117,12 @@ endpoints. To identify them:
 
 ### Phase 2 — Run the trace
 
-The OpenL MCP server ships two generations of trace tools, and which one is
-available depends on the server version behind this plugin. **Check the tool list
-first**, then follow the matching path in
-[references/trace-tools.md](references/trace-tools.md) — Path A when
-`openl_get_trace_nodes` is present (tree trace), Path B when `openl_step_trace` /
-`openl_watch_trace_cells` are present (interactive debugger; prefer it whenever
-it is there). Never call a tool that is not there, and never fall back to
+The connection to OpenL Studio offers one of two generations of trace operations,
+depending on its version. **Check which ones are available first**, then follow the
+matching path in [references/trace-tools.md](references/trace-tools.md) — Path A
+when the trace is read as a node tree, Path B when the run can be stepped through
+and cells watched (interactive debugger; prefer it whenever it is there). Never
+call an operation that is not available, and never fall back to
 reading tables by hand instead of tracing.
 
 Both paths take the user's JSON wrapped as shown in
@@ -171,7 +170,7 @@ So before saving:
    list those changes to the user and get a separate confirmation that they should go
    into the same revision. Never fold unrelated pending work into your revision
    silently; leaving the fix unsaved is the better default.
-4. Projects from the `local` repository cannot be opened or saved through these tools.
+4. Projects from the `local` repository cannot be opened or saved through this connection.
    There, state plainly that the change stays in the working copy and who has to commit
    it.
 
@@ -199,7 +198,7 @@ Suggested ticket after a confirmed fix (Phase 4):
 ## Anti-patterns
 
 - ❌ Never ask the user to find the project or table themselves if they haven't provided it.
-- ❌ Never call a trace tool that this server does not expose — check the tool list and follow the matching path in Phase 2.
+- ❌ Never call a trace operation the connection does not offer — check which are available and follow the matching path in Phase 2.
 - ❌ Never conclude a root cause without reading the actual table formula first.
 - ❌ Never assume data is missing from a lookup without reading the full table.
 - ❌ Never treat all nulls as errors — check whether null is the intended result.

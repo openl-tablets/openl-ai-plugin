@@ -5,7 +5,8 @@ earlier task, or a request to reapply logged changes.
 
 ## Local WebStudio mode
 
-When the target repository is local:
+When the target repository is local, or a file-system repository without
+branch support (for example a developer workspace mounted into the Studio):
 
 - Read and write a local project only through the connection to the Studio
   that holds it; never write to another Studio in this mode.
@@ -19,6 +20,21 @@ When the target repository is local:
 - Missing project guidance never blocks planning or reading tables. Inspect the live project instead and say that
   its documentation is missing. Creating an `AGENTS.md` is optional and only
   as an approved plan item.
+- **Pending changes.** Here Studio compares the working copy with its own
+  snapshot of the project folder, so the pending list can hold far more
+  than this task wrote. Before the first save, split it into three groups
+  and show them once:
+  1. files this task wrote;
+  2. generated output — build folders such as `target/`, deployment
+     archives, compiled copies of workbooks; these never block a save;
+  3. any other project file (another workbook, `pom.xml`, `rules.xml`,
+     scripts, localization) the task did not write.
+
+  Group 3 empty: save. Otherwise ask once whether to save, naming the
+  files and saying that in this mode such entries are often only a
+  snapshot difference: the developer can confirm with the version control
+  status of the folder. A "yes" covers later saves in this task while
+  group 3 does not grow. Never discard group 3 on your own.
 - Keep every other safeguard unchanged: one approval before writes, minimal
   edits, readback after every write, compilation, tests on the saved state,
   and nothing reported as done with failures.

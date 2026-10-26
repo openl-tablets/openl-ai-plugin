@@ -138,7 +138,8 @@ The current plan and summary templates, plus:
 | Status between steps | Step n of N + outcome | Item, revision, readback, compile result |
 | Blocked report | One plain line + the fixed block | The fixed block |
 | Existing test change | Explanation + `For the record:` line | Table, row key, old → new |
-| Summary | What the rules now do, per acceptance criterion: proven / not proven; open decisions; where the full detail is | Summary template |
+| Requirements | Numbered, in the request's words, with source | Numbered, with source and `derived` marks |
+| Summary | What the rules now do, per requirement (R1…Rn): proven / not proven; changes outside the ticket; assumptions; questions for the BA; where the full detail is | Summary template with the requirements table |
 
 ## Worked example — one plan item in both views
 
