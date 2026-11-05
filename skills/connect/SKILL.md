@@ -9,6 +9,30 @@ Connect the current client to OpenL Studio with a Personal Access Token (PAT) wh
 the deployment requires one, or anonymously for a single-user deployment. Keep the
 conversation focused on outcomes and never ask the user to paste a PAT into chat.
 
+## Check for a working connection first
+
+OpenL tools can reach a session from this plugin's own server (in Claude Code its tools
+are named `mcp__plugin_openl_tools__…`) or from another connection, such as a Claude
+desktop extension or an entry in `claude_desktop_config.json`. If any OpenL tool is
+available, call a read-only one first, such as listing the user's projects. If the user
+asked for a particular Studio and you can't tell whether the connection that answers
+serves that one, ask them before acting on the result: connecting a second, different
+Studio is fine.
+
+- It answers: the client is already connected. Say so and stop, unless the user asked
+  to sign out or rotate the token; then go to the sign-out and rotation steps for the
+  connection that answered. Do not add a second connection to the same Studio; it gives
+  Claude every OpenL tool twice.
+- It fails with 401 and the user asked to sign out: go straight to the sign-out steps
+  for that connection. Don't create a replacement token.
+- It fails with 401 and the tool came from this plugin: continue below to replace the
+  token.
+- It fails with 401 and the tool came from another connection: the token lives in that
+  connection's own settings (for a desktop extension, **Settings → Extensions**, the
+  extension). Have the user create a new token in Studio, paste it there, start a new
+  conversation, and verify. Don't follow the setup below, and don't add another
+  connection.
+
 ## Choose the current client first
 
 Use exactly one branch:
@@ -20,10 +44,12 @@ Use exactly one branch:
   **Cursor setup**. Cursor substitutes no `${user_config.*}` values either. Use
   Cursor's own plugin **Configure** dialog rather than Claude Code's
   `/plugin configure`; do not edit a configuration file.
-- **Claude Code terminal, IDE, or desktop Code tab:** `/plugin` settings are
-  available. Follow **Claude Code setup**.
-- **Claude desktop Chat or Cowork:** `/plugin` settings are unavailable and the
-  session may use sandbox paths such as `/sessions/...`. Follow **Cowork setup**.
+- **Claude Code terminal, IDE, or desktop Code tab:** the plugin's settings are
+  available (`/plugin configure` in a terminal; the plugin's own page in the desktop
+  app). Follow **Claude Code setup**.
+- **Claude desktop Chat or Cowork:** this plugin's own server does not run there,
+  whatever its settings, and the session may use sandbox paths such as
+  `/sessions/...`. Follow **Cowork setup**.
 
 If the client cannot be determined from the host context, ask which of these four
 the user is using before giving configuration instructions.
@@ -143,11 +169,19 @@ a blank value or a literal `${user_config...}` placeholder as unavailable:
 - Studio address: `${user_config.studio_base_url}`
 
 If the address is unavailable, reuse a value already present in the conversation or
-ask once for the web address the user opens for OpenL Studio. Do not read Claude's
-settings files; they may contain unrelated secrets.
+ask once for Studio's own address: what the browser shows before the page path, such as
+`https://studio.example.com`, or `http://localhost:8080/webstudio` when Studio runs
+under a path. Do not read Claude's settings files; they may contain unrelated secrets.
 
 Validate the address before probing it. Require an absolute `http://` or `https://`
-URL with no credentials, query, fragment, whitespace, or shell metacharacters.
+URL with no credentials, query, fragment, whitespace, or shell metacharacters. If it is
+the address of a page inside Studio rather than Studio's own (for example one ending in
+`/projects/…`, `/administration/…` or `/mcp`), drop that part and confirm the shorter
+address with the user: the plugin needs Studio's own address, and a page address fails
+the probe below. If the page address came from the plugin's saved setting, also have
+the user save the shorter address in the plugin's **OpenL Studio address** setting, in
+the same place as the token below, even for a single-user Studio: the server reads the
+saved value, not this conversation.
 Accept the exact scheme used by Studio: local copies may use HTTP. When a multi-user
 Studio uses HTTP, warn that its PAT will travel unencrypted and recommend HTTPS,
 especially for any non-local deployment, but do not misreport HTTP as an invalid
@@ -172,42 +206,49 @@ For PAT setup, tell the user:
 > 1. Open OpenL Studio in your browser and sign in as usual.
 > 2. Go to **User → Personal Access Tokens**, create a token (for example, named
 >    "Claude Code"), and copy it when Studio shows it.
-> 3. Open a terminal and start Claude Code there by running `claude` — the settings
->    dialog opens only in a terminal session.
-> 4. At that Claude Code prompt, run `/plugin configure openl@openl-ai-plugin` and
->    paste the token into the masked **Personal Access Token** field.
+> 3. Paste it into the plugin's masked **Personal Access Token** field:
+>    - **Claude desktop app:** in the sidebar, **Customize → Plugins**, open **openl**,
+>      and fill in its connection settings there.
+>    - **Terminal or IDE:** start Claude Code in a terminal by running `claude`, then
+>      run `/plugin configure openl@openl-ai-plugin` at its prompt.
 
 For an `http://` address, add one plain warning before these steps: the PAT is not
 encrypted in transit. Loopback addresses for local Studio copies are supported as they
 are; for any other HTTP address, recommend the HTTPS address instead. Do not block the
 setup after the user chooses to use that Studio address.
 
-If the user is in the Claude **desktop app's Code tab**, restate the caveat plainly:
-`/plugin configure` opens its dialog only in a terminal `claude` session, not in the
-desktop chat or the Code tab. Have them run it once in a terminal; the saved setting
-then applies to their desktop Code sessions.
+If the user is in the Claude **desktop app**, give them the desktop route above. The
+app doesn't ask for the plugin's settings when it installs the plugin; they are on the
+plugin's own page. `/plugin configure` doesn't run in the desktop app: it stays the
+route for a terminal session, and what it saves applies to desktop Code sessions too. A
+plugin uploaded to the desktop app as a zip is named `openl@inline`, not
+`openl@openl-ai-plugin`, so set its values on its page.
 
 Tell the user to start a new Claude session and ask: *List the OpenL projects I can
 access.* A new session is required when tools already started with old settings.
 
 ### Claude Code sign-out and rotation
 
-Both flows edit the masked plugin setting, so repeat the terminal instruction here as
-well: the user opens a terminal, starts Claude Code with `claude`, and runs
-`/plugin configure openl@openl-ai-plugin` there — the dialog does not open in the
-desktop chat or the Code tab.
+Both flows edit the masked plugin setting in the same place as above: in the desktop
+app, **Customize → Plugins → openl**; otherwise a terminal session started with
+`claude`, running `/plugin configure openl@openl-ai-plugin`.
 
-- **Sign out:** revoke the PAT in Studio, clear the plugin's PAT field with
-  `/plugin configure openl@openl-ai-plugin` in a terminal session, and start a new
-  session. Revoke any older PATs created for Claude/OpenL MCP because old server
-  versions may have cached one after a direct CLI login.
-- **Rotate:** create a replacement PAT, update the masked plugin setting the same way
-  (terminal session), start a new session and verify, then revoke the old PAT.
+- **Sign out:** revoke the PAT in Studio, clear the plugin's PAT field there, and
+  start a new session. Revoke any older PATs created for Claude/OpenL MCP because old
+  server versions may have cached one after a direct CLI login.
+- **Rotate:** create a replacement PAT, update the masked plugin setting the same way,
+  start a new session and verify, then revoke the old PAT.
 
 ## Cowork setup
 
-Use `docs/cowork-setup.md` when available. The desktop app has no plugin settings
-dialog for Chat/Cowork, so never suggest `/plugin configure` there.
+Use `docs/cowork-setup.md` when available. In Chat and Cowork the desktop app does not
+run this plugin's own MCP server, because that server takes its address and token from
+the plugin's settings. Values on the plugin's page don't help there, and
+`/plugin configure` isn't available, so never suggest either. Claude may report that
+the plugin's server needs configuring: that is expected, and the plugin's page doesn't
+fix it. The tools come from a connection outside the plugin, such as the `openl` entry
+below. If an OpenL tool already answers (see **Check for a working connection first**),
+don't add the entry.
 
 Guide the user to:
 

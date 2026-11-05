@@ -25,7 +25,8 @@ runs in Claude Code.
   or higher. If it shows an error or a lower number, ask your administrator to
   install it (or get it yourself from [nodejs.org](https://nodejs.org/)).
 - The **OpenL Studio address** — the web address you open in your browser to use
-  OpenL Studio, for example `https://studio.example.com`.
+  OpenL Studio, without the page you are on: for example `https://studio.example.com`,
+  not `https://studio.example.com/projects/…`.
 - Your usual OpenL Studio account, and your office network or VPN if Studio is
   internal.
 
@@ -43,8 +44,16 @@ You can also just describe the problem — Claude starts the matching skill itse
 4. In a new conversation, type `/` — `openl:connect` appears in the list.
 
 If anything offers you the plugin's own settings (Studio address / token), skip
-them — in Chat and Cowork they have no effect. The connection is set up in the next
-steps.
+them — in Chat and Cowork they have no effect. Claude may also say that the plugin's
+MCP server needs configuring: that is the same thing, and the next steps are the fix.
+The connection is set up in the next steps.
+
+Already have OpenL tools in Chat and Cowork from another connection, for example an
+extension your organization provides? Check it first: in a new conversation, ask Claude
+to list your OpenL projects. If it does, skip Steps 2–5: a second connection to the same
+Studio gives Claude every OpenL tool twice. If it answers "Unauthorized" or 401, put a
+new token into that connection's own settings (for an extension, **Settings →
+Extensions**) instead of adding this one.
 
 Trouble with this step? You can skip it for now — the connection (Steps 2–6) works
 without the plugin — and come back to it later.

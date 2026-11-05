@@ -17,8 +17,9 @@ chat and out of the process list.
   without that command are not supported).
 - **Node.js 24 or newer.** Check in a terminal: `node --version` — you want `v24` or
   higher.
-- The **OpenL Studio address** — the web address you open in your browser, e.g.
-  `https://studio.example.com`.
+- The **OpenL Studio address** — the web address you open in your browser, without
+  the page you are on: e.g. `https://studio.example.com`, not
+  `https://studio.example.com/projects/…`.
 - Your usual OpenL Studio account, and your office network or VPN if Studio is
   internal.
 
