@@ -46,16 +46,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   which `/plugin configure openl@openl-ai-plugin` doesn't reach.
 - `openl:connect` first checks whether an OpenL tool already answers, from this plugin or
   another connection such as a desktop extension, and stops there instead of adding a
-  second connection that would give Claude every OpenL tool twice. In Chat and Cowork it
-  says that the plugin's own server doesn't run there, so a prompt to configure it is
-  expected and isn't fixed on the plugin's page.
+  second connection to the same Studio that would give Claude every OpenL tool twice.
+  On a 401 it takes a sign-out straight to the sign-out steps, and has a token from
+  another connection replaced in that connection's settings instead of adding this one.
+  In Chat and Cowork it says that the plugin's own server doesn't run there, so a prompt
+  to configure it is expected and isn't fixed on the plugin's page.
 - The OpenL Studio address is asked for as Studio's own address, without the page you
   are on, in the Claude and Cursor manifests, the setup guides, and `openl:connect`. An
   address copied from a page such as `…/projects/…` made every tool call fail; the skill
-  now drops such a page path (or `/mcp`) and confirms the shorter address.
+  now drops such a page path (or `/mcp`), confirms the shorter address, and has the user
+  save it in the plugin's settings when the saved value was the wrong one.
 - `docs/claude-code-setup.md` and `docs/cowork-setup.md` describe the plugin's page in
   the desktop app, and the Cowork guide says to skip the config entry when OpenL tools
-  already come from another connection.
+  already work through another connection, and to fix that connection's token on a 401.
 
 ## [0.7.1] - 2026-10-13
 

@@ -49,8 +49,11 @@ MCP server needs configuring: that is the same thing, and the next steps are the
 The connection is set up in the next steps.
 
 Already have OpenL tools in Chat and Cowork from another connection, for example an
-extension your organization provides? Skip Steps 2–5: a second connection to the same
-Studio gives Claude every OpenL tool twice.
+extension your organization provides? Check it first: in a new conversation, ask Claude
+to list your OpenL projects. If it does, skip Steps 2–5: a second connection to the same
+Studio gives Claude every OpenL tool twice. If it answers "Unauthorized" or 401, put a
+new token into that connection's own settings (for an extension, **Settings →
+Extensions**) instead of adding this one.
 
 Trouble with this step? You can skip it for now — the connection (Steps 2–6) works
 without the plugin — and come back to it later.

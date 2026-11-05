@@ -12,18 +12,26 @@ conversation focused on outcomes and never ask the user to paste a PAT into chat
 ## Check for a working connection first
 
 OpenL tools can reach a session from this plugin's own server (in Claude Code its tools
-are named `mcp__plugin_openl_tools__…`) or from another connection to the same Studio,
-such as a Claude desktop extension or an entry in `claude_desktop_config.json`. If any
-OpenL tool is available, call a read-only one first, such as listing the user's
-projects:
+are named `mcp__plugin_openl_tools__…`) or from another connection, such as a Claude
+desktop extension or an entry in `claude_desktop_config.json`. If any OpenL tool is
+available, call a read-only one first, such as listing the user's projects. If the user
+asked for a particular Studio and you can't tell whether the connection that answers
+serves that one, ask them before acting on the result: connecting a second, different
+Studio is fine.
 
 - It answers: the client is already connected. Say so and stop, unless the user asked
   to sign out or rotate the token; then go to the sign-out and rotation steps for the
-  connection that answered. Do not add a second connection; two connections to one
-  Studio give Claude every OpenL tool twice.
-- It fails with 401: continue below to replace the token. If the tool did not come from
-  this plugin, the token lives in that connection's own settings (for a desktop
-  extension, **Settings → Extensions**), not in this plugin's.
+  connection that answered. Do not add a second connection to the same Studio; it gives
+  Claude every OpenL tool twice.
+- It fails with 401 and the user asked to sign out: go straight to the sign-out steps
+  for that connection. Don't create a replacement token.
+- It fails with 401 and the tool came from this plugin: continue below to replace the
+  token.
+- It fails with 401 and the tool came from another connection: the token lives in that
+  connection's own settings (for a desktop extension, **Settings → Extensions**, the
+  extension). Have the user create a new token in Studio, paste it there, start a new
+  conversation, and verify. Don't follow the setup below, and don't add another
+  connection.
 
 ## Choose the current client first
 
@@ -170,7 +178,10 @@ URL with no credentials, query, fragment, whitespace, or shell metacharacters. I
 the address of a page inside Studio rather than Studio's own (for example one ending in
 `/projects/…`, `/administration/…` or `/mcp`), drop that part and confirm the shorter
 address with the user: the plugin needs Studio's own address, and a page address fails
-the probe below.
+the probe below. If the page address came from the plugin's saved setting, also have
+the user save the shorter address in the plugin's **OpenL Studio address** setting, in
+the same place as the token below, even for a single-user Studio: the server reads the
+saved value, not this conversation.
 Accept the exact scheme used by Studio: local copies may use HTTP. When a multi-user
 Studio uses HTTP, warn that its PAT will travel unencrypted and recommend HTTPS,
 especially for any non-local deployment, but do not misreport HTTP as an invalid

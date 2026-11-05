@@ -16,8 +16,7 @@ extension, and the Claude desktop app's **Code** tab. Setup takes about five min
 
 > **In the desktop app,** the plugin's settings are also on its own page: in the
 > sidebar, **Customize → Plugins**, open **openl**, and fill in its connection
-> settings. The app doesn't ask for them when you install the plugin. (Checked on the
-> Claude desktop app 4.16336.0, macOS.)
+> settings. The app doesn't ask for them when you install the plugin.
 
 > **No `claude` command in your terminal?** The desktop app ships Claude Code itself
 > but not the terminal CLI — that is
