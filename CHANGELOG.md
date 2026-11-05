@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- `openl:planning` (skill version 0.5.0) — requirements and reporting from an evaluation
+  of real Offer configuration requests:
+  - numbered requirements (R1…Rn) taken from any ticket format, each with its source and
+    "derived" marked; test cases given by the user are requirements and keep their
+    expected values; `SKILL.md` is split, with requirement rules in
+    `references/requirements.md` and execution, the final run, the summary, the merge
+    offer and feedback in `references/execution.md`;
+  - the recommended option of every question is the most conservative one, and "keep as
+    is" means a check only; a domain catalog is invoked as a skill, never read as a file;
+  - open questions and the plan approval go through the client's question dialog with
+    answer options when it has one, and stay as text in the plan otherwise; an approval
+    is an explicit answer from the user or from an agent acting for them, never the
+    agent's own scheduled wake-up or a background notification;
+  - a local WebStudio (a file-system repository without branches) splits pending changes
+    into this task's files, generated output and other files, so build output no longer
+    blocks a save; a write that reports success but loses the table or changes other rows
+    counts as failed, is rolled back and reported instead of being retried another way;
+  - the closing summary starts with a requirement → change → test table, and the final
+    full test run comes after the last save.
+- `openl:testing` — new cases go into the existing test table for the rule, adding
+  columns as needed; a date-versioned rule is tested in the same table with per-row
+  runtime-context dates; a new table only when none fits; user-given cases are never
+  adjusted; the reported run is the one after the last save; in a local WebStudio,
+  generated files in the pending list are not treated as someone else's edit.
+- `openl:trace-investigation` — steps describe Studio operations (start a trace, read
+  the nodes, step, watch cells) instead of MCP tool names, so they read the same over
+  any connection to OpenL Studio.
+
 ## [0.7.1] - 2026-10-13
 
 ### Changed
