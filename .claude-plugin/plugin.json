@@ -9,7 +9,7 @@
     "studio_base_url": {
       "type": "string",
       "title": "OpenL Studio address",
-      "description": "The address you open in your browser to use OpenL Studio, e.g. https://studio.example.com",
+      "description": "OpenL Studio's own address, without the page you are on, e.g. https://studio.example.com or http://localhost:8080 — not …/projects/…",
       "required": true
     },
     "studio_token": {

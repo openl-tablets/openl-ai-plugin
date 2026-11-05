@@ -14,13 +14,17 @@ extension, and the Claude desktop app's **Code** tab. Setup takes about five min
 > once; other Claude Code sessions **on the same computer** (terminal, IDE, desktop
 > Code tab) pick the saved settings up automatically.
 
+> **In the desktop app,** the plugin's settings are also on its own page: in the
+> sidebar, **Customize → Plugins**, open **openl**, and fill in its connection
+> settings. The app doesn't ask for them when you install the plugin. (Checked on the
+> Claude desktop app 4.16336.0, macOS.)
+
 > **No `claude` command in your terminal?** The desktop app ships Claude Code itself
 > but not the terminal CLI — that is
 > [installed separately](https://code.claude.com/docs/en/quickstart#step-1-install-claude-code),
 > and you need it for the steps below. Installing the plugin can also be done from the
-> desktop app's UI (**+** next to the prompt box → **Plugins** → **Add plugin**), but
-> the plugin's settings dialog is a terminal-session feature, so the CLI is the
-> reliable path for both steps.
+> desktop app's UI (**+** next to the prompt box → **Plugins** → **Add plugin**); its
+> settings are then on the plugin's page (**Customize → Plugins → openl**).
 
 ## What you need
 
@@ -33,7 +37,8 @@ extension, and the Claude desktop app's **Code** tab. Setup takes about five min
   it? Just continue — [Step 1](#step-1--install-the-plugin) explains how to check,
   and it's easy to add later.
 - The **OpenL Studio address** — the web address you open in your browser to use
-  OpenL Studio, for example `https://studio.example.com`.
+  OpenL Studio, without the page you are on: for example `https://studio.example.com`,
+  not `https://studio.example.com/projects/…`.
 - Your usual OpenL Studio account, and your office network or VPN if Studio is
   internal.
 
@@ -86,7 +91,8 @@ without a Studio address and you have to add it afterwards with
 When Claude Code asks for the plugin settings, fill in the **OpenL Studio address**.
 You can leave the **Personal Access Token** empty for now — [Step 2](#step-2--connect-to-openl-studio)
 walks you through adding it. As long as these settings are yours to edit (user,
-project, or local scope), you can change them any time by starting Claude Code in a
+project, or local scope), you can change them any time: in the desktop app on the
+plugin's page (**Customize → Plugins → openl**), or by starting Claude Code in a
 terminal and running `/plugin configure openl@openl-ai-plugin`. If your organization
 supplies them through managed settings, Claude Code can't rewrite them — ask your
 administrator instead.
@@ -112,16 +118,18 @@ Claude checks your Studio and walks you through it:
 
 - **Multi-user Studio** — Claude asks you to create a token: open OpenL Studio in your
   browser, go to **User → Personal Access Tokens**, create one (name it e.g. "Claude
-  Code"), and copy it. Then **open a terminal, start Claude Code with `claude`**, run
-  `/plugin configure openl@openl-ai-plugin` and paste the token into the **Personal
-  Access Token** field. The field is masked and the token is not shown to Claude —
-  never paste it into the chat.
+  Code"), and copy it. Then paste it into the plugin's **Personal Access Token**
+  field: in the desktop app, on the plugin's page (**Customize → Plugins → openl**);
+  otherwise **open a terminal, start Claude Code with `claude`**, and run
+  `/plugin configure openl@openl-ai-plugin`. The field is masked and the token is not
+  shown to Claude — never paste it into the chat.
 - **Single-user Studio** — "Your Studio does not require sign-in"; you're done, nothing
   to add.
 
-Use the exact Studio address from the browser, including its scheme. Local copies
-may use `http://`; when a PAT is required, Claude warns that HTTP sends it without
-transport encryption. Prefer HTTPS outside local development.
+Use Studio's own address from the browser, including its scheme but without the page
+you are on: `https://studio.example.com`, not `https://studio.example.com/projects/…`.
+Local copies may use `http://`; when a PAT is required, Claude warns that HTTP sends
+it without transport encryption. Prefer HTTPS outside local development.
 
 The token is stored securely (macOS keychain, or a protected credentials file
 elsewhere) and lets Claude act as you in Studio.
@@ -156,7 +164,8 @@ desktop app's other session types differ:
 
 - **Sign out:** revoke the token in OpenL Studio (**User → Personal Access Tokens**) —
   that is what actually cuts access — then clear the **Personal Access Token** field
-  via `/plugin configure openl@openl-ai-plugin` (terminal session) and start a new
+  (on the plugin's page in the desktop app, or via
+  `/plugin configure openl@openl-ai-plugin` in a terminal session) and start a new
   Claude session.
 - **Rotate:** create a new token in Studio, put it into the same field, verify in a
   new session, then revoke the old token in Studio.
@@ -166,9 +175,9 @@ desktop app's other session types differ:
 | What you see | First thing to try |
 |---|---|
 | The OpenL tools or the plugin didn't appear | Start a new Claude session; then see [Troubleshooting](troubleshooting.md#the-plugin-or-the-openl-tools-didnt-appear) |
-| "Unauthorized" or 401 errors | Your token is missing, expired, or revoked — create a fresh one in Studio (**User → Personal Access Tokens**), update it in a terminal session with `/plugin configure openl@openl-ai-plugin`, then start a new session |
+| "Unauthorized" or 401 errors | Your token is missing, expired, or revoked — create a fresh one in Studio (**User → Personal Access Tokens**), update it on the plugin's page (desktop app) or with `/plugin configure openl@openl-ai-plugin` in a terminal session, then start a new session |
 | "Cannot reach OpenL Studio" | Check the address and your VPN / office network connection |
-| `/plugin …` isn't recognized in the desktop app's Code tab | Expected — these commands run only in a terminal Claude Code session. Open a terminal, run `claude`, and use them there; the settings apply to your Code tab sessions too. |
+| `/plugin …` isn't recognized in the desktop app's Code tab | Expected — these commands run only in a terminal Claude Code session. In the desktop app, set the plugin's values on its page (**Customize → Plugins → openl**) instead, or run `claude` in a terminal and use the commands there; the settings apply to your Code tab sessions too. |
 
 More symptoms and fixes: [troubleshooting.md](troubleshooting.md) — including what
 information to send your administrator if you're stuck.

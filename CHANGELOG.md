@@ -37,6 +37,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the nodes, step, watch cells) instead of MCP tool names, so they read the same over
   any connection to OpenL Studio.
 
+### Fixed
+
+- `openl:connect` no longer sends Claude desktop app users to a terminal for the plugin's
+  settings. The desktop app has them on the plugin's own page (**Customize → Plugins →
+  openl**), and the skill now gives that route first, keeping `/plugin configure` for
+  terminal sessions. It also notes that a plugin uploaded as a zip is `openl@inline`,
+  which `/plugin configure openl@openl-ai-plugin` doesn't reach.
+- `openl:connect` first checks whether an OpenL tool already answers, from this plugin or
+  another connection such as a desktop extension, and stops there instead of adding a
+  second connection that would give Claude every OpenL tool twice. In Chat and Cowork it
+  says that the plugin's own server doesn't run there, so a prompt to configure it is
+  expected and isn't fixed on the plugin's page.
+- The OpenL Studio address is asked for as Studio's own address, without the page you
+  are on, in the Claude and Cursor manifests, the setup guides, and `openl:connect`. An
+  address copied from a page such as `…/projects/…` made every tool call fail; the skill
+  now drops such a page path (or `/mcp`) and confirms the shorter address.
+- `docs/claude-code-setup.md` and `docs/cowork-setup.md` describe the plugin's page in
+  the desktop app, and the Cowork guide says to skip the config entry when OpenL tools
+  already come from another connection.
+
 ## [0.7.1] - 2026-10-13
 
 ### Changed

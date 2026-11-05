@@ -16,8 +16,9 @@ JSON file to edit and no configurator to run in a terminal.
   *Plugins*. Re-verified on Cursor **3.19.7**.
 - **Node.js 24 or newer** on your own computer (the OpenL connection runs locally).
   Check in a terminal: `node --version` — you want `v24` or higher.
-- The **OpenL Studio address** — the web address you open in your browser, e.g.
-  `https://studio.example.com`.
+- The **OpenL Studio address** — the web address you open in your browser, without
+  the page you are on: e.g. `https://studio.example.com`, not
+  `https://studio.example.com/projects/…`.
 - Your usual OpenL Studio account, and your office network or VPN if Studio is
   internal.
 - **The plugin has to be available to your Cursor account.** It may come from Cursor's
@@ -57,7 +58,7 @@ later: **Customize → Plugins → openl → Configure**.
 
 | Setting | What to enter |
 |---|---|
-| **OpenL Studio address** (`OPENL_STUDIO_URL`) | The exact address you open in your browser, including `https://` — for example `https://studio.example.com`. Required. |
+| **OpenL Studio address** (`OPENL_STUDIO_URL`) | Studio's own address from your browser, including `https://` but without the page you are on — for example `https://studio.example.com`. Required. |
 | **Personal Access Token** (`OPENL_STUDIO_TOKEN`) | The token from Step 2. Leave it **empty** for a single-user Studio with no sign-in. |
 
 Cursor masks the token field, because the name says `TOKEN`.

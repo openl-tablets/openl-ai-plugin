@@ -50,7 +50,8 @@ an administrator can hand out for you.
 - **Node.js 24 or newer** on your own computer (the OpenL connection runs locally).
   Each setup guide explains how to check.
 - The **OpenL Studio address** — the web address you open in your browser to use
-  OpenL Studio, for example `https://studio.example.com`.
+  OpenL Studio, without the page you are on: for example `https://studio.example.com`,
+  not `https://studio.example.com/projects/…`.
 - Your usual OpenL Studio account, and your office network or VPN if Studio is
   internal.
 
