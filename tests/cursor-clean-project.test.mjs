@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { cp, mkdir, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { access, cp, mkdir, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import test from "node:test";
@@ -132,6 +132,7 @@ async function copyInstalledPlugin(pluginRoot) {
     cp(join(repositoryRoot, ".cursor-plugin"), join(pluginRoot, ".cursor-plugin"), { recursive: true }),
     cp(join(repositoryRoot, ".claude-plugin"), join(pluginRoot, ".claude-plugin"), { recursive: true }),
     cp(join(repositoryRoot, "skills"), join(pluginRoot, "skills"), { recursive: true }),
+    cp(join(repositoryRoot, "scripts"), join(pluginRoot, "scripts"), { recursive: true }),
     cp(join(repositoryRoot, ".mcp.json"), join(pluginRoot, ".mcp.json")),
     cp(join(repositoryRoot, ".mcp.cursor.json"), join(pluginRoot, ".mcp.cursor.json")),
   ]);
@@ -154,7 +155,19 @@ test("the Cursor packaging contract resolves OpenL in a clean project without pr
   );
 
   const cursorDescriptor = await readJson(join(pluginRoot, ".mcp.cursor.json"));
-  const { env: unresolvedEnvironment, ...expectedInvocation } = cursorDescriptor.mcpServers.tools;
+  const { env: unresolvedEnvironment, ...unresolvedInvocation } = cursorDescriptor.mcpServers.tools;
+  // The launcher is addressed through Cursor's install-path placeholder and must exist in
+  // the installed copy, where Cursor runs it from.
+  const expectedInvocation = expandCursorVariables(unresolvedInvocation, {
+    configuredVariables: {},
+    environment: {},
+    pluginRoot,
+  });
+  assert.deepEqual(expectedInvocation, {
+    command: "node",
+    args: [`${pluginRoot}/scripts/start-openl-mcp.mjs`],
+  });
+  await access(resolve(expectedInvocation.args[0]));
   assert.deepEqual(unresolvedEnvironment, {
     OPENL_BASE_URL: "${OPENL_STUDIO_URL}",
     OPENL_PERSONAL_ACCESS_TOKEN: "${OPENL_STUDIO_TOKEN:-}",

@@ -1,6 +1,6 @@
 ---
 name: connect
-description: This skill should be used when the user asks to connect, sign in, log in, sign out, rotate credentials, or authenticate Codex, Claude Code, Cursor, or Claude desktop/Cowork to OpenL Studio, or when OpenL tools fail with 401 Unauthorized.
+description: This skill should be used when the user asks to connect, sign in, log in, sign out, rotate credentials, or authenticate Codex, Claude Code, Cursor, or Claude desktop/Cowork to OpenL Studio, when OpenL tools fail with 401 Unauthorized, or when some OpenL tools time out or fail while others work (an OpenL Studio version the OpenL MCP server does not support).
 ---
 
 # Connect to OpenL Studio
@@ -19,10 +19,11 @@ asked for a particular Studio and you can't tell whether the connection that ans
 serves that one, ask them before acting on the result: connecting a second, different
 Studio is fine.
 
-- It answers: the client is already connected. Say so and stop, unless the user asked
-  to sign out or rotate the token; then go to the sign-out and rotation steps for the
-  connection that answered. Do not add a second connection to the same Studio; it gives
-  Claude every OpenL tool twice.
+- It answers: the client is already connected. Say so, run **Check version
+  compatibility** below, and stop, unless the user asked to sign out or rotate the
+  token; then go to the sign-out and rotation steps for the connection that answered.
+  Do not add a second connection to the same Studio; it gives Claude every OpenL tool
+  twice.
 - It fails with 401 and the user asked to sign out: go straight to the sign-out steps
   for that connection. Don't create a replacement token.
 - It fails with 401 and the tool came from this plugin: continue below to replace the
@@ -76,7 +77,11 @@ and requests a PAT only for a multi-user Studio.
    ```
 
    The output contains only the Studio address, authentication type, and config
-   path. It never contains the PAT.
+   path. It never contains the PAT. With that address you can also run
+   `node "<source.path>/scripts/studio-compatibility.mjs" --base-url "<address>"`
+   yourself: it prints the result of **Check version compatibility** below for the
+   server this plugin runs, and exits with 1 when the versions don't match or the
+   Studio version can't be read.
 3. If configuration is absent or the user wants to change it, give them this exact
    command with the resolved absolute path:
 
@@ -96,7 +101,9 @@ and requests a PAT only for a multi-user Studio.
    `--allow-insecure` (or `OPENL_AI_ALLOW_INSECURE=1`), which permits a PAT over plain
    HTTP and warns that the token is then sent unencrypted.
 5. After the configurator succeeds, tell the user to start a new Codex task and ask:
-   *List the OpenL projects I can access.*
+   *List the OpenL projects I can access.* The configurator also prints whether the
+   Studio works with the bundled server; if the user reports a version warning from it,
+   handle it as **Check version compatibility** describes.
 
 If `openl@openl-ai-plugin` is not listed, explain that the plugin is not installed
 or enabled and point the user to `docs/codex-setup.md`. Do not guess an installation
@@ -122,7 +129,8 @@ file to edit. Everything below is instructions for the user; never attempt to wr
 Cursor's configuration.
 
 1. Apply the same address validation and unauthenticated `/rest/settings` probe
-   described in **Claude Code setup** to tell single-user from multi-user Studio.
+   described in **Claude Code setup** to tell single-user from multi-user Studio, then
+   run **Check version compatibility** below.
 2. For a multi-user Studio, tell the user to create a PAT first: sign in to Studio,
    open **User → Personal Access Tokens**, create a token (for example, named
    "Cursor"), and copy it when Studio shows it.
@@ -201,6 +209,10 @@ when the response is HTTP 200 JSON with an object-valued `supportedFeatures` fie
 - `userMode` present but PAT support is not `true`: explain that this deployment
   cannot issue the tokens required by the plugin and ask the OpenL administrator.
 
+When Studio answers, run **Check version compatibility** below before going on. After
+the setup, the plugin repeats that check by itself at the start of every Claude Code
+session and shows a warning only when the versions don't match.
+
 For PAT setup, tell the user:
 
 > 1. Open OpenL Studio in your browser and sign in as usual.
@@ -253,13 +265,23 @@ don't add the entry.
 Guide the user to:
 
 1. Obtain the Studio address and apply the same validation and unauthenticated
-   `/rest/settings` probe used in **Claude Code setup**.
+   `/rest/settings` probe used in **Claude Code setup**, then read the Studio version as
+   **Check version compatibility** describes: it decides the entry in step 4.
 2. For multi-user Studio, create a PAT under **User → Personal Access Tokens**. For
    single-user Studio, do not create or configure a token.
 3. Open **Claude menu → Settings… → Developer → Edit Config**.
-4. Add an `openl` entry under `mcpServers` using command `npx`, arguments
-   `-y --prefer-online -p openl-mcp openl-mcp`, and an `env` block containing the
-   Studio address. Add `OPENL_PERSONAL_ACCESS_TOKEN` only for multi-user Studio.
+4. Add an `openl` entry under `mcpServers` with command `npx`:
+   - **Studio 7.0 and later** — Studio's own MCP server, reached through the
+     `mcp-remote` bridge: arguments `-y mcp-remote <studio-address>/mcp --protocol auto`,
+     plus `--allow-http` for an `http://` address. For multi-user Studio add
+     `--header` and `Authorization:${OPENL_AUTH_HEADER}` (no space after the colon), and
+     an `env` block with `OPENL_AUTH_HEADER` set to `Token <PAT>`: `mcp-remote` fills the
+     header from its environment, which keeps the PAT out of its command arguments.
+   - **Older Studio releases** — the OpenL MCP server: arguments
+     `-y --prefer-online -p openl-mcp openl-mcp`, and an `env` block containing
+     `OPENL_BASE_URL` with the Studio address. Add `OPENL_PERSONAL_ACCESS_TOKEN` only for
+     multi-user Studio. Pin `openl-mcp@X.Y.Z` from the table in **Check version
+     compatibility** when the newest release does not support that Studio.
 5. Quit the Claude app completely and restart it, then ask: *List the OpenL projects
    I can access.*
 
@@ -277,6 +299,57 @@ retyping it, and keep straight quotes: smart/curly quotes make the JSON invalid.
 For sign-out, revoke the PAT in Studio first, then remove the token or entire `openl`
 entry and restart the app. For rotation, update and verify the replacement before
 revoking the old PAT.
+
+## Check version compatibility
+
+OpenL Studio 7.0 and later have their own MCP server at `<studio-address>/mcp`, which
+always matches its Studio; in Claude Code, Codex, and Cursor the plugin reads the Studio
+version at start and connects to that server by itself. For older Studio releases the
+plugin runs the OpenL MCP server (`openl-mcp`), and each of its releases works with
+particular Studio releases. Connected to another Studio release, most tools still answer
+but some time out or fail, which looks like a broken tool or project. Run this check when
+a connection already answers, during every setup above, and whenever some OpenL tools
+time out or fail while others work.
+
+1. **Studio version.** Request `<studio-address>/rest/public/info/openl.json` without
+   authentication; if that is not HTTP 200 JSON, request
+   `<studio-address>/web/public/info/openl.json` (Studio 6.x answers without sign-in only
+   there). Use the rules of the `/rest/settings` probe: no redirects, a 10-second
+   timeout, at most 1 MiB. The version is the `openl.version` string, such as `6.4.0`.
+   Never send a PAT with these requests.
+2. **Server version.** When an OpenL connection answers, call its version tool
+   (`openl_get_version`) and use the version it reports; a server without that tool is
+   an `openl-mcp` older than 1.2. Before a connection answers: Studio 7.0 and later are
+   served by their own server; for older releases this plugin runs the last numbered
+   OpenL MCP release in the table below in Claude Code, Codex, and Cursor.
+3. **Compare** the first two numbers of each version (`6.4.0` → 6.4) with this table:
+
+   | OpenL MCP | OpenL Studio |
+   |---|---|
+   | 1.0 | 6.0 |
+   | 1.1 | 6.3 |
+   | 1.2 | 6.4 |
+   | built into Studio | 7.0 and later |
+
+- **Studio 7.0 and later:** say in one line that Studio serves its own MCP server and
+  which address the connection uses. In Claude Code, Codex, and Cursor the plugin has
+  already chosen it; in Chat/Cowork the entry must point `mcp-remote` at
+  `<studio-address>/mcp` (see **Cowork setup**), not run `openl-mcp`. If a connection to
+  `/mcp` reports that Studio does not serve its built-in server, the server needs
+  Node.js on the Studio host and is not available on Tomcat: that is for the OpenL
+  administrator.
+- **Compatible:** say so in one line, with both versions.
+- **Not compatible:** tell the user plainly, with both versions, that this server
+  supports only the Studio release in its row, so some OpenL tools may time out or fail.
+  Name what does work: the Studio release this server supports, the server release that
+  supports their Studio (or that none does), and that Studio 7.0 and later bring their
+  own server. In Chat/Cowork the config entry can pin that server release, for example
+  `openl-mcp@1.1.0` for Studio 6.3; in the other clients the plugin release decides the
+  server. Point to the table in the plugin's README (**Compatible OpenL Studio
+  versions**). The mismatch does not block the setup, so continue it; never change
+  Studio, the server, or other infrastructure to resolve it.
+- **Studio version not readable:** say that compatibility could not be checked, and
+  continue.
 
 ## Safety rules
 

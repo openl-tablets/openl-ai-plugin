@@ -110,7 +110,7 @@ export function normalizeBaseUrl(rawValue, { allowInsecure = false } = {}) {
   return `${url.protocol}//${url.host}${path}`;
 }
 
-async function readLimitedBody(response, maxBytes) {
+export async function readLimitedBody(response, maxBytes) {
   if (!response.body) {
     return "";
   }
@@ -126,7 +126,7 @@ async function readLimitedBody(response, maxBytes) {
     total += value.byteLength;
     if (total > maxBytes) {
       await reader.cancel();
-      throw new Error("OpenL Studio settings response is unexpectedly large.");
+      throw new Error("OpenL Studio response is unexpectedly large.");
     }
     chunks.push(value);
   }

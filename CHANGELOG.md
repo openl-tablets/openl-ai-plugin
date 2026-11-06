@@ -5,6 +5,68 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-11-06
+
+### Added
+
+- **OpenL Studio 7.0 and later: the plugin uses Studio's own MCP server.** Studio 7.0
+  serves an MCP server at `<studio>/mcp`, released with Studio. Claude Code, Codex and
+  Cursor now start a launcher (`scripts/start-openl-mcp.mjs`; the Codex launcher shares
+  it) that reads the Studio version without signing in and then:
+  - for Studio 7.0 and later, bridges the client's stdio to `<studio>/mcp` over
+    Streamable HTTP (`scripts/mcp-http-bridge.mjs`, no new dependencies). It speaks both
+    protocol eras Studio serves: MCP 2026-07-28, which Claude Code tries first, with the
+    `MCP-Protocol-Version`, `Mcp-Method` and `Mcp-Name` headers derived from each
+    message, and the 2025 session protocol, where a session Studio closed after 30 idle
+    minutes is reopened and the request retried. The PAT goes in
+    `Authorization: Token …` and nowhere else; HTTP failures come back as JSON-RPC
+    errors that say what to do (a refused PAT, or a Studio whose built-in server isn't
+    running because Node.js is missing on its host);
+  - for older Studio releases, or when the version can't be read, runs the pinned
+    `openl-mcp@1.2.0` as before, with the same environment.
+
+  Users keep entering Studio's own address; nothing changes in the settings. Chat/Cowork
+  runs no plugin code, so `docs/cowork-setup.md` and `openl:connect` give a separate
+  `mcp-remote` entry for Studio 7.0 that reads the PAT from the entry's environment.
+- **OpenL Studio version check.** Each `openl-mcp` release works with particular
+  OpenL Studio releases; against another Studio, most tools answer but some time out or
+  fail (`openl-mcp` 1.2 with Studio 7.0: the agent-context and file-search tools time
+  out), which looked like a broken plugin. The plugin reads Studio's version
+  (`/rest/public/info/openl.json`, or `/web/public/info/openl.json` on Studio 6.x) and
+  warns, naming both versions, when it has no server for that Studio:
+  - **Claude Code:** a `SessionStart` hook, declared inline in
+    `.claude-plugin/plugin.json`, runs the check at startup, resume and `/clear`. On a
+    mismatch it shows the warning and tells Claude, so later tool timeouts are put down
+    to the mismatch; otherwise, including for Studio 7.0+, it stays silent. It waits at
+    most three seconds for Studio.
+  - **Codex:** `configure-codex.mjs` prints the result after its Studio probe and warns
+    on a mismatch without refusing the configuration.
+  - **Every client:** `openl:connect` runs the check when a connection already answers,
+    during each setup, and when some OpenL tools time out while others work, using the
+    server's own version tool for the release actually running.
+  - `node scripts/studio-compatibility.mjs --base-url <url>` runs the same check by
+    hand.
+- **Compatible OpenL Studio versions** in the README: OpenL MCP 1.0 → Studio 6.0,
+  1.1 → 6.3, 1.2 → 6.4, and the server built into Studio 7.0 and later, with the plugin
+  versions for each. The same rows are in `scripts/studio-compatibility.mjs` and
+  `openl:connect`; `tests/studio-compatibility.test.mjs` keeps the three equal. The
+  release checklist now includes updating the table.
+- Troubleshooting entries for "some OpenL requests time out while others work" and
+  "OpenL Studio does not serve its built-in MCP server" in `docs/troubleshooting.md`,
+  and rows in the "If something doesn't work" table of every setup guide; the
+  administrator guide lists Studio 6.4.x or 7.0 and later.
+
+### Changed
+
+- `.mcp.json` (Claude Code) and `.mcp.cursor.json` (Cursor) run
+  `node <plugin>/scripts/start-openl-mcp.mjs` instead of `npx` directly. The launcher has
+  not yet been run in a live Cursor; it is part of the release smoke test.
+- `openl-mcp` is pinned in one place, `OPENL_MCP_VERSION` in
+  `scripts/studio-compatibility.mjs`, instead of three; a test fails the build if a
+  descriptor names a release of its own. The pin stays `openl-mcp@1.2.0`.
+- The npx invocation and process-tree handling moved from the Codex launcher to
+  `scripts/start-openl-mcp.mjs`, which all clients share.
+
 ## [0.7.2] - 2026-11-05
 
 ### Changed

@@ -1,16 +1,15 @@
 import assert from "node:assert/strict";
-import { access, chmod, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { access, mkdtemp, readFile, rm, symlink } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { EventEmitter } from "node:events";
 import { tmpdir } from "node:os";
-import { delimiter, join } from "node:path";
+import { join } from "node:path";
 import test from "node:test";
 import { writeCodexConfig } from "../scripts/codex-config.mjs";
-import {
-  buildMcpEnvironment,
-  buildNpxInvocation,
-  terminateProcessTree,
-} from "../scripts/start-openl-mcp-codex.mjs";
+import { buildMcpEnvironment } from "../scripts/start-openl-mcp-codex.mjs";
+import { buildNpxInvocation, terminateProcessTree } from "../scripts/start-openl-mcp.mjs";
+import { builtInMcpRoutes, startFakeStudio, versionRoutes } from "./helpers/fake-studio.mjs";
+import { installFakeNpx, startNode, waitFor } from "./helpers/processes.mjs";
 
 test("launcher environment replaces inherited OpenL credentials", () => {
   const env = buildMcpEnvironment(
@@ -166,58 +165,69 @@ test("launcher keeps secrets out of output and uses a fresh cache", async (t) =>
   t.after(() => rm(root, { recursive: true, force: true }));
   const configDirectory = join(root, "config");
   const capturePath = join(root, "capture.json");
-  const fakeNpx = join(root, process.platform === "win32" ? "npx.cmd" : "npx");
-  const fakeNpxHelper = join(root, "fake-npx.mjs");
+  const npxEnvironment = await installFakeNpx(root, capturePath);
   const configuredToken = "configured-secret-for-test";
+
+  // A Studio 6.4 has no MCP server of its own, so the launcher runs the pinned openl-mcp.
+  const studio = await startFakeStudio(versionRoutes("6.4.0"));
+  t.after(() => studio.close());
   await writeCodexConfig({
     version: 1,
-    baseUrl: "https://studio.example.com",
+    baseUrl: studio.baseUrl,
     personalAccessToken: configuredToken,
   }, { configPath: join(configDirectory, "codex.json") });
-  await writeFile(fakeNpxHelper, `
-import { writeFileSync } from "node:fs";
-writeFileSync(process.env.OPENL_TEST_CAPTURE, JSON.stringify({
-  argv: process.argv.slice(2),
-  baseUrl: process.env.OPENL_BASE_URL,
-  token: process.env.OPENL_PERSONAL_ACCESS_TOKEN,
-  configDir: process.env.OPENL_CONFIG_DIR
-}));
-`);
-  if (process.platform === "win32") {
-    await writeFile(
-      fakeNpx,
-      '@echo off\r\n"%OPENL_TEST_NODE%" "%OPENL_TEST_HELPER%" %*\r\n',
-    );
-  } else {
-    await writeFile(
-      fakeNpx,
-      '#!/bin/sh\nexec "$OPENL_TEST_NODE" "$OPENL_TEST_HELPER" "$@"\n',
-      { mode: 0o700 },
-    );
-    await chmod(fakeNpx, 0o700);
-  }
 
-  const result = spawnSync(process.execPath, [join(process.cwd(), "scripts/start-openl-mcp-codex.mjs")], {
-    encoding: "utf8",
-    env: {
-      ...process.env,
-      OPENL_AI_CONFIG_DIR: configDirectory,
-      OPENL_BASE_URL: "https://wrong.example.com",
-      OPENL_PERSONAL_ACCESS_TOKEN: "inherited-secret-for-test",
-      OPENL_CONFIG_DIR: join(root, "stale-cache"),
-      OPENL_TEST_CAPTURE: capturePath,
-      OPENL_TEST_HELPER: fakeNpxHelper,
-      OPENL_TEST_NODE: process.execPath,
-      PATH: `${root}${delimiter}${process.env.PATH}`,
-    },
+  const run = startNode(join(process.cwd(), "scripts/start-openl-mcp-codex.mjs"), {
+    ...process.env,
+    ...npxEnvironment,
+    OPENL_AI_CONFIG_DIR: configDirectory,
+    OPENL_BASE_URL: "https://wrong.example.com",
+    OPENL_PERSONAL_ACCESS_TOKEN: "inherited-secret-for-test",
+    OPENL_CONFIG_DIR: join(root, "stale-cache"),
   });
-  assert.equal(result.status, 0, result.stderr);
-  assert.doesNotMatch(`${result.stdout}${result.stderr}`, /configured-secret|inherited-secret/);
+  run.child.stdin.end();
+  const exit = await run.exited;
+  assert.equal(exit.code, 0, run.stderr);
+  assert.doesNotMatch(`${run.stdout}${run.stderr}`, /configured-secret|inherited-secret/);
 
   const capture = JSON.parse(await readFile(capturePath, "utf8"));
   assert.deepEqual(capture.argv, ["-y", "-p", "openl-mcp@1.2.0", "openl-mcp"]);
-  assert.equal(capture.baseUrl, "https://studio.example.com");
+  assert.equal(capture.baseUrl, studio.baseUrl);
   assert.equal(capture.token, configuredToken);
   assert.notEqual(capture.configDir, join(root, "stale-cache"));
   await assert.rejects(access(capture.configDir), { code: "ENOENT" });
+});
+
+test("launcher connects Codex to the MCP server built into Studio 7.0", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "openl-ai-launcher-built-in-test-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const configDirectory = join(root, "config");
+  const studio = await startFakeStudio(builtInMcpRoutes());
+  t.after(() => studio.close());
+  await writeCodexConfig({
+    version: 1,
+    baseUrl: studio.baseUrl,
+    personalAccessToken: "configured-secret-for-test",
+  }, { configPath: join(configDirectory, "codex.json") });
+
+  const run = startNode(join(process.cwd(), "scripts/start-openl-mcp-codex.mjs"), {
+    ...process.env,
+    OPENL_AI_CONFIG_DIR: configDirectory,
+    OPENL_PERSONAL_ACCESS_TOKEN: "inherited-secret-for-test",
+  });
+  run.child.stdin.write(`${JSON.stringify({
+    jsonrpc: "2.0",
+    id: 1,
+    method: "initialize",
+    params: { protocolVersion: "2025-11-25", capabilities: {}, clientInfo: { name: "codex", version: "1" } },
+  })}\n`);
+  await waitFor(() => run.stdout.includes("\n"));
+  run.child.stdin.end();
+  const exit = await run.exited;
+
+  assert.equal(exit.code, 0, run.stderr);
+  assert.equal(JSON.parse(run.stdout.trim()).result.serverInfo.name, "studio-mcp");
+  assert.doesNotMatch(`${run.stdout}${run.stderr}`, /configured-secret|inherited-secret/);
+  const [initialize] = studio.requests.filter((request) => request.method === "POST" && request.url === "/mcp");
+  assert.equal(initialize.headers.authorization, "Token configured-secret-for-test");
 });

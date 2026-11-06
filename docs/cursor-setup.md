@@ -139,6 +139,7 @@ server restarts with the release's pinned OpenL MCP version.
 | "Node.js 24 or later is required", or the server won't start at all | Install/update Node.js (`node --version` must be `v24`+), then start a new chat. |
 | "Unauthorized" / 401 | The token is missing, expired, or revoked. Create a fresh one in Studio and paste it under **Configure**. |
 | "Cannot reach OpenL Studio" | Check the address and your office network or VPN. |
+| Listing projects works, but some other requests time out or fail | Usually the Studio release isn't one the bundled OpenL MCP server supports. Pick `openl:connect` from the `/` menu: it compares both versions. See [Compatible OpenL Studio versions](../README.md#compatible-openl-studio-versions). |
 
 More symptoms and fixes: [troubleshooting.md](troubleshooting.md).
 

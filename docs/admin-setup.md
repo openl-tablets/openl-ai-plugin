@@ -38,13 +38,38 @@ marketplace rename map. Older and centrally managed installations need the
 | **Claude Code** | **2.1.119 or later; 2.1.193+ recommended for a 0.1.x upgrade** | The plugin's settings dialog uses `manifest.userConfig`, introduced in Claude Code 2.1.83; 2.1.119 fixed optional blank settings, and 2.1.193 added automatic plugin rename migration. |
 | **Codex** | A desktop/CLI build with `codex plugin marketplace` and `codex plugin add` (verified with `codex-cli 0.145.0-alpha.30` and `0.146.0-alpha.3.1`) | Codex installs the same marketplace but reads its own native `.codex-plugin` manifest and bundled launcher; older preview builds without `plugin add` are not supported. |
 | **Cursor** | A build whose **Customize** page manages plugins (re-verified on Cursor **3.19.7**) | Cursor reads its own `.cursor-plugin` manifest and prompts for the plugin's declared variables. Direct repository and local-development imports also depend on organization policy — see [Rolling out to Cursor users](#rolling-out-to-cursor-users). |
-| **Node.js** | **24 or later, on every user's machine** | The plugin's backend is the [`openl-mcp`](https://www.npmjs.com/package/openl-mcp) npm package (`engines: node >= 24`), launched locally via `npx` for Claude Code, Codex, Cursor, or Cowork. This applies **even when the organization pre-installs the plugin** — there is no server-side variant. First launch downloads the package from the npm registry (cached afterwards). |
-| **OpenL Studio** | A deployment reachable from user machines | See [Studio address](#studio-address) below. |
+| **Node.js** | **24 or later, on every user's machine** | Every client starts the plugin's Node launcher locally. For OpenL Studio 7.0+ it connects to Studio's own MCP server; for older releases it runs the [`openl-mcp`](https://www.npmjs.com/package/openl-mcp) npm package (`engines: node >= 24`) via `npx`, and Cowork runs `openl-mcp` or `mcp-remote` via `npx` itself. This applies **even when the organization pre-installs the plugin**. A first `npx` launch downloads the package from the npm registry (cached afterwards). |
+| **OpenL Studio** | **6.4.x**, or **7.0 and later** with its built-in MCP server running; reachable from user machines | Studio 7.0+ serves its own MCP server, which the plugin uses; for 6.4 the plugin runs `openl-mcp` 1.2 locally. See [Compatible OpenL Studio versions](../README.md#compatible-openl-studio-versions) and [Studio address](#studio-address) below. |
 
-The Claude Code plugin pins `openl-mcp@1.2.0`. A blank token setting has been treated
-as absent, rather than sent as an empty credential, since `1.1.0`. The separate desktop /
+For a Studio older than 7.0 the plugin runs its pinned `openl-mcp@1.2.0` (Claude Code,
+Codex and Cursor alike). A blank token setting has been treated as absent, rather than
+sent as an empty credential, since `1.1.0`. The separate desktop /
 Cowork setup uses the current npm release by default; administrators can pin it for a
 controlled rollout as described below.
+
+**Which MCP server serves which Studio.** At every start the plugin reads Studio's
+version without signing in (`/rest/public/info/openl.json` on Studio 7.0 and later,
+`/web/public/info/openl.json` on 6.x) and picks the server:
+
+- **OpenL Studio 7.0 and later** serve their own MCP server at `<Studio address>/mcp`,
+  released with Studio and always matching it. The plugin connects to it over HTTP with
+  the user's PAT (`Authorization: Token …`), or without credentials on a single-user
+  Studio. The server runs only when Node.js is installed on the Studio host — the
+  Studio Docker image and the Demo package include it; a WAR deployment on Jetty needs
+  it installed; it is not available on Tomcat — and while `mcp.enabled` is not set to
+  `false`. Users keep entering Studio's own address, not the `/mcp` one.
+- **Older Studio releases** get the `openl-mcp` release pinned in the plugin, run on the
+  user's machine. Each `openl-mcp` release line supports a particular Studio release
+  line, listed in the [compatibility table](../README.md#compatible-openl-studio-versions).
+  Against another Studio release most tools still answer, but some time out or fail,
+  which users tend to report as a broken plugin.
+
+So upgrading Studio from 6.4 to 7.0 needs no plugin change beyond 0.8.0. For a Studio
+the plugin has no server for (for example 6.3 with this release), it warns with both
+versions: Claude Code at the start of each session, the Codex configurator when it runs,
+and `openl:connect` in every client. A Cowork configuration is managed by hand and must
+follow the same table: see [cowork-setup.md](cowork-setup.md#the-entry-for-openl-studio-70-and-later)
+for the Studio 7.0 entry.
 
 ## Installing for the organization
 
@@ -255,8 +280,10 @@ entry under `mcpServers` — the analyst-facing walkthrough is
   new server release when it starts. For a controlled rollout, distribute an exact
   package spec instead, for example
   `npx -y -p openl-mcp@1.2.0 openl-mcp`; pinned installations update only when you
-  change that version in the managed config. The Claude Code plugin remains pinned
-  independently in its bundled `.mcp.json`.
+  change that version in the managed config. For OpenL Studio 7.0 and later the entry
+  uses `mcp-remote` to reach Studio's own server instead; see
+  [cowork-setup.md](cowork-setup.md#the-entry-for-openl-studio-70-and-later). The plugin
+  for Claude Code, Codex and Cursor chooses and pins its server independently.
 - **Token storage caveat**: in this file the PAT is stored **in plain text** (there is
   no masked field, unlike the Claude Code plugin). The file lives in the user's
   profile with their ACLs. Set expectations accordingly: short-ish token TTLs and

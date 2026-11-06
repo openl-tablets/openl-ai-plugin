@@ -139,6 +139,7 @@ Why does this policy come out with a premium of 0? Input: { … }
 | The configurator asks for `--allow-insecure` | The HTTP address is not loopback. Use its HTTPS address, or — only on a trusted internal network — re-run with `--allow-insecure` (see Step 3). |
 | "Unauthorized" / 401 | The token is missing, expired, or revoked. Create a fresh one in Studio and rerun the configurator. |
 | "Cannot reach OpenL Studio" | Check the address and your office network or VPN. |
+| Listing projects works, but some other requests time out or fail, or the configurator warned about the OpenL Studio version | The Studio release isn't one the bundled OpenL MCP server supports. Ask Codex to run `$openl:connect`, which compares both versions, and see [Compatible OpenL Studio versions](../README.md#compatible-openl-studio-versions). |
 
 ## Good to know
 

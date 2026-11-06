@@ -97,6 +97,11 @@ Either way, open the file in a plain-text editor.
 You will paste a small block into that file, then change your Studio address and —
 for multi-user Studio — your token from Step 2.
 
+> **OpenL Studio 7.0 or later?** It has its own MCP server, and the entry is different:
+> use [the entry for OpenL Studio 7.0 and later](#the-entry-for-openl-studio-70-and-later)
+> below instead. Not sure which release you have? Ask Claude to run `/openl:connect`,
+> or ask your administrator.
+
 **If the file is empty or brand new**, make it look exactly like this:
 
 ```json
@@ -163,7 +168,45 @@ example:
 ```
 
 A fixed version does not update automatically. Change the version number in this
-line and restart Claude whenever you want to upgrade it.
+line and restart Claude whenever you want to upgrade it. The newest `openl-mcp` supports
+OpenL Studio 6.4; for an older Studio, pin the release the
+[compatibility table](../README.md#compatible-openl-studio-versions) gives for it, such
+as `openl-mcp@1.1.0` for Studio 6.3.
+
+### The entry for OpenL Studio 7.0 and later
+
+OpenL Studio 7.0 and later serve their own MCP server at their address followed by
+`/mcp`, and it always matches the Studio. The Claude app reaches it through
+`mcp-remote`, a small bridge that `npx` downloads the same way:
+
+```json
+"openl": {
+  "command": "npx",
+  "args": [
+    "-y", "mcp-remote", "PASTE-YOUR-STUDIO-ADDRESS-HERE/mcp",
+    "--protocol", "auto",
+    "--header", "Authorization:${OPENL_AUTH_HEADER}"
+  ],
+  "env": {
+    "OPENL_AUTH_HEADER": "Token PASTE-YOUR-TOKEN-HERE"
+  }
+}
+```
+
+- Replace `PASTE-YOUR-STUDIO-ADDRESS-HERE` with your Studio address, keeping `/mcp`
+  after it: `https://studio.example.com/mcp`.
+- Replace `PASTE-YOUR-TOKEN-HERE` with your token, keeping `Token ` (with the space)
+  in front of it. `mcp-remote` puts this value into the `Authorization` header itself,
+  so the token never appears in the program's arguments. Keep
+  `Authorization:${OPENL_AUTH_HEADER}` exactly as it is, with no space after the colon.
+- **Single-user Studio:** remove the `"--header", "Authorization:${OPENL_AUTH_HEADER}"`
+  part (with the comma before it) and the whole `env` block.
+- **An `http://` address:** add `"--allow-http"` to the arguments, for example after
+  `"auto"`.
+
+If Claude then reports that Studio does not serve its built-in MCP server, the server
+isn't running on the Studio host (it needs Node.js there, and isn't available when
+Studio runs on Tomcat): ask your OpenL administrator.
 
 > Careful with commas and quotes — this file format is strict. If Claude ignores
 > your change after restart, a missing/extra comma is the most common reason. Paste
@@ -234,6 +277,8 @@ that name has nothing to offer. Install **openl** and remove **openl-ai** instea
 | Claude doesn't seem to have any OpenL abilities | 1) Make sure you fully quit and restarted Claude. 2) Re-open the settings file (Step 3) and check the block matches the example in Step 4 — commas and quotes matter. 3) Check Node.js: open Terminal (macOS) or PowerShell (Windows), run `node --version`; if it errors or shows less than `v24`, ask your administrator to install/update Node.js. |
 | "Unauthorized" or 401 errors | First re-open the settings file (Step 3) and check the token line: the placeholder must be replaced with your real token (quotes kept, no spaces). If it looks right, the token expired or was revoked — create a fresh one in Studio (**User → Personal Access Tokens**), put it into the file, restart Claude. |
 | "Cannot reach OpenL Studio" / timeouts | Check you're on the office network or VPN, and that the address in the file is exactly the one that works in your browser, including its `http://` or `https://` scheme. |
+| Listing projects works, but some other requests time out or fail | Usually a version mismatch between OpenL Studio and the OpenL MCP server. Ask Claude to run `/openl:connect`: it reads both versions and compares them with the [compatibility table](../README.md#compatible-openl-studio-versions). For OpenL Studio 7.0 and later, switch to [the entry for Studio 7.0 and later](#the-entry-for-openl-studio-70-and-later). For an older Studio, pin the server release that supports it in the `args` of the `openl` entry — for example `"-y", "-p", "openl-mcp@1.1.0", "openl-mcp"` for Studio 6.3 — and restart Claude, or ask your administrator. |
+| "OpenL Studio does not serve its built-in MCP server" | Studio 7.0 runs its MCP server only when Node.js is installed on the Studio host, and not on Tomcat. Ask your OpenL administrator. |
 | Worked in a desktop Cowork session, but not on claude.ai in the browser | Expected: this setup works only in the **desktop app**. The web version of Claude can't run it. |
 | Can't find **Customize → Plugins** (Step 1) | Update the Claude desktop app to the latest version — or skip Step 1 for now: the connection (Steps 2–6) works without the plugin. |
 | The plugin sits on an old version, and **Update** is greyed out | The app only knows the marketplace copy it synced earlier, so refresh the marketplace first — see [Keeping OpenL up to date](#keeping-openl-up-to-date). For a plugin still named **openl-ai**, **Update** never activates at all: install **openl** instead ([migration guide](migrate-to-0.2.md#claude-desktop-app--cowork)). |
