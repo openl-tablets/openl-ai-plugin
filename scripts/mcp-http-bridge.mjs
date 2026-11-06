@@ -25,10 +25,10 @@ const MAX_ERROR_BODY_BYTES = 64 * 1024;
 const CLOSE_TIMEOUT_MS = 2_000;
 
 // MCP 2026-07-28 is stateless: each request names its protocol version in its `_meta`
-// envelope, and over HTTP the client must repeat it, the method, and for some methods the
-// name of what is called in headers (SEP-2243). A server such as Studio's checks them
-// before it answers. A client on stdio sends no headers, so the bridge derives them from
-// the message, as the MCP SDK's own HTTP client does.
+// envelope, and its HTTP binding requires the client to repeat it, the method, and for
+// some methods the name of what is called in headers. A server such as Studio's checks
+// them before it answers. A client on stdio sends no headers, so the bridge derives them
+// from the message, as the MCP SDK's own HTTP client does.
 const PROTOCOL_VERSION_META_KEY = "io.modelcontextprotocol/protocolVersion";
 const MCP_NAME_SOURCE = Object.freeze({
   "tools/call": "name",
