@@ -54,6 +54,36 @@ an administrator can hand out for you.
   not `https://studio.example.com/projects/…`.
 - Your usual OpenL Studio account, and your office network or VPN if Studio is
   internal.
+- An **OpenL Studio release this plugin version supports**: 6.4, or 7.0 and later — see
+  the next section.
+
+## Compatible OpenL Studio versions
+
+The plugin talks to OpenL Studio through an **OpenL MCP server**:
+
+- **OpenL Studio 7.0 and later** have their own MCP server, built into Studio, at
+  Studio's address followed by `/mcp`. The plugin connects to it by itself; it always
+  matches its Studio. It needs Node.js on the Studio server (the Docker image and the
+  Demo package have it) and is not available when Studio runs on Tomcat.
+- **Older Studio releases** have none, so the plugin runs the OpenL MCP server
+  (`openl-mcp`) on your computer. Each of its releases works with particular Studio
+  releases; connected to another one, most requests still work, but some time out or
+  fail.
+
+| OpenL MCP | OpenL Studio | Plugin |
+|---|---|---|
+| 1.0 | 6.0 | — |
+| 1.1 | 6.3 | 0.1.0 – 0.3.0 |
+| 1.2 | 6.4 | 0.5.0 and later |
+| built into Studio | 7.0 and later | 0.8.0 and later |
+
+Patch releases of a line, such as Studio 6.4.2, are included. Whatever the release, you
+give the plugin Studio's own address, not the `/mcp` one: the plugin reads Studio's
+version and picks the server. It also warns you, naming both versions, when it has no
+server for your Studio: in Claude Code at the start of each session, in Codex when you
+run its configurator, and in Cursor and the desktop app's Chat/Cowork when you run
+`openl:connect`. The table is updated with every plugin release that changes the
+server.
 
 ## What to ask
 

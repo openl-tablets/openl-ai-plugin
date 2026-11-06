@@ -36,13 +36,17 @@ openl-ai-plugin/
 ├── .cursor-plugin/
 │   ├── plugin.json          # Cursor manifest: variables, MCP descriptor path
 │   └── marketplace.json     # Cursor's own copy of the marketplace entry
-├── .mcp.json                # Claude Code MCP server (kept as a separate root file — see below)
-├── .mcp.codex.json          # Codex MCP server (openl-ai) → bundled launcher
-├── .mcp.cursor.json         # Cursor MCP server (tools) → npx + Cursor plugin variables
-├── scripts/                 # Codex-only Node helpers (Claude Code needs none of these)
-│   ├── start-openl-mcp-codex.mjs   # launcher: reads saved config, spawns openl-mcp
-│   ├── configure-codex.mjs         # interactive, no-echo PAT/address setup
-│   └── codex-config.mjs            # shared config read/write + Studio probe helpers
+├── .mcp.json                # Claude Code MCP server → launcher (kept as a separate root file — see below)
+├── .mcp.codex.json          # Codex MCP server (openl-ai) → Codex launcher
+├── .mcp.cursor.json         # Cursor MCP server (tools) → launcher + Cursor plugin variables
+├── scripts/                 # Node helpers, no npm dependencies
+│   ├── start-openl-mcp.mjs         # launcher (Claude Code, Cursor): Studio 7.0+ → bridge, else openl-mcp
+│   ├── mcp-http-bridge.mjs         # stdio ↔ Streamable HTTP bridge to <studio>/mcp
+│   ├── studio-compatibility.mjs    # openl-mcp pin, Studio compatibility table + check
+│   │                               # (Claude Code SessionStart hook, Codex configurator)
+│   ├── start-openl-mcp-codex.mjs   # Codex launcher: reads saved config, then as above
+│   ├── configure-codex.mjs         # Codex: interactive, no-echo PAT/address setup
+│   └── codex-config.mjs            # Codex config read/write + Studio probe helpers
 ├── skills/
 │   ├── branching/SKILL.md   # /openl:branching → isolated branches, sync, hotfix workflow
 │   ├── change-log-and-reapply/SKILL.md  # /openl:change-log-and-reapply → log changes, reapply the missing ones
@@ -59,15 +63,27 @@ openl-ai-plugin/
 └── README.md
 ```
 
-## Packaging model: `npx` from npm
+## Packaging model: a launcher, then Studio's own server or `npx` from npm
 
-The plugin is a **packaging layer, not a fork**. The MCP server is the published
-[`openl-mcp`](https://www.npmjs.com/package/openl-mcp) npm package (source:
-[`openl-tablets/openl-mcp`](https://github.com/openl-tablets/openl-mcp)), launched as a **stdio**
-server via `npx -y -p openl-mcp@X.Y.Z openl-mcp`.
+The plugin is a **packaging layer, not a fork**. Every client starts a small Node launcher
+of the plugin as its **stdio** MCP server, and the launcher serves the Studio one of two
+ways (see [Studio 7.0's built-in MCP server](#studio-70s-built-in-mcp-server)):
 
-- **Claude Code plugin:** pin an exact version (`@1.2.0`) in `.mcp.json` for
-  reproducibility. Bumping the pin is a plugin release (see [release.md](release.md)).
+- **OpenL Studio 7.0 and later** serve their own MCP server at `<studio>/mcp`, built from
+  the `openl-mcp` sources and released with Studio; the launcher bridges stdio to it
+  over HTTP.
+- **Older Studio releases** get the published
+  [`openl-mcp`](https://www.npmjs.com/package/openl-mcp) npm package (source:
+  [`openl-tablets/openl-mcp`](https://github.com/openl-tablets/openl-mcp)), which the
+  launcher runs via `npx -y -p openl-mcp@X.Y.Z openl-mcp` with its own stdio.
+
+The `openl-mcp` release is pinned exactly once, `OPENL_MCP_VERSION` in
+`scripts/studio-compatibility.mjs`, for reproducibility. Bumping the pin is a plugin
+release (see [release.md](release.md)).
+
+- **Claude Code plugin:** `.mcp.json` runs `node ${CLAUDE_PLUGIN_ROOT}/scripts/start-openl-mcp.mjs`
+  with `OPENL_BASE_URL` and `OPENL_PERSONAL_ACCESS_TOKEN` from the plugin's settings —
+  the environment `openl-mcp` reads, which the launcher hands on unchanged.
 - **Desktop / Cowork manual config:** use an unversioned package with
   `--prefer-online` by default so it checks for server updates when Claude starts.
   Administrators can replace it with an exact version for a controlled rollout. This
@@ -79,9 +95,9 @@ server via `npx -y -p openl-mcp@X.Y.Z openl-mcp`.
   launcher reads the Studio address and PAT from the platform-specific user config
   written by `scripts/configure-codex.mjs`: owner-only `0700/0600` storage on POSIX,
   while Windows relies on `%APPDATA%` user-profile ACLs. It then spawns the same
-  `npx -y -p openl-mcp@X.Y.Z openl-mcp` in an isolated config dir. It carries its
-  **own** version pin (`OPENL_MCP_VERSION`), kept equal to the `.mcp.json` pin by a test
-  in `tests/plugin-manifests.test.mjs` — see [release.md](release.md).
+  `npx -y -p openl-mcp@X.Y.Z openl-mcp` in an isolated config dir, or, for Studio 7.0
+  and later, bridges to Studio's own server with the configured PAT. It shares the
+  server choice, the pin and the process handling with `scripts/start-openl-mcp.mjs`.
   This path-based descriptor was smoke-installed with `codex-cli
   0.145.0-alpha.30` and `0.146.0-alpha.3.1` on 2026-07-30: Codex copied it into
   the plugin cache and registered `openl-ai` with the installed plugin directory
@@ -101,15 +117,14 @@ server via `npx -y -p openl-mcp@X.Y.Z openl-mcp`.
   its own per-user plugin **variables**: names declared in `.cursor-plugin/plugin.json`
   under `variables` (a restricted JSON Schema), values entered by the user, and
   `${NAME}` / `${NAME:-default}` placeholders expanded in the MCP descriptor. So Cursor
-  needs no launcher and no configurator — `.mcp.cursor.json` runs the same pinned
-  `npx -y -p openl-mcp@X.Y.Z openl-mcp` directly, with
+  needs no configurator — `.mcp.cursor.json` runs the same launcher as Claude Code,
+  `node ${CURSOR_PLUGIN_ROOT}/scripts/start-openl-mcp.mjs`, with
   `OPENL_BASE_URL=${OPENL_STUDIO_URL}` and
   `OPENL_PERSONAL_ACCESS_TOKEN=${OPENL_STUDIO_TOKEN:-}`. The `:-` default is load-bearing:
   an unconfigured variable **without** a default survives substitution as the literal
   `${…}` string, so a single-user Studio user who left the token blank would send
   `Authorization: Token ${OPENL_STUDIO_TOKEN}` and get 401; the empty-string default is
-  what `openl-mcp` >= 1.1.0 already treats as "no token". The pin is carried a third
-  time here and kept equal to the other two by `tests/plugin-manifests.test.mjs`.
+  what `openl-mcp` >= 1.1.0 and the bridge both treat as "no token".
 - `npx` needs the npm registry at first launch (cached afterwards). For offline / air-gapped
   installs the documented escape hatch is a vendored single-file bundle under
   `${CLAUDE_PLUGIN_ROOT}/dist/` with `command` pointed at `node`; it is a variant, not the default.
@@ -229,9 +244,11 @@ on, not a stable public API):**
   rather than the names the server itself reads — an `OPENL_BASE_URL` exported in a
   developer's shell would otherwise silently outrank what they typed into Cursor.
 - `${CURSOR_PLUGIN_ROOT}` and `${CLAUDE_PLUGIN_ROOT}` are substituted with the plugin
-  install path, so a bundled launcher would be possible here too. It is not used: plain
-  `npx` is the one spawn path already observed working in Cursor, and Cursor's variables
-  remove the reason the Codex launcher exists.
+  install path, which is how `.mcp.cursor.json` addresses the launcher. Until 0.8.0 the
+  descriptor ran plain `npx`, the one spawn path observed working in Cursor; the
+  launcher became necessary to choose between Studio's own MCP server and `openl-mcp`,
+  and **has not been run in a live Cursor yet** — the release smoke test below covers
+  it.
 - A variable is masked when its name contains a word like `TOKEN`, `SECRET`, `KEY`, or
   `PASSWORD`. `OPENL_STUDIO_TOKEN` is named for that heuristic; renaming it would
   unmask it.
@@ -243,8 +260,9 @@ on, not a stable public API):**
 
 - `tests/cursor-clean-project.test.mjs` is a regression model of the observed loader
   precedence and substitution rules. It proves that the packaged files resolve to the
-  expected command, environment and five skill directories in an otherwise empty
-  project; it is **not** a Cursor executable or GUI end-to-end test.
+  expected command, an existing launcher in the installed copy, the environment and the
+  skill directories in an otherwise empty project; it is **not** a Cursor executable or
+  GUI end-to-end test.
 - No installer-script extension is needed: Cursor's native manifest installs the MCP
   descriptor and shared skills, while **Configure** supplies the two per-user values.
   The separate Codex configurator remains Codex-only.
@@ -282,9 +300,9 @@ Consequences for skill content:
   differs (`/plugin configure` vs the Codex configurator vs Cursor's **Configure**
   dialog vs `claude_desktop_config.json`).
 - **Never assume a tool surface.** A skill ships with the plugin, but the tools come
-  from whatever `openl-mcp` version is configured — the pin in `.mcp.json` for Claude
-  Code, in `scripts/start-openl-mcp-codex.mjs` for Codex and in `.mcp.cursor.json` for
-  Cursor, or a user-managed version in the desktop/Cowork config. `trace-investigation` therefore checks which trace
+  from whatever MCP server serves the Studio — the one built into Studio 7.0 and later,
+  the `openl-mcp` pinned in `scripts/studio-compatibility.mjs` for older releases, or a
+  user-managed version in the desktop/Cowork config. `trace-investigation` therefore checks which trace
   tools exist and follows one of two paths: the interactive debugger of the pinned
   `openl-mcp@1.2.0` (`openl_step_trace`, `openl_watch_trace_cells`,
   `openl_inspect_trace_frame`, …), or the tree-trace tools of `openl-mcp@1.1.0`
@@ -293,11 +311,103 @@ Consequences for skill content:
   only for a desktop/Cowork config still held on `1.1.0`, and can be dropped once no
   supported configuration can land there.
 
+## Studio 7.0's built-in MCP server
+
+OpenL Studio 7.0 runs the `openl-mcp` sources inside Studio (EPBDS-16810): Studio starts
+the server with Node.js on the Studio host and serves it at `<studio>/mcp` over
+Streamable HTTP, released and versioned with Studio. It authenticates the way Studio's
+REST API does — `Authorization: Token <PAT>`, or nothing on a single-user Studio — and
+exists only when Node.js is installed on the Studio host (the Docker image and the Demo
+package include it; a Jetty WAR deployment needs it; Tomcat has no endpoint) and
+`mcp.enabled` is not `false`.
+
+The plugin still has to serve Studio 6.4, which has no such server, so it cannot point
+the clients' descriptors at `/mcp` directly: a descriptor is static, and the transport
+has to follow the Studio. Every client therefore starts a launcher as a stdio server:
+
+- **The choice.** `scripts/start-openl-mcp.mjs` (`start-openl-mcp-codex.mjs` for Codex,
+  after reading its config) reads Studio's version as the compatibility check does,
+  within five seconds. Studio 7.0 or later → the bridge to `<studio>/mcp`; an older
+  release → `npx -y -p openl-mcp@X.Y.Z openl-mcp` with the same environment and stdio;
+  a version that cannot be read → `openl-mcp` too, which reports the connection problem
+  as it always has. The choice is logged on stderr, which clients keep in their MCP
+  logs. It is made once per start: a Studio upgraded under a running session is picked
+  up when the client restarts the server.
+- **The bridge** (`scripts/mcp-http-bridge.mjs`) is the plugin's own, with no
+  dependencies, rather than `mcp-remote`: the PAT stays inside the process
+  (never in arguments), nothing third-party is fetched at start, and its behaviour is
+  pinned by tests. It forwards each stdin line as a POST with
+  `Accept: application/json, text/event-stream` and writes back the JSON body or every
+  event of an SSE response. Studio serves both protocol eras, and clients pick: Claude
+  Code 2.1.312 tries `server/discover` (2026-07-28) first and falls back to
+  `initialize`. A 2026-07-28 request is stateless and must repeat its envelope's
+  protocol version, its method and — for `tools/call`, `prompts/get`, `resources/read`
+  and `tasks/*` — its name as `MCP-Protocol-Version`, `Mcp-Method` and `Mcp-Name`
+  headers (Base64-wrapped when not plain ASCII), or Studio's MCP SDK answers 400; a
+  stdio client sends no headers, so the bridge derives them from the message as the
+  SDK's own HTTP client does. For a 2025 client it keeps `Mcp-Session-Id` and
+  `MCP-Protocol-Version` from `initialize`, and sends `DELETE` when stdin closes or a
+  termination signal arrives.
+  Studio drops a 2025-protocol session left unused for 30 minutes and then answers 404;
+  the bridge replays the client's own `initialize` (under its own id, answer not
+  forwarded), sends `notifications/initialized`, and retries the request once, so an
+  idle agent session survives. HTTP failures become JSON-RPC errors for the request
+  that caused them, worded for the user: 401 points to the PAT, a missing endpoint on
+  `initialize` to the Studio host's Node.js. It opens no standalone GET stream, so
+  server notifications outside a request (such as `tools/list_changed`) are not
+  forwarded, and like `undici` it gives up on a response with no data for five minutes.
+- **Chat/Cowork** runs no plugin code; `openl:connect` and
+  [cowork-setup.md](cowork-setup.md#the-entry-for-openl-studio-70-and-later) give the
+  `mcp-remote` entry that Studio's own guide documents, with the PAT read from the
+  entry's `env` rather than written into its arguments.
+
+## Studio version compatibility check
+
+Each `openl-mcp` release line supports particular OpenL Studio release lines (1.2 →
+Studio 6.4). Connected to another Studio, the server still starts and most tools answer,
+but tools whose Studio endpoints changed time out or fail — `openl-mcp` 1.2 against
+Studio 7.0 timed out on the agent-context and file-search tools. Nothing in the server
+reports that, so the plugin checks it. Since Studio 7.0 serves its own server, which the
+launcher uses, the check matters for releases older than 7.0.
+
+- **One table, three copies.** `STUDIO_COMPATIBILITY` in
+  `scripts/studio-compatibility.mjs` is what the code uses; the README publishes it as
+  **Compatible OpenL Studio versions**, and `skills/connect/SKILL.md` carries it for
+  clients where the agent does the check. Both add a row for the server built into
+  Studio 7.0 and later (`BUILT_IN_MCP_SINCE`). `tests/studio-compatibility.test.mjs`
+  keeps the three equal and requires the pinned server to be the last numbered row,
+  which is how the skill knows the plugin's server before a connection answers.
+- **Reading Studio's version without a token.** `/public/info/openl.json` returns
+  `openl.version`. Studio 7.0+ serves it anonymously as `/rest/public/…`; Studio 6.x
+  only as `/web/public/…` (on a multi-user 6.x, `/rest/public/…` needs a sign-in), so the
+  check tries `/rest` first and falls back to `/web`. A path a Studio does not serve may
+  come back as an HTML page or a sign-in redirect rather than a 404, so only an HTTP 200
+  JSON response with a parseable `openl.version` counts. The check never sends the PAT,
+  follows no redirects, caps the body at 64 KiB, and compares major.minor only.
+- **Claude Code: a SessionStart hook** declared inline in `.claude-plugin/plugin.json`,
+  not in `hooks/hooks.json`. Cursor and Codex read their own manifests, so they never
+  see the inline block, whereas a default `hooks/hooks.json` could be found by their own
+  hook discovery and read under a different hook contract. The hook reads the address from
+  `CLAUDE_PLUGIN_OPTION_STUDIO_BASE_URL`, which Claude Code exports to plugin hooks,
+  rather than substituting `${user_config.studio_base_url}` into a shell command. It is
+  synchronous, because only a synchronous hook's `systemMessage` is shown to the user;
+  its three-second budget bounds the delay when Studio is unreachable, and it stays
+  silent unless the versions are known to differ — a Studio with its own server never
+  warns. On a mismatch it shows the warning and adds it to Claude's context, so later
+  tool timeouts are attributed to the mismatch.
+- **Codex:** the configurator runs the same check after its `/rest/settings` probe and
+  prints the result; a mismatch is a warning, not a refusal. The launcher logs its
+  choice, but its stderr reaches only Codex's logs.
+- **Cursor and Chat/Cowork:** no plugin code runs at session start there, so
+  `openl:connect` does the check, using the server's own `openl_get_version` tool for
+  the version actually running (a Cowork config may be unpinned).
+
 ## Authentication design
 
-In the supported plugin flow, requests to Studio's `/rest/**` include
-`Authorization: Token <openl_pat_…>` only when the plugin's `studio_token` setting provides
-an explicit Personal Access Token (injected as `OPENL_PERSONAL_ACCESS_TOKEN`). Anonymous
+In the supported plugin flow, requests to Studio's `/rest/**` — or, for Studio 7.0 and
+later, to its built-in MCP server at `/mcp` — include `Authorization: Token <openl_pat_…>`
+only when the plugin's `studio_token` setting provides an explicit Personal Access Token
+(injected as `OPENL_PERSONAL_ACCESS_TOKEN`). Anonymous
 single-user requests omit the `Authorization` header entirely; a blank token setting is treated
 as absent rather than as an empty credential. The supported plugin modes are:
 

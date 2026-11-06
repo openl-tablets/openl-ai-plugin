@@ -176,6 +176,7 @@ desktop app's other session types differ:
 | The OpenL tools or the plugin didn't appear | Start a new Claude session; then see [Troubleshooting](troubleshooting.md#the-plugin-or-the-openl-tools-didnt-appear) |
 | "Unauthorized" or 401 errors | Your token is missing, expired, or revoked — create a fresh one in Studio (**User → Personal Access Tokens**), update it on the plugin's page (desktop app) or with `/plugin configure openl@openl-ai-plugin` in a terminal session, then start a new session |
 | "Cannot reach OpenL Studio" | Check the address and your VPN / office network connection |
+| Claude warns at the start of a session that the OpenL Studio version isn't supported, or some requests time out while others work | The Studio release isn't one the bundled OpenL MCP server supports. See [Compatible OpenL Studio versions](../README.md#compatible-openl-studio-versions) and [Some OpenL requests time out while others work](troubleshooting.md#some-openl-requests-time-out-while-others-work). |
 | `/plugin …` isn't recognized in the desktop app's Code tab | Expected — these commands run only in a terminal Claude Code session. In the desktop app, set the plugin's values on its page (**Customize → Plugins → openl**) instead, or run `claude` in a terminal and use the commands there; the settings apply to your Code tab sessions too. |
 
 More symptoms and fixes: [troubleshooting.md](troubleshooting.md) — including what

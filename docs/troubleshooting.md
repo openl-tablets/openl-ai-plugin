@@ -109,6 +109,42 @@ timeouts.
 **Contact your administrator when:** you're on the VPN, the browser opens Studio, the
 addresses match — and Claude still can't reach it.
 
+## Some OpenL requests time out while others work
+
+Listing projects works, but other requests — reading a project's agent instructions,
+searching project files — time out or fail with unexpected errors. Or Claude showed a
+warning at the start of the session that OpenL Studio's version is not supported by the
+OpenL MCP server.
+
+This is almost always a **version mismatch**: each release of the OpenL MCP server works
+with particular OpenL Studio releases, and the Studio you connect to is a different one.
+(OpenL Studio 7.0 and later bring their own MCP server, which the plugin uses from version
+0.8.0, so on those releases the cause is an older plugin.)
+
+1. Run `/openl:connect`. It reads both versions and tells you whether they match.
+2. Compare them with the [compatibility table](../README.md#compatible-openl-studio-versions).
+   Either connect to a Studio release that this plugin version supports, or update the
+   plugin once a release supports your Studio (see the next section for updating).
+
+**Contact your administrator when:** your organization's Studio is a release the table
+does not list for your plugin version — the plugin and Studio upgrades have to be
+planned together.
+
+## "OpenL Studio does not serve its built-in MCP server"
+
+OpenL Studio 7.0 and later have their own MCP server at Studio's address followed by
+`/mcp`, and the plugin connects to it. This message means Studio answered, but that
+server isn't running.
+
+1. Check that the plugin's **OpenL Studio address** is Studio's own address, without
+   `/mcp` or a page path — the plugin adds `/mcp` itself.
+2. Otherwise it is a Studio setting: the server needs Node.js on the Studio host (the
+   Docker image and the Demo package include it), can be turned off with `mcp.enabled`,
+   and isn't available when Studio runs on Tomcat.
+
+**Contact your administrator** with the message Claude showed: only they can start the
+server on the Studio host.
+
 ## The plugin stays on an old version
 
 A new plugin release exists, but Claude Code keeps loading the old one — or it never
@@ -209,6 +245,7 @@ Include:
 - What you asked Claude to do, and the **error text** Claude showed.
 - Which setup you use: the **Claude Code plugin** or the **Claude desktop app
   (Cowork)** settings file.
+- The **OpenL Studio and OpenL MCP versions** `/openl:connect` reports.
 - Your **OpenL Studio address** — Claude Code: from
   `/plugin configure openl@openl-ai-plugin`; Claude desktop app (Cowork): from the
   `openl` entry in `claude_desktop_config.json`.

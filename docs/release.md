@@ -24,9 +24,11 @@ the server can publish freely, and the plugin adopts a server version deliberate
 ```
 openl-mcp repo ──npm publish──▶ npmjs: openl-mcp@X.Y.Z
                                         ▲
-                                        │ pinned in two places that must match:
-                                        │   .mcp.json → tools.args               (Claude Code)
-                                        │   OPENL_MCP_VERSION in the launcher     (Codex)
+                                        │ pinned once: OPENL_MCP_VERSION in
+                                        │   scripts/studio-compatibility.mjs, used by the
+                                        │   launchers of Claude Code, Codex and Cursor
+                                        │   for a Studio older than 7.0 (7.0+ serves its
+                                        │   own MCP server at <studio>/mcp)
 openl-ai-plugin repo ──git tag──▶ marketplace.json ──▶ user runs /plugin install
 ```
 
@@ -197,16 +199,29 @@ Codex cleanup.
 2. Confirm it's resolvable: `npm view openl-mcp@X.Y.Z version`.
 
 **B. This repo: cut a plugin release**
-1. If adopting a new server: bump the pin in **all three** places that carry it —
-   `.mcp.json` → `tools.args` (Claude Code), `OPENL_MCP_VERSION` in
-   `scripts/start-openl-mcp-codex.mjs` (Codex), and `.mcp.cursor.json` →
-   `mcpServers.tools.args` (Cursor). They must stay equal;
-   `tests/plugin-manifests.test.mjs` fails the build if they drift.
-2. Update skills / agents / docs as needed.
-3. Bump `version` in all three plugin manifests and `package.json` (and the entry in
+1. If adopting a new server: bump `OPENL_MCP_VERSION` in
+   `scripts/studio-compatibility.mjs`, the only place that names it. Every client starts
+   one of the plugin's launchers (`scripts/start-openl-mcp.mjs`, or
+   `scripts/start-openl-mcp-codex.mjs` for Codex), which pass it to `npx`;
+   `tests/plugin-manifests.test.mjs` fails the build if a descriptor pins a release of
+   its own. The pin matters only for Studio releases older than 7.0: Studio 7.0 and
+   later serve their own MCP server, which the launchers connect to.
+2. Update the **OpenL Studio compatibility table** with every release that changes the
+   server, and confirm the Studio release(s) the new server supports with the
+   `openl-mcp` maintainers. The table lives in three places that must list the same
+   rows: `STUDIO_COMPATIBILITY` in `scripts/studio-compatibility.mjs` (what the
+   session-start and configurator checks use), the
+   [README](../README.md#compatible-openl-studio-versions) (the published table, which
+   also says which plugin versions bundle each server), and **Check version
+   compatibility** in `skills/connect/SKILL.md`. The pinned server must be the last
+   numbered row, followed by the row for the server built into Studio 7.0 and later.
+   `tests/studio-compatibility.test.mjs` fails the build otherwise. Also update the
+   Studio row of [Supported versions](admin-setup.md#supported-versions).
+3. Update skills / agents / docs as needed.
+4. Bump `version` in all three plugin manifests and `package.json` (and the entry in
    either `marketplace.json` if it carries one).
-4. Update `CHANGELOG.md` (replace `Unreleased` with the release date on the version being cut).
-5. Run `npm test` and `claude plugin validate .`, then smoke-install through an
+5. Update `CHANGELOG.md` (replace `Unreleased` with the release date on the version being cut).
+6. Run `npm test` and `claude plugin validate .`, then smoke-install through an
    isolated Codex test profile and inspect only this plugin with
    `codex mcp get openl-ai --json`. Confirm it uses the bundled launcher and never
    Claude's `${user_config.*}` placeholders. Do not capture a global
@@ -216,7 +231,7 @@ Codex cleanup.
    read-only listing uses the normal read path, a harmless write requests approval,
    the launcher remains the configured process, and no PAT appears in prompts,
    process arguments, stdout, stderr, or captured MCP traffic.
-6. Treat the automated Cursor tests as a **packaging contract**, not an application
+7. Treat the automated Cursor tests as a **packaging contract**, not an application
    smoke test. Publish the candidate to a disposable/team marketplace branch, or use
    local import when an administrator has enabled it. In a clean project and
    user-scoped install, enter a test Studio URL/PAT only through **Configure**, confirm
@@ -225,8 +240,8 @@ Codex cleanup.
    not gain `.cursor/mcp.json` or any other hand-written config. Exercise the chosen
    update route once from the previous release as well, recording whether the settings
    remain configured; never put the PAT in logs or test artifacts.
-7. Commit, tag `vA.B.C`, push.
-8. (Optional) create a GitHub Release with notes pulled from `CHANGELOG.md`.
+8. Commit, tag `vA.B.C`, push.
+9. (Optional) create a GitHub Release with notes pulled from `CHANGELOG.md`.
 
 **C. Users update**
 - Existing Claude Code 0.1.x users: refresh the marketplace; Claude Code 2.1.193+
@@ -303,7 +318,7 @@ no browser sign-in is shipped. The Claude **desktop app (Cowork)** is covered by
 `openl-mcp` server configured via `claude_desktop_config.json` — see
 [cowork-setup.md](cowork-setup.md), not this plugin's settings. That manual configuration follows
 the current npm release by default and offers an exact-version option for controlled deployments;
-it is independent of the pin in `.mcp.json`. Only **claude.ai (web/remote)** needs
+it is independent of the plugin's pin. Only **claude.ai (web/remote)** needs
 the separate remote MCP connector (the `openl-studio-mcp` server's embedded-OAuth mode, which
 requires an internet-reachable MCP endpoint).
 

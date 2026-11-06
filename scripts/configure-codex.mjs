@@ -17,6 +17,7 @@ import {
   safeConfigStatus,
   writeCodexConfig,
 } from "./codex-config.mjs";
+import { checkStudio } from "./studio-compatibility.mjs";
 
 function usage() {
   return `Configure the OpenL Plugin for Codex without putting a Personal Access Token in chat.
@@ -283,6 +284,12 @@ async function configure(baseUrlArgument, { allowInsecure = false } = {}) {
 
   console.error("Checking OpenL Studio…");
   const deployment = await probeStudio(baseUrl, { allowInsecure });
+  // A Studio the bundled server does not support still gets configured: the user may
+  // be about to upgrade one side. The warning names both versions so it is not missed.
+  const compatibility = await checkStudio(deployment.baseUrl);
+  console.error(compatibility.result?.status === "incompatible"
+    ? `\n⚠️  ${compatibility.message}`
+    : compatibility.message);
   const transport = classifyStudioTransport(deployment.baseUrl, { allowInsecure });
   // Persist the opt-in only when a non-loopback HTTP address actually needs it.
   // Loopback HTTP is accepted without an opt-in, but is still reported and warned

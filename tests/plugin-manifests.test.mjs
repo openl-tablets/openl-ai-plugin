@@ -65,12 +65,23 @@ test("Codex uses only its native launcher and never Claude placeholders", async 
   assert.doesNotMatch(`${codexText}\n${codexMcpText}`, /\$\{user_config\./);
 });
 
-test("Claude keeps its existing MCP contract and pin", async () => {
-  const claudeMcpText = await readFile(".mcp.json", "utf8");
-  const claudeMcp = JSON.parse(claudeMcpText);
-  assert.deepEqual(Object.keys(claudeMcp), ["tools"]);
-  assert.match(claudeMcpText, /\$\{user_config\.studio_base_url\}/);
-  assert.ok(claudeMcp.tools.args.includes("openl-mcp@1.2.0"));
+// Claude Code starts the plugin's launcher, which serves Studio 7.0+ through the server
+// built into Studio and older releases through the pinned openl-mcp. The environment is
+// the one openl-mcp reads, so the launcher hands it on unchanged.
+test("Claude starts the plugin's launcher with its settings", async () => {
+  const claudeMcp = await readJson(".mcp.json");
+  assert.deepEqual(claudeMcp, {
+    tools: {
+      type: "stdio",
+      command: "node",
+      args: ["${CLAUDE_PLUGIN_ROOT}/scripts/start-openl-mcp.mjs"],
+      env: {
+        OPENL_BASE_URL: "${user_config.studio_base_url}",
+        OPENL_PERSONAL_ACCESS_TOKEN: "${user_config.studio_token}",
+      },
+    },
+  });
+  await assert.doesNotReject(access("scripts/start-openl-mcp.mjs"));
 });
 
 // Cursor discovers `.mcp.json` before `mcp.json` and would otherwise reuse Claude
@@ -93,15 +104,19 @@ test("Cursor overrides MCP discovery with its own descriptor and variables", asy
 
   // Every ${VAR} placeholder in the descriptor must be declared in the manifest schema:
   // Cursor leaves an undeclared, unconfigured placeholder in place verbatim, and Cursor's
-  // own submission checklist requires the declaration.
+  // own submission checklist requires the declaration. CURSOR_PLUGIN_ROOT is Cursor's own,
+  // the install path of the plugin.
   const declared = Object.keys(cursor.variables.properties);
   assert.deepEqual([...declared].sort(), ["OPENL_STUDIO_TOKEN", "OPENL_STUDIO_URL"]);
   assert.deepEqual(cursor.variables.required, ["OPENL_STUDIO_URL"]);
-  const placeholders = [...cursorMcpText.matchAll(/\$\{([^:}]+)(?::-([^}]*))?\}/gu)];
+  const placeholders = [...cursorMcpText.matchAll(/\$\{([^:}]+)(?::-([^}]*))?\}/gu)]
+    .filter(([, name]) => name !== "CURSOR_PLUGIN_ROOT");
   assert.equal(placeholders.length, 2);
   for (const [, name] of placeholders) {
     assert.ok(declared.includes(name), `${name} is used but not declared under variables`);
   }
+  assert.equal(cursorMcp.mcpServers.tools.command, "node");
+  assert.deepEqual(cursorMcp.mcpServers.tools.args, ["${CURSOR_PLUGIN_ROOT}/scripts/start-openl-mcp.mjs"]);
 
   // The token is optional (single-user Studio has no sign-in). An unconfigured variable
   // without a default survives substitution as the literal `${OPENL_STUDIO_TOKEN}`,
@@ -112,39 +127,21 @@ test("Cursor overrides MCP discovery with its own descriptor and variables", asy
   assert.equal(env.OPENL_PERSONAL_ACCESS_TOKEN, "${OPENL_STUDIO_TOKEN:-}");
 });
 
-// The server version is pinned twice — .mcp.json (Claude Code) and
-// OPENL_MCP_VERSION in the Codex launcher — with no shared source of truth.
-// This guard fails the build if the two ever drift, so a release bump that
-// touches only one place cannot silently ship Codex users a stale server.
-test("Claude, Codex and Cursor pin the same openl-mcp version", async () => {
-  const claudeMcp = await readJson(".mcp.json");
-  const pinnedArg = claudeMcp.tools.args.find((arg) => arg.startsWith("openl-mcp@"));
-  assert.ok(pinnedArg, ".mcp.json must pin an exact openl-mcp@<version>");
-  const claudePin = pinnedArg.slice("openl-mcp@".length);
-
-  const launcherText = await readFile("scripts/start-openl-mcp-codex.mjs", "utf8");
-  const launcherMatch = launcherText.match(/OPENL_MCP_VERSION = "([^"]+)"/);
-  assert.ok(launcherMatch, "the Codex launcher must define OPENL_MCP_VERSION");
-  const codexPin = launcherMatch[1];
-
-  assert.equal(
-    codexPin,
-    claudePin,
-    `openl-mcp pin drift: .mcp.json pins ${claudePin} but ` +
-      `scripts/start-openl-mcp-codex.mjs pins ${codexPin}. Bump both together (see docs/release.md).`,
-  );
-
-  const cursorMcp = await readJson(".mcp.cursor.json");
-  const cursorPinnedArg = cursorMcp.mcpServers.tools.args.find((arg) => arg.startsWith("openl-mcp@"));
-  assert.ok(cursorPinnedArg, ".mcp.cursor.json must pin an exact openl-mcp@<version>");
-  const cursorPin = cursorPinnedArg.slice("openl-mcp@".length);
-
-  assert.equal(
-    cursorPin,
-    claudePin,
-    `openl-mcp pin drift: .mcp.json pins ${claudePin} but ` +
-      `.mcp.cursor.json pins ${cursorPin}. Bump all three together (see docs/release.md).`,
-  );
+// Every client starts one of the plugin's launchers, and the launchers take the openl-mcp
+// release from OPENL_MCP_VERSION in scripts/studio-compatibility.mjs. No descriptor may
+// name a release of its own: it would bypass the launcher's choice of the server built
+// into Studio 7.0 and later, and drift from the pin the compatibility check uses.
+test("openl-mcp is pinned in one place, which every client's launcher uses", async () => {
+  const { OPENL_MCP_VERSION } = await import("../scripts/studio-compatibility.mjs");
+  assert.match(OPENL_MCP_VERSION, /^\d+\.\d+\.\d+$/u, "OPENL_MCP_VERSION must be an exact version");
+  for (const descriptor of [".mcp.json", ".mcp.cursor.json", ".mcp.codex.json"]) {
+    assert.doesNotMatch(await readFile(descriptor, "utf8"), /openl-mcp@/u, `${descriptor} must not pin openl-mcp`);
+  }
+  const launcherText = await readFile("scripts/start-openl-mcp.mjs", "utf8");
+  assert.match(launcherText, /import \{[^}]*\bOPENL_MCP_VERSION\b[^}]*\} from "\.\/studio-compatibility\.mjs";/u);
+  const codexLauncherText = await readFile("scripts/start-openl-mcp-codex.mjs", "utf8");
+  assert.match(codexLauncherText, /from "\.\/start-openl-mcp\.mjs";/u);
+  assert.doesNotMatch(codexLauncherText, /openl-mcp@/u);
 });
 
 async function skillDirectories() {
