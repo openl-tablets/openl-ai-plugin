@@ -294,17 +294,30 @@ function parseArgs(argv) {
   return options;
 }
 
+// Claude's first reply waits for the hook process, not for the check inside it, so the
+// hook exits as soon as it has spoken. Aborting fetch() does not close a TCP connect that
+// got no answer (a Studio address behind a VPN that is off): Node keeps it until its own
+// connect timeout, about ten seconds, and a process left to drain would wait for it.
+function exitHook(text) {
+  if (!text) {
+    process.exit(0);
+  }
+  // Depending on the platform, a pipe is written asynchronously: exit once the output is out.
+  process.stdout.write(text, () => process.exit(0));
+}
+
 async function main(argv = process.argv.slice(2)) {
   if (argv.includes("--session-start-hook")) {
-    // A hook must never fail the session start, whatever goes wrong.
+    let text = "";
     try {
       const output = await sessionStartHookOutput();
       if (output) {
-        process.stdout.write(`${JSON.stringify(output)}\n`);
+        text = `${JSON.stringify(output)}\n`;
       }
     } catch {
-      // Stay silent.
+      // A hook must never fail the session start, whatever goes wrong: stay silent.
     }
+    exitHook(text);
     return;
   }
 

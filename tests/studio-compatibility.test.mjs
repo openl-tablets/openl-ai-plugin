@@ -55,9 +55,9 @@ const studio7 = (version) => ({
   "/rest/public/info/openl.json": json({ "openl.version": version, "openl.build.date": "2026-10-07" }),
 });
 
-function runScript(args, env) {
+function runScript(args, env, nodeArgs = []) {
   return new Promise((resolvePromise, rejectPromise) => {
-    const child = spawn(process.execPath, ["scripts/studio-compatibility.mjs", ...args], {
+    const child = spawn(process.execPath, [...nodeArgs, "scripts/studio-compatibility.mjs", ...args], {
       env: { ...process.env, CLAUDE_PLUGIN_OPTION_STUDIO_BASE_URL: "", ...env },
       stdio: ["ignore", "pipe", "pipe"],
     });
@@ -277,6 +277,24 @@ test("the hook command prints hook JSON on a mismatch and always exits 0", async
   });
   const unconfigured = await runScript(["--session-start-hook"], {});
   assert.deepEqual(unconfigured, { code: 0, stdout: "", stderr: "" });
+});
+
+// Claude's first reply waits for the hook process, not for the check inside it. A Studio
+// address that exists but never answers (a VPN that is off) leaves a connection attempt
+// open after the check gives up; the process must not wait for it.
+test("the hook command exits when its three-second budget is spent", async () => {
+  const unansweredFetch = new URL("./helpers/unanswered-fetch.mjs", import.meta.url).href;
+  const started = Date.now();
+  const run = await runScript(
+    ["--session-start-hook"],
+    { CLAUDE_PLUGIN_OPTION_STUDIO_BASE_URL: "http://studio.example.com" },
+    ["--import", unansweredFetch],
+  );
+  const elapsed = Date.now() - started;
+  assert.deepEqual(run, { code: 0, stdout: "", stderr: "" });
+  // The budget plus Node's start-up, well inside the 10 seconds plugin.json allows.
+  assert.ok(elapsed >= 2_900, `the hook gave up after ${elapsed} ms, before its budget`);
+  assert.ok(elapsed < 6_000, `the hook exited after ${elapsed} ms`);
 });
 
 test("the command-line check exits 0 only when the plugin has a server for the Studio", async () => {
