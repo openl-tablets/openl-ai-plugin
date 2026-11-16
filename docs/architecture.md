@@ -393,7 +393,11 @@ launcher uses, the check matters for releases older than 7.0.
   synchronous, because only a synchronous hook's `systemMessage` is shown to the user;
   its three-second budget bounds the delay when Studio is unreachable, and it stays
   silent unless the versions are known to differ — a Studio with its own server never
-  warns. On a mismatch it shows the warning and adds it to Claude's context, so later
+  warns. The hook exits as soon as it is done rather than when its event loop drains:
+  an aborted `fetch()` leaves an unanswered TCP connect open until Node's own connect
+  timeout, so an address that exists but does not answer (a VPN that is off) would
+  otherwise hold the session start for about ten seconds. The `timeout` of 10 seconds in
+  the manifest is Claude Code's backstop, not the budget. On a mismatch it shows the warning and adds it to Claude's context, so later
   tool timeouts are attributed to the mismatch.
 - **Codex:** the configurator runs the same check after its `/rest/settings` probe and
   prints the result; a mismatch is a warning, not a refusal. The launcher logs its

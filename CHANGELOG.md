@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **Claude Code: an unreachable Studio no longer holds up the session start for ten
+  seconds.** When the Studio address exists but does not answer — an internal address
+  with the VPN off — the `SessionStart` version check gave up after three seconds as
+  intended, but the hook process stayed alive about seven seconds more on the connection
+  attempt that an aborted `fetch()` leaves open, so Claude's first reply waited about ten
+  seconds at every startup, resume and `/clear`. The hook now exits as soon as the check
+  is done. An address that does not resolve, or a host that refuses the connection, was
+  not affected.
+
 ## [0.8.0] - 2026-11-06
 
 ### Added
