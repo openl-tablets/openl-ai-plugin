@@ -233,8 +233,11 @@ test("the Cursor packaging contract resolves OpenL in a clean project without pr
     .sort();
   assert.deepEqual(installedSkills, [
     "branching",
+    "calculations",
     "change-log-and-reapply",
     "connect",
+    "decision-tables",
+    "model",
     "planning",
     "testing",
     "trace-investigation",

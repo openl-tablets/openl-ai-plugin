@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Three rule-building skills: `model`, `calculations` and `decision-tables`.** Business
+  analysts using the plugin on real projects found that the rules it generated worked but
+  did not follow the conventions their teams use, so the output had to be reworked by
+  hand. These skills carry those conventions, so the agent follows them without extra
+  prompting (EPBDS-16693):
+  - `calculations` builds and changes Spreadsheet tables. The entry point returns a
+    `SpreadsheetResult` with the returned steps marked `*` rather than a new output
+    datatype, values come from the project's lookups, and new tables follow the module's
+    existing sheet layout.
+  - `decision-tables` builds and changes decision tables. SmartRules and SmartLookup are
+    the default; a result built from several values uses an external Returns table
+    instead of SimpleRules with a `new ()` constructor. New tables go on the module's
+    existing sheet, and an explicit instruction about the target sheet is always
+    followed.
+  - `model` builds and changes the input model on top of the project's existing
+    datatypes and vocabularies, and adds a datatype only when no suitable one exists.
+  - All three delete a sheet left empty after its last table is removed, check every
+    reader before renaming or removing anything, and hand over to `planning` when a
+    change grows beyond their own tables.
+
 ### Fixed
 
 - **Claude Code: an unreachable Studio no longer holds up the session start for ten

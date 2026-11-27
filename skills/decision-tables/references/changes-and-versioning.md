@@ -1,0 +1,24 @@
+# Changing values, versioning and dispatch
+
+Part of the decision-tables skill, moved word for word from its SKILL.md. Non-negotiables, Workflow, Writing the table, Verification checklist and Scope and sources are in short form in [SKILL.md](../SKILL.md) and in full in [non-negotiables.md](non-negotiables.md) and [workflow-and-writing.md](workflow-and-writing.md); any other section named in parentheses is in one of the files listed under **Where to read** there.
+
+## Changing values in an existing table
+
+
+Use this when the task changes only values (a rate, a factor, a parameter) in tables that already exist. Headers, titles, signature, layout and formulas stay as they are (Non-negotiable 1); a change to any of them is a build task.
+
+1. **Ask first: new version or override?** A request to change values ("apply the new values", "update the rates") may not say whether they replace the current values or apply only from a date, a state or a product. Unless the request says so, ask the user before touching a cell: override the values in the current table, or create a new version that applies from a date or to a scope while the current version keeps its values. For a new version, the version comes first: the versioning task creates it (a versioning skill if one is available, otherwise ask the user how the project versions rules), and this skill then changes the values in the new version only. For an override, the values change in place in every version file that holds the table, unless the user names the versions.
+2. **Find the companion rows.** One business change often needs rows in several tables: a new key value needs a row in every table keyed by it, and a new combination may need a row for every value of another key. Search the project for tables keyed by the same vocabulary or attribute, including the tables AGENTS.md records against that vocabulary (Non-negotiable 3). List the rows each would need and ask the user which belong to this change; the project or its domain decides which tables move together. Never add a row the user has not confirmed.
+3. **Map and check the values** as for a new table (Non-negotiables 2 to 5, Completeness and conflicts).
+4. **A value added to a vocabulary is checked in every table that tests it.** Search the project and its dependent projects for every table with a condition on that vocabulary; the tables recorded against it in AGENTS.md are where the search starts, not the whole list. For each table: a table that lists every value gets a row for the new value, with the value the requirement or the user gives; a table with a catch-all row gets the user's confirmation that the catch-all returns the right value for it, or a row of its own. Never copy a neighbour's row as a guess.
+5. **Show the impact preview** before asking for approval. For every changed cell: the table, the keys, the old value, the new value and its source. Then run the module's tests and list each result that changed; every changed result must be explained by a changed value, and any other change is a defect to fix first. Tests whose expected values must change go to a testing skill, if one is available, with the new expected values from the requirement. The preview is what the value owner (usually the actuary) confirms: ask the user to get that confirmation before the project is saved.
+
+## Versioning and dispatch
+
+
+Creating a rule version and setting business dimension properties (effective date, request date, state, LOB and the like) is a versioning task, not this skill's. Hand it to a versioning skill if one is available; otherwise ask the user how the project versions rules. What this skill must respect when it touches a versioned rule:
+
+- **Know how the project versions.** Rules may be versioned by the module file name, by a Properties table for a module or category, or by properties on each table. Read which before editing. A requirement that says new values apply from a date means a new version first, not an edit of the current one (Changing values in an existing table, step 1).
+- **Edit the right version.** Several tables can share one name, each for a different date, state or line of business. Identify the one the requirement targets and change only that one, unless the user says the change applies to all.
+- **Keep the dispatch group identical.** All versions of a rule have the same name, return type, parameter types and parameter names. A signature change in one version breaks dispatch, so it goes through Non-negotiable 6 and is applied to every version.
+- **Keep the properties a table has.** Business properties are the versioning task's. Dev properties that a table already carries stay as they are. This skill adds only two properties: the description that a documented departure from the model needs (Workflow step 1), and the temporary gap and overlap check, removed before saving.
