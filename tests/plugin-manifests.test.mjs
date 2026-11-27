@@ -166,8 +166,11 @@ test("every skill is packaged for every client", async () => {
     [...skills].sort(),
     [
       "branching",
+      "calculations",
       "change-log-and-reapply",
       "connect",
+      "decision-tables",
+      "model",
       "planning",
       "testing",
       "trace-investigation",

@@ -112,6 +112,9 @@ by itself.
 | `openl:planning` | The entry point for building, changing, or fixing anything in an OpenL project: works out which projects and tables a request touches, shows one plan for a single approval, then carries it out item by item and verifies the result. |
 | `openl:branching` | Manages isolated branches for any rule or config change — opens the right revision, syncs with base/development, resolves conflicts, and handles the hotfix two-branch rule and post-merge cleanup. |
 | `openl:trace-investigation` | Finds out why a rule returned an unexpected result: traces the run, names the root cause, and proposes the minimal fix. Give it the input payload and what you expected. |
+| `openl:model` | Builds or changes the input model — datatypes and vocabularies — on top of the project's existing model, adding a new datatype only when no suitable one exists, and checks every reader before a field is renamed or removed. |
+| `openl:calculations` | Builds and changes Spreadsheet tables: steps, formulas, calculation levels and performance. The response is a `SpreadsheetResult` with the returned steps marked `*`, not a new output datatype. |
+| `openl:decision-tables` | Builds and changes decision tables and lookups — SmartRules and SmartLookup by default — with values copied exactly, every input covered, and new tables placed on the module's existing sheet. |
 | `openl:change-log-and-reapply` | Keeps a log of every change a feature applied and, after a merge conflict, a project refresh, or a backport, reapplies only the changes that are missing — stopping on conflicting changes in the target. |
 | `openl:testing` | Adds test rows and runs the full suite after any rule change, reading per-row results before reporting anything as tested. |
 | `openl:versioning` | Adds a new effective-dated or dimension-scoped version of a table — without touching the existing version — with matching test coverage. |
@@ -120,10 +123,12 @@ To start one explicitly:
 
 - **Claude Code or the Claude desktop app's Chat/Cowork tabs:** type
   `/openl:connect`, `/openl:planning`, `/openl:branching`,
-  `/openl:change-log-and-reapply`, `/openl:trace-investigation`,
+  `/openl:change-log-and-reapply`, `/openl:model`, `/openl:calculations`,
+  `/openl:decision-tables`, `/openl:trace-investigation`,
   `/openl:testing`, or `/openl:versioning`.
 - **Codex:** type `$` and select `$openl:connect`, `$openl:planning`, `$openl:branching`,
-  `$openl:change-log-and-reapply`, `$openl:trace-investigation`, `$openl:testing`, or
+  `$openl:change-log-and-reapply`, `$openl:model`, `$openl:calculations`,
+  `$openl:decision-tables`, `$openl:trace-investigation`, `$openl:testing`, or
   `$openl:versioning`;
   `/skills` opens the skills picker too.
 - **Cursor:** the skills are listed under **Customize → Skills** (in the *Agent

@@ -49,8 +49,11 @@ openl-ai-plugin/
 │   └── codex-config.mjs            # Codex config read/write + Studio probe helpers
 ├── skills/
 │   ├── branching/SKILL.md   # /openl:branching → isolated branches, sync, hotfix workflow
+│   ├── calculations/SKILL.md  # /openl:calculations → Spreadsheet tables, `*`-marked response steps
 │   ├── change-log-and-reapply/SKILL.md  # /openl:change-log-and-reapply → log changes, reapply the missing ones
 │   ├── connect/SKILL.md     # /openl:connect → guided Personal Access Token setup
+│   ├── decision-tables/SKILL.md  # /openl:decision-tables → SmartRules/SmartLookup and other decision tables
+│   ├── model/SKILL.md       # /openl:model → input datatypes and vocabularies, reusing the project's model
 │   ├── planning/SKILL.md    # /openl:planning → one plan, one approval, tracked execution
 │   ├── testing/SKILL.md     # /openl:testing → pre-test sequence, per-row results
 │   ├── trace-investigation/SKILL.md  # /openl:trace-investigation → root-cause a rule result
@@ -190,7 +193,7 @@ specific app build.
   this task.
 - Cursor documents native [skills](https://cursor.com/docs/skills) and
   [subagents](https://cursor.com/docs/subagents), and discovers their plugin files from
-  `skills/*/SKILL.md` and `agents/*.md`. This repository currently ships seven shared
+  `skills/*/SKILL.md` and `agents/*.md`. This repository currently ships ten shared
   skills and **no agents** for either Claude Code or Cursor,
   so agent parity is zero-to-zero. If agents are added later, smoke-test their
   frontmatter and behaviour in both clients instead of assuming every Claude-specific
